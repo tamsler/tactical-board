@@ -1,5 +1,6 @@
 import React from "react";
 import type { Player } from "../../types/tactics";
+import { getContrastTextColor } from "../../utils/mathUtils";
 
 interface PitchPlayerProps {
   player: Player;
@@ -17,6 +18,10 @@ export const PitchPlayer: React.FC<PitchPlayerProps> = ({
 }) => {
   const radius = player.radius || 18;
   const hasFacing = player.facingAngle !== undefined && player.showVisionCone;
+  const contrastTextColor =
+    player.textColor && player.textColor !== "#ffffff"
+      ? player.textColor
+      : getContrastTextColor(player.color);
 
   // Calculate vision cone polygon points if facing angle is active
   const renderVisionCone = () => {
@@ -97,7 +102,13 @@ export const PitchPlayer: React.FC<PitchPlayerProps> = ({
         cy={player.y}
         r={radius}
         fill={player.color}
-        stroke={player.isGoalkeeper ? "#ffffff" : "#ffffff"}
+        stroke={
+          contrastTextColor === "#0f172a"
+            ? "#0f172a"
+            : player.isGoalkeeper
+              ? "#ffffff"
+              : "#ffffff"
+        }
         strokeWidth={player.isGoalkeeper ? "3" : "2.5"}
       />
 
@@ -108,7 +119,7 @@ export const PitchPlayer: React.FC<PitchPlayerProps> = ({
           cy={player.y}
           r={radius - 4}
           fill="none"
-          stroke="#ffffff"
+          stroke={contrastTextColor === "#0f172a" ? "#0f172a" : "#ffffff"}
           strokeWidth="1"
           strokeDasharray="2 2"
           opacity="0.8"
@@ -121,7 +132,7 @@ export const PitchPlayer: React.FC<PitchPlayerProps> = ({
         y={player.y + 1}
         textAnchor="middle"
         dominantBaseline="central"
-        fill={player.textColor || "#ffffff"}
+        fill={contrastTextColor}
         fontSize={radius > 16 ? "13" : "11"}
         fontWeight="800"
         fontFamily="system-ui, -apple-system, sans-serif"

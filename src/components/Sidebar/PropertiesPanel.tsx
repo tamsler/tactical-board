@@ -1,6 +1,7 @@
 import React from "react";
 import type { useTacticsState } from "../../hooks/useTacticsState";
 import { Trash2 } from "lucide-react";
+import { getContrastTextColor } from "../../utils/mathUtils";
 
 interface PropertiesPanelProps {
   tactics: ReturnType<typeof useTacticsState>;
@@ -115,7 +116,12 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             {playerColors.map((c) => (
               <button
                 key={c}
-                onClick={() => updatePlayer(player.id, { color: c })}
+                onClick={() =>
+                  updatePlayer(player.id, {
+                    color: c,
+                    textColor: getContrastTextColor(c),
+                  })
+                }
                 style={{ backgroundColor: c }}
                 className={`w-6 h-6 rounded-full border transition cursor-pointer ${
                   player.color === c

@@ -145,3 +145,25 @@ export function getTBarPath(
 
   return `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`;
 }
+
+// Determine high contrast text color (black or white) based on background hex/rgb color
+export function getContrastTextColor(hexColor: string): "#0f172a" | "#ffffff" {
+  let hex = hexColor.replace("#", "").trim();
+  if (hex.length === 3) {
+    hex = hex
+      .split("")
+      .map((c) => c + c)
+      .join("");
+  }
+  if (hex.length !== 6) {
+    return "#ffffff";
+  }
+
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  // Perceived relative luminance (standard W3C formula)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.65 ? "#0f172a" : "#ffffff";
+}
