@@ -18,7 +18,12 @@ export function App() {
   const [activeTab, setActiveTab] = useState<"formations" | "properties">(
     "formations",
   );
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 1024;
+    }
+    return true;
+  });
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   // Auto-switch to properties tab when an element is selected
@@ -121,9 +126,9 @@ export function App() {
       />
 
       {/* Main Workspace Area */}
-      <div className="flex-1 flex relative overflow-hidden">
+      <div className="flex-1 flex relative overflow-hidden min-h-0 min-w-0">
         {/* Left Tool Palette Sidebar */}
-        <div className="bg-slate-900/95 backdrop-blur border-r border-slate-800 p-2.5 flex flex-col items-center z-30 shrink-0 overflow-y-auto">
+        <div className="bg-slate-900/95 backdrop-blur border-r border-slate-800 p-1 sm:p-2.5 flex flex-col items-center z-30 shrink-0 overflow-y-auto">
           <ToolSelector
             activeTool={tactics.activeTool}
             setActiveTool={tactics.setActiveTool}
@@ -135,13 +140,13 @@ export function App() {
         </div>
 
         {/* Central Pitch Stage */}
-        <main className="flex-1 flex flex-col items-center justify-between relative p-2 md:p-4 overflow-auto bg-slate-950/80">
-          <div className="flex-1 w-full flex items-center justify-center min-h-0">
+        <main className="flex-1 flex flex-col items-center justify-between relative p-1 md:p-2 overflow-hidden bg-slate-950/80 min-h-0 min-w-0">
+          <div className="flex-1 w-full h-full flex items-center justify-center min-h-0 min-w-0">
             <TacticalBoard tactics={tactics} boardRef={boardRef} />
           </div>
 
           {/* Bottom Quick-Add Bar */}
-          <div className="w-full mt-2 z-20 shrink-0">
+          <div className="w-full mt-1 z-20 shrink-0">
             <BottomQuickBar
               activeTool={tactics.activeTool}
               setActiveTool={tactics.setActiveTool}
@@ -156,14 +161,26 @@ export function App() {
           </div>
         </main>
 
+        {/* Backdrop for mobile drawer */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs z-35 md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         {/* Right Sidebar (Tabs for Formations / Settings vs Properties) */}
         <aside
-          className={`bg-slate-900/95 backdrop-blur border-l border-slate-800 transition-all duration-300 flex flex-col z-30 shrink-0 ${
-            isSidebarOpen ? "w-80" : "w-0"
+          className={`bg-slate-900/95 backdrop-blur border-l border-slate-800 transition-all duration-300 flex flex-col z-40 shrink-0 ${
+            isSidebarOpen ? "w-72 sm:w-80" : "w-0"
+          } ${
+            isSidebarOpen
+              ? "fixed inset-y-0 right-0 h-full md:static md:h-auto shadow-2xl md:shadow-none"
+              : ""
           } overflow-hidden`}
         >
           {isSidebarOpen && (
-            <div className="flex flex-col h-full w-80">
+            <div className="flex flex-col h-full w-72 sm:w-80">
               {/* Tab Navigation */}
               <div className="flex border-b border-slate-800 bg-slate-950/60 p-1.5 gap-1 shrink-0">
                 <button
@@ -210,7 +227,7 @@ export function App() {
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-40 bg-slate-800 hover:bg-slate-700 text-slate-300 p-1 rounded-l-md border-y border-l border-slate-700 shadow-md transition"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-40 bg-slate-800 hover:bg-slate-700 text-slate-300 p-1 rounded-l-md border-y border-l border-slate-700 shadow-md transition cursor-pointer"
         >
           {isSidebarOpen ? (
             <ChevronRight className="w-4 h-4" />

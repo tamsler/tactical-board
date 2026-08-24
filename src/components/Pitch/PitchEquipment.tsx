@@ -12,7 +12,7 @@ export const PitchEquipment: React.FC<PitchEquipmentProps> = ({
   isSelected,
   onPointerDown,
 }) => {
-  const { type, x, y } = equipment;
+  const { type, x, y, scale = 1.0 } = equipment;
 
   const renderItem = () => {
     switch (type) {
@@ -231,6 +231,7 @@ export const PitchEquipment: React.FC<PitchEquipmentProps> = ({
   return (
     <g
       className="cursor-grab active:cursor-grabbing select-none"
+      transform={`translate(${x}, ${y}) scale(${scale}) translate(${-x}, ${-y})`}
       onPointerDown={(e) => {
         e.stopPropagation();
         onPointerDown(equipment.id, e);
@@ -238,10 +239,10 @@ export const PitchEquipment: React.FC<PitchEquipmentProps> = ({
     >
       {isSelected && (
         <rect
-          x={x - 24}
-          y={y - 20}
-          width="48"
-          height="40"
+          x={x - 26}
+          y={y - 22}
+          width="52"
+          height="44"
           fill="none"
           stroke="#38bdf8"
           strokeWidth="1.5"

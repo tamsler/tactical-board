@@ -211,13 +211,113 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           <input
             type="range"
             min="8"
-            max="20"
+            max="24"
             value={ball.size || 11}
             onChange={(e) =>
               updateBall(ball.id, { size: Number(e.target.value) })
             }
             className="w-full accent-emerald-500 bg-slate-800"
           />
+        </div>
+      </div>
+    );
+  }
+
+  // 1c. EQUIPMENT PROPERTIES (Cones, Mannequins, Goals)
+  if (selectedType === "equipment") {
+    const eq = state.equipments.find((item) => item.id === selectedId);
+    if (!eq) return null;
+
+    const currentScale = eq.scale ?? 1.0;
+
+    const getEquipmentTitle = () => {
+      switch (eq.type) {
+        case "cone-orange":
+          return "Orange Cone";
+        case "cone-yellow":
+          return "Yellow Cone";
+        case "cone-blue":
+          return "Blue Cone";
+        case "mannequin":
+          return "Wall Mannequin";
+        case "mini-goal":
+          return "Mini Goal";
+        case "ladder":
+          return "Agility Ladder";
+        case "pole":
+          return "Agility Pole";
+        default:
+          return "Equipment";
+      }
+    };
+
+    return (
+      <div className="space-y-4 p-3 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-slate-200">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div className="font-bold text-sm text-slate-100 flex items-center gap-1.5 capitalize">
+            <span>
+              {eq.type.startsWith("cone")
+                ? "🔶"
+                : eq.type === "mannequin"
+                  ? "🧍"
+                  : eq.type === "mini-goal"
+                    ? "🥅"
+                    : "🎯"}
+            </span>{" "}
+            {getEquipmentTitle()}
+          </div>
+          <button
+            onClick={deleteSelected}
+            title="Delete Equipment"
+            className="p-1.5 hover:bg-rose-950/60 text-rose-400 rounded-lg transition cursor-pointer"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Scale / Size Slider */}
+        <div>
+          <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+            <span>Size Scale</span>
+            <span>{Math.round(currentScale * 100)}%</span>
+          </div>
+          <input
+            type="range"
+            min="0.5"
+            max="2.5"
+            step="0.1"
+            value={currentScale}
+            onChange={(e) =>
+              tactics.updateEquipment(eq.id, {
+                scale: Number(e.target.value),
+              })
+            }
+            className="w-full accent-emerald-500 bg-slate-800"
+          />
+        </div>
+
+        {/* Preset Size Buttons */}
+        <div className="flex items-center gap-1.5 pt-1">
+          {[
+            { label: "Small (70%)", val: 0.7 },
+            { label: "Normal (100%)", val: 1.0 },
+            { label: "Large (140%)", val: 1.4 },
+            { label: "Extra (180%)", val: 1.8 },
+          ].map((preset) => (
+            <button
+              key={preset.val}
+              onClick={() =>
+                tactics.updateEquipment(eq.id, { scale: preset.val })
+              }
+              className={`flex-1 py-1 px-1 rounded text-[10px] font-semibold transition cursor-pointer ${
+                Math.abs(currentScale - preset.val) < 0.05
+                  ? "bg-emerald-600 text-white"
+                  : "bg-slate-800 hover:bg-slate-700 text-slate-300"
+              }`}
+            >
+              {preset.label.split(" ")[0]}
+            </button>
+          ))}
         </div>
       </div>
     );

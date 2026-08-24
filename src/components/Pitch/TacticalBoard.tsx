@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import type {
   Player,
   Ball,
@@ -82,6 +83,59 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
     useState<DrawingLine | null>(null);
   const [draggedInitialShape, setDraggedInitialShape] =
     useState<TacticalShape | null>(null);
+  const dragHasMovedRef = useRef(false);
+
+  // Zoom & Pan state (enhanced for mobile pinch-to-zoom & detailed pitch viewing)
+  const [zoom, setZoom] = useState(1.0);
+  const [panOffset, setPanOffset] = useState<Point>({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStartPoint, setPanStartPoint] = useState<Point>({ x: 0, y: 0 });
+  const [initialPanOffset, setInitialPanOffset] = useState<Point>({
+    x: 0,
+    y: 0,
+  });
+
+  // Multi-touch tracking for pinch-to-zoom & two-finger panning
+  const activePointersRef = useRef<
+    Map<number, { clientX: number; clientY: number }>
+  >(new Map());
+  const isPinchingRef = useRef(false);
+  const pinchStartDistRef = useRef(0);
+  const pinchStartZoomRef = useRef(1);
+  const pinchStartPanRef = useRef<Point>({ x: 0, y: 0 });
+  const pinchStartCenterRef = useRef<Point>({ x: 0, y: 0 });
+
+  const clampPan = useCallback((pan: Point, currentZoom: number): Point => {
+    if (currentZoom <= 1.02) return { x: 0, y: 0 };
+    const maxPanX = (PITCH_WIDTH / 2) * ((currentZoom - 1) / currentZoom);
+    const maxPanY = (PITCH_HEIGHT / 2) * ((currentZoom - 1) / currentZoom);
+    return {
+      x: Math.max(-maxPanX, Math.min(maxPanX, pan.x)),
+      y: Math.max(-maxPanY, Math.min(maxPanY, pan.y)),
+    };
+  }, []);
+
+  const handleZoomIn = () => {
+    setZoom((prev) => Math.min(3.0, Number((prev + 0.25).toFixed(2))));
+  };
+
+  const handleZoomOut = () => {
+    setZoom((prev) => {
+      const next = Math.max(1.0, Number((prev - 0.25).toFixed(2)));
+      if (next <= 1.02) {
+        setPanOffset({ x: 0, y: 0 });
+      } else {
+        setPanOffset((p) => clampPan(p, next));
+      }
+      return next;
+    });
+  };
+
+  const handleResetZoom = () => {
+    setZoom(1.0);
+    setPanOffset({ x: 0, y: 0 });
+    setIsPanning(false);
+  };
 
   // Drawing in progress state
   const [isDrawing, setIsDrawing] = useState(false);
@@ -279,8 +333,36 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
     [tactics, setSelectedId, setSelectedType, getPitchCoordinates, state],
   );
 
-  // Background pointer down (drawing start or quick entity creation)
+  // Background pointer down (drawing start, quick entity creation, or pan/pinch)
   const handleBoardPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
+    activePointersRef.current.set(e.pointerId, {
+      clientX: e.clientX,
+      clientY: e.clientY,
+    });
+
+    // Multi-touch pinch gesture start
+    if (activePointersRef.current.size >= 2) {
+      isPinchingRef.current = true;
+      setIsDrawing(false);
+      setIsDragging(false);
+      setIsPanning(false);
+      setDrawStartPoint(null);
+      setDraggedEntityId(null);
+
+      const [p1, p2] = Array.from(activePointersRef.current.values());
+      pinchStartDistRef.current = Math.hypot(
+        p2.clientX - p1.clientX,
+        p2.clientY - p1.clientY,
+      );
+      pinchStartZoomRef.current = zoom;
+      pinchStartPanRef.current = { ...panOffset };
+      pinchStartCenterRef.current = {
+        x: (p1.clientX + p2.clientX) / 2,
+        y: (p1.clientY + p2.clientY) / 2,
+      };
+      return;
+    }
+
     if (e.button !== 0) return; // Only primary button
     const pt = getPitchCoordinates(e);
 
@@ -469,11 +551,75 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
     if (activeTool === "select") {
       setSelectedId(null);
       setSelectedType(null);
+      if (zoom > 1.02) {
+        setIsPanning(true);
+        setPanStartPoint({ x: e.clientX, y: e.clientY });
+        setInitialPanOffset({ ...panOffset });
+      }
     }
   };
 
-  // Pointer move (entity drag or drawing preview)
+  // Pointer move (entity drag, drawing preview, multi-touch pinch-zoom, or pan)
   const handleBoardPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    activePointersRef.current.set(e.pointerId, {
+      clientX: e.clientX,
+      clientY: e.clientY,
+    });
+
+    // Multi-touch pinch-to-zoom & two-finger pan
+    if (isPinchingRef.current && activePointersRef.current.size >= 2) {
+      const [p1, p2] = Array.from(activePointersRef.current.values());
+      const currentDist = Math.hypot(
+        p2.clientX - p1.clientX,
+        p2.clientY - p1.clientY,
+      );
+      const scaleFactor = currentDist / Math.max(10, pinchStartDistRef.current);
+      const newZoom = Math.min(
+        3.0,
+        Math.max(
+          1.0,
+          Math.round(pinchStartZoomRef.current * scaleFactor * 100) / 100,
+        ),
+      );
+
+      const currentCenter = {
+        x: (p1.clientX + p2.clientX) / 2,
+        y: (p1.clientY + p2.clientY) / 2,
+      };
+      const deltaX =
+        (currentCenter.x - pinchStartCenterRef.current.x) / newZoom;
+      const deltaY =
+        (currentCenter.y - pinchStartCenterRef.current.y) / newZoom;
+
+      setZoom(newZoom);
+      setPanOffset(
+        clampPan(
+          {
+            x: pinchStartPanRef.current.x + deltaX,
+            y: pinchStartPanRef.current.y + deltaY,
+          },
+          newZoom,
+        ),
+      );
+      return;
+    }
+
+    // Single pointer pan when zoomed in
+    if (isPanning) {
+      const dx = (e.clientX - panStartPoint.x) / zoom;
+      const dy = (e.clientY - panStartPoint.y) / zoom;
+      setPanOffset(
+        clampPan(
+          {
+            x: initialPanOffset.x + dx,
+            y: initialPanOffset.y + dy,
+          },
+          zoom,
+        ),
+      );
+      return;
+    }
+
     const pt = getPitchCoordinates(e);
 
     // 1. If Dragging an existing entity
@@ -605,13 +751,27 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
     }
   };
 
-  // Pointer up (commit drag or finish drawing)
-  const handleBoardPointerUp = () => {
+  // Pointer up (commit drag, finish drawing, or end pinch/pan)
+  const handleBoardPointerUp = (e?: React.PointerEvent<SVGSVGElement>) => {
+    if (e) {
+      activePointersRef.current.delete(e.pointerId);
+    } else {
+      activePointersRef.current.clear();
+    }
+
+    if (activePointersRef.current.size < 2) {
+      isPinchingRef.current = false;
+    }
+    if (isPanning) {
+      setIsPanning(false);
+    }
+
     if (isDragging) {
       setIsDragging(false);
       setDraggedEntityId(null);
       setDraggedInitialLine(null);
       setDraggedInitialShape(null);
+      dragHasMovedRef.current = false;
     }
 
     if (isDrawing && drawStartPoint && currentMousePoint) {
@@ -962,16 +1122,76 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
   };
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center select-none overflow-hidden p-2">
-      {/* Outer Pitch Frame with Shadow */}
-      <div className="relative w-full max-w-[1200px] aspect-[1050/680] shadow-2xl rounded-lg overflow-hidden border-2 border-slate-700 bg-slate-950">
+    <div className="relative w-full h-full flex items-center justify-center select-none overflow-hidden p-0 sm:p-1 min-h-0 min-w-0">
+      {/* Floating Zoom Controls for Mobile (both Portrait and Landscape) and Tablets */}
+      <div className="flex lg:hidden absolute bottom-2 right-2 sm:bottom-3 sm:right-3 z-30 items-center gap-1 bg-slate-900/95 backdrop-blur-md border border-slate-700/80 p-1 rounded-xl shadow-2xl text-slate-200">
+        <button
+          type="button"
+          onClick={handleZoomOut}
+          disabled={zoom <= 1.0}
+          title="Zoom Out"
+          className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-800 active:bg-slate-700 disabled:opacity-40 disabled:hover:bg-transparent transition cursor-pointer"
+        >
+          <ZoomOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={handleResetZoom}
+          title="Reset Zoom (100%)"
+          className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg hover:bg-slate-800 text-[10px] sm:text-[11px] font-bold transition cursor-pointer min-w-[38px] sm:min-w-[44px] text-center"
+        >
+          {Math.round(zoom * 100)}%
+        </button>
+        <button
+          type="button"
+          onClick={handleZoomIn}
+          disabled={zoom >= 3.0}
+          title="Zoom In"
+          className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-800 active:bg-slate-700 disabled:opacity-40 disabled:hover:bg-transparent transition cursor-pointer"
+        >
+          <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        </button>
+        {zoom > 1.0 && (
+          <button
+            type="button"
+            onClick={handleResetZoom}
+            title="Fit to Screen"
+            className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-800 text-emerald-400 transition cursor-pointer border-l border-slate-800 ml-0.5"
+          >
+            <Maximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Outer Pitch Frame with Zoom & Pan transform */}
+      <div
+        className={`relative w-full h-full max-w-full max-h-full aspect-[1050/680] shadow-2xl rounded-lg overflow-hidden border border-slate-700 md:border-2 bg-slate-950 transition-transform ${isPanning ? "duration-0" : "duration-75 ease-out"} origin-center flex items-center justify-center`}
+        style={{
+          aspectRatio: "1050 / 680",
+          transform: `scale(${zoom}) translate(${panOffset.x}px, ${panOffset.y}px)`,
+        }}
+      >
         <svg
           ref={boardRef}
           viewBox={`0 0 ${PITCH_WIDTH} ${PITCH_HEIGHT}`}
-          className="w-full h-full block touch-none cursor-crosshair"
+          className={`w-full h-full block touch-none ${
+            isPanning
+              ? "cursor-grab active:cursor-grabbing"
+              : activeTool === "select" && zoom > 1.05
+                ? "cursor-grab"
+                : "cursor-crosshair"
+          }`}
+          style={{
+            width: "100%",
+            height: "100%",
+            maxWidth: "100%",
+            maxHeight: "100%",
+            objectFit: "contain",
+          }}
           onPointerDown={handleBoardPointerDown}
           onPointerMove={handleBoardPointerMove}
           onPointerUp={handleBoardPointerUp}
+          onPointerCancel={handleBoardPointerUp}
         >
           {/* 1. Pitch Layer */}
           <SoccerPitch
