@@ -9,6 +9,7 @@ import {
   FileDown,
   Upload,
   HelpCircle,
+  History,
 } from "lucide-react";
 import type { useTacticsState, BoardState } from "../../hooks/useTacticsState";
 import {
@@ -41,6 +42,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     canRedo,
     clearDrawings,
     resetBoard,
+    isRestoredFromCache,
   } = tactics;
 
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -187,6 +189,16 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               placeholder="Tactics Title..."
               className="text-base md:text-lg font-bold bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-slate-100 px-2 py-0.5 rounded border border-transparent focus:border-slate-600 outline-none transition w-48 md:w-80"
             />
+            {isRestoredFromCache && (
+              <span
+                title="Board state automatically restored from local browser storage"
+                className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-950/70 border border-emerald-800/70 px-2 py-0.5 rounded-full"
+              >
+                <History className="w-3 h-3 text-emerald-400" />
+                <span className="hidden sm:inline">Restored from Cache</span>
+                <span className="sm:hidden">Restored</span>
+              </span>
+            )}
           </div>
         </div>
       </div>

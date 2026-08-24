@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type {
   Player,
   Ball,
@@ -783,22 +783,74 @@ export function createBaseState(
   };
 }
 
+const STORAGE_KEY = "tactical_board_saved_state_v1";
+
+interface SavedTacticsData {
+  boardState?: BoardState;
+  matchFormat?: MatchFormat;
+  pitchType?: PitchType;
+  selectedFormations?: Record<
+    MatchFormat,
+    { teamA: string | null; teamB: string | null }
+  >;
+  showBuildOutLines?: boolean;
+  grassStyle?: GrassStyle;
+  showGrid?: boolean;
+  showZones?: boolean;
+  showPlayerLabels?: boolean;
+  drawingColor?: string;
+  drawingWidth?: number;
+  frames?: TacticFrame[];
+  activeFrameIndex?: number;
+}
+
+function loadSavedTactics(): SavedTacticsData | null {
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return null;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as SavedTacticsData;
+  } catch {
+    return null;
+  }
+}
+
 export function useTacticsState() {
+  const savedData = loadSavedTactics();
+  const hasRestoredFromStorage = !!(
+    savedData?.boardState &&
+    Array.isArray(savedData.boardState.players) &&
+    savedData.boardState.players.length > 0
+  );
+
+  const [isRestoredFromCache, setIsRestoredFromCache] = useState<boolean>(
+    () => hasRestoredFromStorage,
+  );
+
   // Current active tool
   const [activeTool, setActiveTool] = useState<ToolType>("select");
 
   // Game Format: 11v11, 9v9, or 7v7
-  const [matchFormat, setMatchFormat] = useState<MatchFormat>("11v11");
-  const [showBuildOutLines, setShowBuildOutLines] = useState<boolean>(true);
+  const [matchFormat, setMatchFormat] = useState<MatchFormat>(
+    () => savedData?.matchFormat || "11v11",
+  );
+  const [showBuildOutLines, setShowBuildOutLines] = useState<boolean>(() =>
+    savedData?.showBuildOutLines !== undefined
+      ? savedData.showBuildOutLines
+      : true,
+  );
 
   // Selected formations for Team A and Team B across formats
   const [selectedFormations, setSelectedFormations] = useState<
     Record<MatchFormat, { teamA: string | null; teamB: string | null }>
-  >({
-    "11v11": { teamA: "4-3-3", teamB: "4-4-2" },
-    "9v9": { teamA: "3-2-3", teamB: "3-3-2" },
-    "7v7": { teamA: "2-3-1", teamB: "3-2-1" },
-  });
+  >(
+    () =>
+      savedData?.selectedFormations || {
+        "11v11": { teamA: "4-3-3", teamB: "4-4-2" },
+        "9v9": { teamA: "3-2-3", teamB: "3-3-2" },
+        "7v7": { teamA: "2-3-1", teamB: "3-2-1" },
+      },
+  );
 
   // Selected item ID and its type
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -807,35 +859,64 @@ export function useTacticsState() {
   >(null);
 
   // Pitch visual customization
-  const [grassStyle, setGrassStyle] = useState<GrassStyle>("stripes");
-  const [pitchType, setPitchType] = useState<PitchType>("full");
-  const [showGrid, setShowGrid] = useState(false);
-  const [showZones, setShowZones] = useState(false);
-  const [showPlayerLabels, setShowPlayerLabels] = useState(true);
+  const [grassStyle, setGrassStyle] = useState<GrassStyle>(
+    () => savedData?.grassStyle || "stripes",
+  );
+  const [pitchType, setPitchType] = useState<PitchType>(
+    () => savedData?.pitchType || "full",
+  );
+  const [showGrid, setShowGrid] = useState<boolean>(
+    () => savedData?.showGrid ?? false,
+  );
+  const [showZones, setShowZones] = useState<boolean>(
+    () => savedData?.showZones ?? false,
+  );
+  const [showPlayerLabels, setShowPlayerLabels] = useState<boolean>(
+    () => savedData?.showPlayerLabels ?? true,
+  );
 
   // Drawing customization
-  const [drawingColor, setDrawingColor] = useState("#facc15"); // Yellow default for arrows
-  const [drawingWidth, setDrawingWidth] = useState(3.5);
+  const [drawingColor, setDrawingColor] = useState<string>(
+    () => savedData?.drawingColor || "#facc15",
+  );
+  const [drawingWidth, setDrawingWidth] = useState<number>(
+    () => savedData?.drawingWidth || 3.5,
+  );
 
   // Multi-frame / animation slides
-  const [frames, setFrames] = useState<TacticFrame[]>([
-    {
-      id: "frame-1",
-      title: "Phase 1: Build-up",
-      players: [],
-      balls: [{ id: "ball-1", x: PITCH_WIDTH / 2, y: PITCH_HEIGHT / 2 }],
-      equipments: [],
-      lines: [],
-      shapes: [],
-      texts: [],
-      notes: "Initial team shape and build-up phase.",
-    },
-  ]);
-  const [activeFrameIndex, setActiveFrameIndex] = useState(0);
+  const [frames, setFrames] = useState<TacticFrame[]>(
+    () =>
+      savedData?.frames || [
+        {
+          id: "frame-1",
+          title: "Phase 1: Build-up",
+          players: [],
+          balls: [{ id: "ball-1", x: PITCH_WIDTH / 2, y: PITCH_HEIGHT / 2 }],
+          equipments: [],
+          lines: [],
+          shapes: [],
+          texts: [],
+          notes: "Initial team shape and build-up phase.",
+        },
+      ],
+  );
+  const [activeFrameIndex, setActiveFrameIndex] = useState<number>(
+    () => savedData?.activeFrameIndex || 0,
+  );
 
   // Undo / Redo history
   const [history, setHistory] = useState<HistoryState>(() => {
-    const initial = createBaseState("full", "11v11");
+    const saved = loadSavedTactics();
+    const initial =
+      saved?.boardState &&
+      Array.isArray(saved.boardState.players) &&
+      saved.boardState.players.length > 0
+        ? saved.boardState
+        : createBaseState(
+            saved?.pitchType || "full",
+            saved?.matchFormat || "11v11",
+          );
+
     return {
       past: [],
       present: initial,
@@ -844,6 +925,44 @@ export function useTacticsState() {
   });
 
   const state = history.present;
+
+  // Auto-persist board and settings to localStorage across browser refreshes
+  useEffect(() => {
+    try {
+      const dataToSave: SavedTacticsData = {
+        boardState: state,
+        matchFormat,
+        pitchType,
+        selectedFormations,
+        showBuildOutLines,
+        grassStyle,
+        showGrid,
+        showZones,
+        showPlayerLabels,
+        drawingColor,
+        drawingWidth,
+        frames,
+        activeFrameIndex,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    } catch {
+      // Ignore quota exceeded or storage unavailable errors
+    }
+  }, [
+    state,
+    matchFormat,
+    pitchType,
+    selectedFormations,
+    showBuildOutLines,
+    grassStyle,
+    showGrid,
+    showZones,
+    showPlayerLabels,
+    drawingColor,
+    drawingWidth,
+    frames,
+    activeFrameIndex,
+  ]);
 
   // Push new state onto history
   const pushState = useCallback(
@@ -1025,6 +1144,7 @@ export function useTacticsState() {
   const resetBoard = useCallback(() => {
     const fresh = createBaseState(pitchType, matchFormat);
     pushState(fresh);
+    setIsRestoredFromCache(false);
     const defaultA =
       matchFormat === "11v11"
         ? "4-3-3"
@@ -1181,6 +1301,8 @@ export function useTacticsState() {
     setActiveTool,
     matchFormat,
     setMatchFormat,
+    isRestoredFromCache,
+    setIsRestoredFromCache,
     selectedFormationA: selectedFormations[matchFormat]?.teamA ?? null,
     selectedFormationB: selectedFormations[matchFormat]?.teamB ?? null,
     selectedFormations,
