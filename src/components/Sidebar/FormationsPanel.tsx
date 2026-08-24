@@ -29,6 +29,8 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
     pushState,
     loadFormation,
     matchFormat,
+    selectedFormationA,
+    selectedFormationB,
     switchFormat,
     showBuildOutLines,
     setShowBuildOutLines,
@@ -242,16 +244,26 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
             <span>Team Red (Attacking Right)</span>
           </div>
           <div className="grid grid-cols-2 gap-1.5">
-            {currentFormations.map((f) => (
-              <button
-                key={`team-a-${f.id}`}
-                onClick={() => loadFormation(f, "A")}
-                className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 font-medium text-[11px] transition text-left cursor-pointer active:scale-95 truncate"
-                title={f.name}
-              >
-                {f.system}
-              </button>
-            ))}
+            {currentFormations.map((f) => {
+              const isSelected = selectedFormationA === f.id;
+              return (
+                <button
+                  key={`team-a-${f.id}`}
+                  onClick={() => loadFormation(f, "A")}
+                  className={`px-2.5 py-1.5 rounded-lg border text-[11px] transition text-left cursor-pointer active:scale-95 flex items-center justify-between gap-1 ${
+                    isSelected
+                      ? "bg-red-600 text-white border-red-500 font-bold shadow-md ring-1 ring-red-400"
+                      : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 font-medium"
+                  }`}
+                  title={f.name}
+                >
+                  <span className="truncate">{f.system}</span>
+                  {isSelected && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -261,16 +273,26 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
             <span>Team Blue (Attacking Left)</span>
           </div>
           <div className="grid grid-cols-2 gap-1.5">
-            {currentFormations.map((f) => (
-              <button
-                key={`team-b-${f.id}`}
-                onClick={() => loadFormation(f, "B")}
-                className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 font-medium text-[11px] transition text-left cursor-pointer active:scale-95 truncate"
-                title={f.name}
-              >
-                {f.system}
-              </button>
-            ))}
+            {currentFormations.map((f) => {
+              const isSelected = selectedFormationB === f.id;
+              return (
+                <button
+                  key={`team-b-${f.id}`}
+                  onClick={() => loadFormation(f, "B")}
+                  className={`px-2.5 py-1.5 rounded-lg border text-[11px] transition text-left cursor-pointer active:scale-95 flex items-center justify-between gap-1 ${
+                    isSelected
+                      ? "bg-sky-600 text-white border-sky-500 font-bold shadow-md ring-1 ring-sky-400"
+                      : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 font-medium"
+                  }`}
+                  title={f.name}
+                >
+                  <span className="truncate">{f.system}</span>
+                  {isSelected && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

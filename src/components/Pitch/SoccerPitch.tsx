@@ -454,54 +454,56 @@ export const SoccerPitch: React.FC<SoccerPitchProps> = ({
                 strokeWidth="3.5"
                 strokeDasharray="10 8"
               />
-              {/* Badges / Labels on touchlines */}
-              <g opacity="0.9">
+              {/* Badges / Labels outside touchlines */}
+              <g opacity="0.95">
                 {/* Top Left Label */}
                 <rect
-                  x={leftBuildOutX - 48}
-                  y={padY + 4}
-                  width="96"
+                  x={leftBuildOutX - 18}
+                  y={padY - 22}
+                  width="36"
                   height="16"
                   rx="4"
                   fill="#0f172a"
-                  fillOpacity="0.8"
+                  fillOpacity="0.85"
                   stroke="#38bdf8"
                   strokeWidth="1"
                 />
                 <text
                   x={leftBuildOutX}
-                  y={padY + 12}
+                  y={padY - 14}
                   textAnchor="middle"
                   dominantBaseline="central"
                   fill="#38bdf8"
-                  fontSize="9"
+                  fontSize="10"
                   fontWeight="bold"
+                  letterSpacing="0.5"
                 >
-                  BUILD-OUT LINE
+                  BOL
                 </text>
 
                 {/* Top Right Label */}
                 <rect
-                  x={rightBuildOutX - 48}
-                  y={padY + 4}
-                  width="96"
+                  x={rightBuildOutX - 18}
+                  y={padY - 22}
+                  width="36"
                   height="16"
                   rx="4"
                   fill="#0f172a"
-                  fillOpacity="0.8"
+                  fillOpacity="0.85"
                   stroke="#38bdf8"
                   strokeWidth="1"
                 />
                 <text
                   x={rightBuildOutX}
-                  y={padY + 12}
+                  y={padY - 14}
                   textAnchor="middle"
                   dominantBaseline="central"
                   fill="#38bdf8"
-                  fontSize="9"
+                  fontSize="10"
                   fontWeight="bold"
+                  letterSpacing="0.5"
                 >
-                  BUILD-OUT LINE
+                  BOL
                 </text>
               </g>
             </g>

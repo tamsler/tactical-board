@@ -11,12 +11,12 @@ import type {
   GrassStyle,
   PitchType,
   MatchFormat,
+  FormationPreset,
 } from "../types/tactics";
 import {
   FORMATIONS_11V11_TEAM_A,
   FORMATIONS_9V9_TEAM_A,
   FORMATIONS_7V7_TEAM_A,
-  FORMATIONS_TEAM_A,
   PITCH_WIDTH,
   PITCH_HEIGHT,
   TEAM_COLORS,
@@ -791,6 +791,15 @@ export function useTacticsState() {
   const [matchFormat, setMatchFormat] = useState<MatchFormat>("11v11");
   const [showBuildOutLines, setShowBuildOutLines] = useState<boolean>(true);
 
+  // Selected formations for Team A and Team B across formats
+  const [selectedFormations, setSelectedFormations] = useState<
+    Record<MatchFormat, { teamA: string | null; teamB: string | null }>
+  >({
+    "11v11": { teamA: "4-3-3", teamB: "4-4-2" },
+    "9v9": { teamA: "3-2-3", teamB: "3-3-2" },
+    "7v7": { teamA: "2-3-1", teamB: "3-2-1" },
+  });
+
   // Selected item ID and its type
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<
@@ -1016,13 +1025,36 @@ export function useTacticsState() {
   const resetBoard = useCallback(() => {
     const fresh = createBaseState(pitchType, matchFormat);
     pushState(fresh);
+    const defaultA =
+      matchFormat === "11v11"
+        ? "4-3-3"
+        : matchFormat === "9v9"
+          ? "3-2-3"
+          : "2-3-1";
+    const defaultB =
+      matchFormat === "11v11"
+        ? "4-4-2"
+        : matchFormat === "9v9"
+          ? "3-3-2"
+          : "3-2-1";
+    setSelectedFormations((prev) => ({
+      ...prev,
+      [matchFormat]: { teamA: defaultA, teamB: defaultB },
+    }));
     setSelectedId(null);
     setSelectedType(null);
   }, [pitchType, matchFormat, pushState]);
 
   // Load Formation
   const loadFormation = useCallback(
-    (formation: (typeof FORMATIONS_TEAM_A)[0], team: "A" | "B") => {
+    (formation: FormationPreset, team: "A" | "B") => {
+      setSelectedFormations((prev) => ({
+        ...prev,
+        [matchFormat]: {
+          ...prev[matchFormat],
+          [team === "A" ? "teamA" : "teamB"]: formation.id,
+        },
+      }));
       pushState((prev) => {
         const isTeamA = team === "A";
         const color = isTeamA
@@ -1055,13 +1087,21 @@ export function useTacticsState() {
         };
       });
     },
-    [pushState],
+    [matchFormat, pushState],
   );
 
   // Switch Format and load default formations
   const switchFormat = useCallback(
     (format: MatchFormat) => {
       setMatchFormat(format);
+      const defaultA =
+        format === "11v11" ? "4-3-3" : format === "9v9" ? "3-2-3" : "2-3-1";
+      const defaultB =
+        format === "11v11" ? "4-4-2" : format === "9v9" ? "3-3-2" : "3-2-1";
+      setSelectedFormations((prev) => ({
+        ...prev,
+        [format]: { teamA: defaultA, teamB: defaultB },
+      }));
       pushState((prev) => {
         if (pitchType === "half") {
           return {
@@ -1141,6 +1181,9 @@ export function useTacticsState() {
     setActiveTool,
     matchFormat,
     setMatchFormat,
+    selectedFormationA: selectedFormations[matchFormat]?.teamA ?? null,
+    selectedFormationB: selectedFormations[matchFormat]?.teamB ?? null,
+    selectedFormations,
     showBuildOutLines,
     setShowBuildOutLines,
     switchFormat,
