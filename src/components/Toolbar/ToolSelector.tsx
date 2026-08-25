@@ -91,9 +91,9 @@ export const ToolSelector: React.FC<ToolSelectorProps> = ({
     },
     {
       id: "text",
-      label: "Text Label",
+      label: "Coaching Notes",
       icon: <Type className="w-5 h-5" />,
-      tooltip: "Click anywhere to add text annotation",
+      tooltip: "Click pitch to add multi-line coaching points & tactical notes",
     },
     {
       id: "eraser",

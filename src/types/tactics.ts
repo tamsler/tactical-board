@@ -118,7 +118,12 @@ export interface TextAnnotation {
   fontSize: number;
   color: string;
   bgColor?: string;
+  bgOpacity?: number;
   isBold?: boolean;
+  isItalic?: boolean;
+  align?: "left" | "center" | "right";
+  borderStyle?: "none" | "solid" | "dashed";
+  borderColor?: string;
 }
 
 export interface TacticFrame {

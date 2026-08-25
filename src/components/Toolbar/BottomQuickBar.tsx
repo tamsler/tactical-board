@@ -1,10 +1,6 @@
 import React from "react";
-import type { ToolType } from "../../types/tactics";
-import { Undo2, Redo2, Trash2 } from "lucide-react";
 
 interface BottomQuickBarProps {
-  activeTool: ToolType;
-  setActiveTool: (tool: ToolType) => void;
   onAddPlayer: (team: "A" | "B" | "neutral" | "custom", isGk?: boolean) => void;
   onAddBall: () => void;
   onAddEquipment: (
@@ -15,22 +11,12 @@ interface BottomQuickBarProps {
       | "mannequin"
       | "mini-goal",
   ) => void;
-  onUndo: () => void;
-  onRedo: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
 }
 
 export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
-  activeTool,
-  setActiveTool,
   onAddPlayer,
   onAddBall,
   onAddEquipment,
-  onUndo,
-  onRedo,
-  canUndo,
-  canRedo,
 }) => {
   // Preset colored player chips (like in tactical-board.com reference)
   const playerChips = [
@@ -58,10 +44,10 @@ export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
   ];
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-2 py-1 md:px-3 md:py-2 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-xl md:rounded-2xl shadow-2xl flex items-center justify-between gap-1.5 md:gap-2 z-20 overflow-x-auto scrollbar-none">
-      {/* Quick Player Tokens (Click to add or select placement tool) */}
-      <div className="flex items-center gap-1 md:gap-1.5 overflow-x-auto py-0.5 scrollbar-none shrink-0">
-        <span className="text-[10px] uppercase font-bold text-slate-400 mr-1 hidden sm:inline">
+    <div className="w-full max-w-5xl mx-auto px-2 py-1.5 md:px-3 md:py-2 bg-slate-900 border border-slate-800 rounded-xl md:rounded-2xl shadow-2xl flex items-center gap-2 sm:gap-3 z-20 overflow-x-auto scrollbar-none touch-pan-x justify-start md:justify-between">
+      {/* Quick Player Tokens */}
+      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 py-0.5">
+        <span className="text-[10px] uppercase font-bold text-slate-400 mr-0.5 hidden sm:inline">
           Players:
         </span>
         {playerChips.map((chip, idx) => (
@@ -73,7 +59,7 @@ export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
               backgroundColor: chip.color,
               color: chip.textColor || "#ffffff",
             }}
-            className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-black text-[10px] sm:text-xs shadow-md border-2 border-white/80 hover:scale-115 active:scale-95 transition cursor-pointer shrink-0"
+            className="w-7 h-7 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-black text-[11px] sm:text-xs shadow-md border-2 border-white/80 hover:scale-115 active:scale-95 transition cursor-pointer shrink-0"
           >
             {chip.label}
           </button>
@@ -83,7 +69,7 @@ export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
       <div className="h-5 md:h-6 w-[1px] bg-slate-800 shrink-0" />
 
       {/* Equipment & Ball Section */}
-      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Ball */}
         <button
           onClick={onAddBall}
@@ -96,10 +82,19 @@ export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
         {/* Orange Cone */}
         <button
           onClick={() => onAddEquipment("cone-orange")}
-          title="Add Training Cone"
+          title="Add Orange Cone"
           className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-xs sm:text-sm shadow hover:scale-110 active:scale-95 transition cursor-pointer border border-slate-700 shrink-0"
         >
           🔶
+        </button>
+
+        {/* Yellow Cone */}
+        <button
+          onClick={() => onAddEquipment("cone-yellow")}
+          title="Add Yellow Cone"
+          className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-xs sm:text-sm shadow hover:scale-110 active:scale-95 transition cursor-pointer border border-slate-700 shrink-0"
+        >
+          🟡
         </button>
 
         {/* Dummy / Mannequin */}
@@ -118,52 +113,6 @@ export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
           className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-xs font-bold text-red-400 shadow hover:scale-110 active:scale-95 transition cursor-pointer border border-slate-700 shrink-0"
         >
           🥅
-        </button>
-      </div>
-
-      <div className="h-5 md:h-6 w-[1px] bg-slate-800 shrink-0" />
-
-      {/* Quick Eraser / Undo / Redo */}
-      <div className="flex items-center gap-1 md:gap-1.5 shrink-0">
-        <button
-          onClick={() =>
-            setActiveTool(activeTool === "eraser" ? "select" : "eraser")
-          }
-          title="Eraser Tool"
-          className={`p-1.5 md:p-2 rounded-lg transition text-xs font-semibold flex items-center gap-1 cursor-pointer shrink-0 ${
-            activeTool === "eraser"
-              ? "bg-rose-600 text-white ring-2 ring-rose-400"
-              : "bg-slate-800 hover:bg-slate-700 text-rose-400"
-          }`}
-        >
-          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">Erase</span>
-        </button>
-
-        <button
-          onClick={onUndo}
-          disabled={!canUndo}
-          title="Undo"
-          className={`p-1.5 md:p-2 rounded-lg transition shrink-0 ${
-            canUndo
-              ? "bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
-              : "bg-slate-800/40 text-slate-600 cursor-not-allowed opacity-50"
-          }`}
-        >
-          <Undo2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        </button>
-
-        <button
-          onClick={onRedo}
-          disabled={!canRedo}
-          title="Redo"
-          className={`p-1.5 md:p-2 rounded-lg transition shrink-0 ${
-            canRedo
-              ? "bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
-              : "bg-slate-800/40 text-slate-600 cursor-not-allowed opacity-50"
-          }`}
-        >
-          <Redo2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
       </div>
     </div>

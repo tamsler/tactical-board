@@ -12,6 +12,7 @@ import {
   getArrowHeadPath,
   getTBarPath,
 } from "../../utils/mathUtils";
+import { parseStyledTextLines } from "../../utils/textUtils";
 
 interface PitchDrawingsProps {
   lines: DrawingLine[];
@@ -126,17 +127,6 @@ export const PitchDrawings: React.FC<PitchDrawingsProps> = ({
             strokeLinecap="round"
           />
         )}
-
-        {/* Shadow */}
-        <path
-          d={pathD}
-          fill="none"
-          stroke="#000000"
-          strokeWidth={line.width}
-          strokeOpacity="0.25"
-          strokeLinecap="round"
-          transform="translate(1, 1.5)"
-        />
 
         {/* Actual Drawn Line */}
         <path
@@ -368,6 +358,52 @@ export const PitchDrawings: React.FC<PitchDrawingsProps> = ({
   // Render Text Annotation
   const renderText = (textItem: TextAnnotation) => {
     const isSelected = selectedId === textItem.id;
+    const rawText = textItem.text || "";
+    const lines = rawText.split(/\r?\n/);
+    const fontSize = textItem.fontSize || 14;
+    const lineHeight = Math.round(fontSize * 1.38);
+
+    const parsedLines = parseStyledTextLines(
+      rawText,
+      textItem.isBold,
+      textItem.isItalic,
+    );
+
+    // Calculate maximum width among all lines based on visible characters
+    const maxLineLength = Math.max(
+      ...parsedLines.map((spans) =>
+        spans.reduce((sum, span) => sum + span.text.length, 0),
+      ),
+      1,
+    );
+    const charWidth = fontSize * 0.58;
+    const padX = 12;
+    const padTop = 14; // Added generous spacing above the first line of text
+    const padBottom = 10;
+    const boxWidth = Math.max(
+      50,
+      Math.round(maxLineLength * charWidth + padX * 2),
+    );
+    const boxHeight = Math.max(
+      fontSize + padTop + padBottom,
+      (lines.length - 1) * lineHeight + fontSize + padTop + padBottom,
+    );
+
+    const align = textItem.align || "left";
+    const boxX = textItem.x - padX;
+    let textX = textItem.x;
+    let textAnchor: "start" | "middle" | "end" = "start";
+
+    if (align === "center") {
+      textX = boxX + boxWidth / 2;
+      textAnchor = "middle";
+    } else if (align === "right") {
+      textX = boxX + boxWidth - padX;
+      textAnchor = "end";
+    }
+
+    const boxY = textItem.y - fontSize - padTop + 2;
+    const hasBg = textItem.bgColor && textItem.bgColor !== "transparent";
 
     return (
       <g
@@ -378,31 +414,95 @@ export const PitchDrawings: React.FC<PitchDrawingsProps> = ({
           onTextPointerDown(textItem.id, e);
         }}
       >
-        {/* Background pill */}
-        {textItem.bgColor && (
+        {/* Background card / pill */}
+        {hasBg && (
           <rect
-            x={textItem.x - 6}
-            y={textItem.y - textItem.fontSize}
-            width={textItem.text.length * (textItem.fontSize * 0.62) + 12}
-            height={textItem.fontSize + 8}
-            rx="4"
+            x={boxX}
+            y={boxY}
+            width={boxWidth}
+            height={boxHeight}
+            rx="6"
             fill={textItem.bgColor}
-            fillOpacity="0.85"
-            stroke={isSelected ? "#38bdf8" : "#334155"}
-            strokeWidth={isSelected ? "2" : "1"}
+            fillOpacity={textItem.bgOpacity ?? 0.88}
+            stroke={isSelected ? "#38bdf8" : textItem.borderColor || "#334155"}
+            strokeWidth={
+              isSelected
+                ? 2
+                : textItem.borderStyle && textItem.borderStyle !== "none"
+                  ? 1.5
+                  : 1
+            }
+            strokeDasharray={
+              textItem.borderStyle === "dashed" ? "4 3" : undefined
+            }
           />
         )}
+
+        {/* Selected bounding outline if no background */}
+        {!hasBg && isSelected && (
+          <rect
+            x={boxX}
+            y={boxY}
+            width={boxWidth}
+            height={boxHeight}
+            rx="6"
+            fill="transparent"
+            stroke="#38bdf8"
+            strokeWidth="1.5"
+            strokeDasharray="3 3"
+          />
+        )}
+
+        {/* Multi-line Text */}
         <text
-          x={textItem.x}
+          x={textX}
           y={textItem.y}
+          textAnchor={textAnchor}
           fill={textItem.color || "#ffffff"}
-          fontSize={textItem.fontSize || 14}
-          fontWeight={textItem.isBold ? "bold" : "600"}
+          fontSize={fontSize}
           fontFamily="system-ui, -apple-system, sans-serif"
-          className="pointer-events-none filter drop-shadow"
+          className="pointer-events-none filter drop-shadow select-none"
         >
-          {textItem.text}
+          {parsedLines.map((spans, idx) => {
+            const isEmptyLine = spans.every((s) => s.text.length === 0);
+            return (
+              <tspan key={idx} x={textX} dy={idx === 0 ? 0 : lineHeight}>
+                {isEmptyLine
+                  ? "\u00A0"
+                  : spans.map((span, sIdx) => (
+                      <tspan
+                        key={sIdx}
+                        fontWeight={
+                          span.bold ? "bold" : textItem.isBold ? "bold" : "500"
+                        }
+                        fontStyle={
+                          span.italic
+                            ? "italic"
+                            : textItem.isItalic
+                              ? "italic"
+                              : "normal"
+                        }
+                      >
+                        {span.text}
+                      </tspan>
+                    ))}
+              </tspan>
+            );
+          })}
         </text>
+
+        {/* Selection corner badge/handle */}
+        {isSelected && (
+          <circle
+            cx={boxX + boxWidth}
+            cy={boxY + boxHeight}
+            r="3.5"
+            fill="#38bdf8"
+            stroke="#ffffff"
+            strokeWidth="1"
+            className="pointer-events-none"
+          />
+        )}
       </g>
     );
   };

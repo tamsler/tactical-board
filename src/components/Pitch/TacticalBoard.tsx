@@ -512,13 +512,17 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
     if (activeTool === "text") {
       const newText: TextAnnotation = {
         id: `text-${Date.now()}`,
-        x: pt.x,
-        y: pt.y,
-        text: "Tactics Note",
-        fontSize: 14,
+        x: Math.round(pt.x),
+        y: Math.round(pt.y),
+        text: "Coaching Notes",
+        fontSize: 13,
         color: "#ffffff",
         bgColor: "#0f172a",
-        isBold: true,
+        bgOpacity: 0.9,
+        isBold: false,
+        align: "left",
+        borderStyle: "solid",
+        borderColor: "#334155",
       };
       pushState((prev) => ({ ...prev, texts: [...prev.texts, newText] }));
       setSelectedId(newText.id);

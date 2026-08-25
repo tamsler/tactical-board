@@ -1254,39 +1254,10 @@ export function useTacticsState() {
   );
 
   // Switch Pitch Layout (Full Pitch, Half Pitch, Just Grass)
-  const switchPitchType = useCallback(
-    (type: PitchType) => {
-      setPitchType(type);
-      pushState((prev) => {
-        if (type === "half") {
-          return {
-            ...prev,
-            players: generateHalfPitchPlayers(matchFormat),
-            balls: [{ id: `ball-${Date.now()}`, x: 525, y: 480, size: 11 }],
-            title: `Half Pitch Training - ${matchFormat}`,
-          };
-        }
-        if (type === "blank") {
-          return {
-            ...prev,
-            players: generateGrassPlayers(matchFormat),
-            balls: [{ id: `ball-${Date.now()}`, x: 525, y: 340, size: 11 }],
-            title: `Drill / Practice - ${matchFormat}`,
-          };
-        }
-        // Full pitch
-        return {
-          ...prev,
-          players: generateFullPitchPlayers(matchFormat),
-          balls: [{ id: `ball-${Date.now()}`, x: 525, y: 340, size: 11 }],
-          title: `Match Tactics - ${matchFormat}`,
-        };
-      });
-      setSelectedId(null);
-      setSelectedType(null);
-    },
-    [matchFormat, pushState],
-  );
+  // Only changes the pitch background/field markings without resetting existing players or board items
+  const switchPitchType = useCallback((type: PitchType) => {
+    setPitchType(type);
+  }, []);
 
   return {
     state,

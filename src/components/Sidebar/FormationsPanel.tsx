@@ -185,7 +185,7 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
   return (
     <div className="space-y-4 text-xs text-slate-200">
       {/* 0. GAME FORMAT SELECTOR (11v11, 9v9, 7v7) */}
-      <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2.5">
+      <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2.5">
         <div className="flex items-center gap-2 font-bold text-sm text-slate-100">
           <Users className="w-4 h-4 text-emerald-400" />
           <span>Game Format</span>
@@ -227,7 +227,7 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
       </div>
 
       {/* 1. FORMATIONS SELECTOR */}
-      <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-3">
+      <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-3">
         <div className="flex items-center justify-between font-bold text-sm text-slate-100">
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-emerald-400" />
@@ -298,7 +298,7 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
       </div>
 
       {/* 2. PITCH STYLES & OVERLAYS */}
-      <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-3">
+      <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-3">
         <div className="flex items-center gap-2 font-bold text-sm text-slate-100">
           <Sliders className="w-4 h-4 text-sky-400" />
           <span>Pitch Layout & Overlays</span>
@@ -405,7 +405,7 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
       </div>
 
       {/* 3. COACHING NOTES */}
-      <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-2">
+      <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
         <div className="flex items-center gap-2 font-bold text-sm text-slate-100">
           <StickyNote className="w-4 h-4 text-amber-400" />
           <span>Coaching Notes</span>

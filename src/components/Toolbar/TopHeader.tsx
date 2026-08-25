@@ -10,6 +10,7 @@ import {
   Upload,
   HelpCircle,
   History,
+  Shield,
 } from "lucide-react";
 import type { useTacticsState, BoardState } from "../../hooks/useTacticsState";
 import {
@@ -20,17 +21,20 @@ import {
 } from "../../utils/exportUtils";
 import confetti from "canvas-confetti";
 import wsfcLogo from "../../assets/wsfc-logo.png";
+import { APP_INFO } from "../../constants/appInfo";
 
 interface TopHeaderProps {
   tactics: ReturnType<typeof useTacticsState>;
   boardRef: React.RefObject<SVGSVGElement | null>;
   onToggleSidebar?: () => void;
+  onOpenFormations?: () => void;
   onOpenHelp?: () => void;
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
   tactics,
   boardRef,
+  onOpenFormations,
   onOpenHelp,
 }) => {
   const {
@@ -157,7 +161,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         } else {
           alert("Invalid tactics file format.");
         }
-      } catch (err) {
+      } catch {
         alert("Could not parse JSON file.");
       }
     };
@@ -166,16 +170,16 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   };
 
   return (
-    <header className="w-full bg-slate-900/90 backdrop-blur border-b border-slate-800 px-2 sm:px-4 py-1.5 md:py-2 flex items-center justify-between gap-1.5 sm:gap-2 z-50 sticky top-0 shadow-md min-w-0">
+    <header className="w-full bg-slate-900 border-b border-slate-800 px-2 sm:px-4 py-1.5 md:py-2 flex items-center justify-between gap-1 sm:gap-2 z-40 sticky top-0 shadow-md min-w-0 overflow-x-auto scrollbar-none touch-pan-x">
       {/* App Logo & Title */}
       <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-        <div className="flex items-center justify-center h-8 sm:h-10 w-auto shrink-0">
+        <div className="flex items-center justify-center h-7 sm:h-10 w-auto shrink-0">
           <img
             src={wsfcLogo}
             alt="West Sacramento Futbol Club"
-            className="h-8 sm:h-10 w-auto object-contain filter drop-shadow-md hover:scale-105 transition-transform"
-            width="36"
-            height="40"
+            className="h-7 sm:h-10 w-auto object-contain filter drop-shadow-md hover:scale-105 transition-transform"
+            width="32"
+            height="36"
           />
         </div>
         <div>
@@ -187,12 +191,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 pushState((prev) => ({ ...prev, title: e.target.value }))
               }
               placeholder="Tactics Title..."
-              className="text-xs sm:text-sm md:text-base font-bold bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-slate-100 px-1.5 py-0.5 rounded border border-transparent focus:border-slate-600 outline-none transition w-24 sm:w-36 md:w-64 focus:w-36 sm:focus:w-48 md:focus:w-72"
+              className="text-xs sm:text-sm md:text-base font-bold bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-slate-100 px-1 py-0.5 rounded border border-transparent focus:border-slate-600 outline-none transition w-20 sm:w-36 md:w-64 focus:w-28 sm:focus:w-48 md:focus:w-72"
             />
+            <span
+              title={`Tactical Board v${APP_INFO.version}`}
+              className="hidden sm:inline-block text-[10px] font-mono text-slate-400 bg-slate-800/80 border border-slate-700/60 px-1.5 py-0.5 rounded-md shrink-0 cursor-default"
+            >
+              v{APP_INFO.version}
+            </span>
             {isRestoredFromCache && (
               <span
                 title="Board state automatically restored from local browser storage"
-                className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold text-emerald-400 bg-emerald-950/70 border border-emerald-800/70 px-1.5 py-0.5 rounded-full shrink-0"
+                className="hidden md:inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold text-emerald-400 bg-emerald-950/70 border border-emerald-800/70 px-1.5 py-0.5 rounded-full shrink-0"
               >
                 <History className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-400" />
                 <span className="hidden sm:inline">Restored</span>
@@ -271,7 +281,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         <button
           onClick={() => fileInputRef.current?.click()}
           title="Load Tactic JSON"
-          className="flex items-center gap-1 px-2 py-1.5 sm:px-3 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition shrink-0"
+          className="flex items-center gap-1 px-2 py-1.5 sm:px-3 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition shrink-0 cursor-pointer"
         >
           <Upload className="w-3.5 h-3.5" />
           <span className="hidden md:inline">Load</span>
@@ -292,7 +302,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           </button>
 
           {showExportMenu && (
-            <div className="absolute right-0 mt-2 w-52 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 p-1.5 z-60 text-slate-200 text-xs animate-in fade-in zoom-in-95">
+            <div className="fixed sm:absolute right-2 sm:right-0 top-12 sm:top-full mt-1.5 w-52 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 p-1.5 z-70 text-slate-200 text-xs animate-in fade-in zoom-in-95">
               <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 Export Board
               </div>
@@ -367,12 +377,24 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           )}
         </div>
 
+        {/* Formations & Settings button (Mobile / Quick access) */}
+        {onOpenFormations && (
+          <button
+            onClick={onOpenFormations}
+            title="Formations & Pitch Settings"
+            className="flex items-center gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 transition cursor-pointer shrink-0 md:hidden"
+          >
+            <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
+            <span className="hidden sm:inline text-[11px]">Formations</span>
+          </button>
+        )}
+
         {/* Help button */}
         {onOpenHelp && (
           <button
             onClick={onOpenHelp}
             title="Shortcuts & Instructions"
-            className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition shrink-0"
+            className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition shrink-0 cursor-pointer"
           >
             <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>

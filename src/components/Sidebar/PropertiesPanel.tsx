@@ -1,11 +1,397 @@
 import React from "react";
 import type { useTacticsState } from "../../hooks/useTacticsState";
-import { Trash2 } from "lucide-react";
+import type { TextAnnotation } from "../../types/tactics";
+import {
+  Trash2,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Bold,
+  Italic,
+  FileText,
+} from "lucide-react";
 import { getContrastTextColor } from "../../utils/mathUtils";
+import { isFormatActive, toggleMarkdownFormat } from "../../utils/textUtils";
 
 interface PropertiesPanelProps {
   tactics: ReturnType<typeof useTacticsState>;
 }
+
+const TextPropertiesEditor: React.FC<{
+  textItem: TextAnnotation;
+  updateText: (id: string, updates: Partial<TextAnnotation>) => void;
+  deleteSelected: () => void;
+}> = ({ textItem, updateText, deleteSelected }) => {
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const [selectionRange, setSelectionRange] = React.useState({
+    start: 0,
+    end: 0,
+  });
+
+  const isBoldActive = isFormatActive(
+    textItem.text || "",
+    selectionRange.start,
+    selectionRange.end,
+    "bold",
+    textItem.isBold,
+  );
+
+  const isItalicActive = isFormatActive(
+    textItem.text || "",
+    selectionRange.start,
+    selectionRange.end,
+    "italic",
+    textItem.isItalic,
+  );
+
+  const textColors = [
+    "#ffffff",
+    "#facc15",
+    "#4ade80",
+    "#38bdf8",
+    "#f87171",
+    "#c084fc",
+    "#94a3b8",
+    "#0f172a",
+  ];
+
+  const bgColors = [
+    { label: "Dark Slate", value: "#0f172a" },
+    { label: "High Danger", value: "#4c0519" },
+    { label: "Transparent", value: "transparent" },
+  ];
+
+  const borderColors = ["#334155", "#38bdf8", "#10b981", "#f59e0b", "#ef4444"];
+
+  const currentBg = textItem.bgColor ?? "#0f172a";
+  const isTransparent = currentBg === "transparent";
+
+  const handleFormat = (format: "bold" | "italic") => {
+    const el = textareaRef.current;
+    const currentText = textItem.text || "";
+    const start = el ? (el.selectionStart ?? 0) : selectionRange.start;
+    const end = el ? (el.selectionEnd ?? 0) : selectionRange.end;
+
+    const { newText, newStart, newEnd } = toggleMarkdownFormat(
+      currentText,
+      start,
+      end,
+      format,
+    );
+
+    updateText(textItem.id, { text: newText });
+    setSelectionRange({ start: newStart, end: newEnd });
+
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(newStart, newEnd);
+      }
+    }, 0);
+  };
+
+  return (
+    <div className="space-y-4 p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200">
+      <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div className="flex items-center gap-1.5 font-bold text-sm text-slate-100">
+          <FileText className="w-4 h-4 text-emerald-400" />
+          <span>Coaching Notes & Text</span>
+        </div>
+        <button
+          onClick={deleteSelected}
+          title="Delete Text"
+          className="p-1.5 hover:bg-rose-950/60 text-rose-400 rounded-lg transition cursor-pointer"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Multi-line Note Content */}
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-[10px] uppercase font-bold text-slate-400">
+            Coaching Points (Multi-line)
+          </label>
+          <span className="text-[10px] text-slate-500">
+            Select text & click B / I
+          </span>
+        </div>
+        <textarea
+          ref={textareaRef}
+          rows={5}
+          value={textItem.text}
+          onChange={(e) => {
+            updateText(textItem.id, { text: e.target.value });
+            setSelectionRange({
+              start: e.target.selectionStart ?? 0,
+              end: e.target.selectionEnd ?? 0,
+            });
+          }}
+          onSelect={(e) =>
+            setSelectionRange({
+              start: e.currentTarget.selectionStart ?? 0,
+              end: e.currentTarget.selectionEnd ?? 0,
+            })
+          }
+          onKeyUp={(e) =>
+            setSelectionRange({
+              start: e.currentTarget.selectionStart ?? 0,
+              end: e.currentTarget.selectionEnd ?? 0,
+            })
+          }
+          onMouseUp={(e) =>
+            setSelectionRange({
+              start: e.currentTarget.selectionStart ?? 0,
+              end: e.currentTarget.selectionEnd ?? 0,
+            })
+          }
+          onKeyDown={(e) => {
+            if ((e.ctrlKey || e.metaKey) && (e.key === "b" || e.key === "B")) {
+              e.preventDefault();
+              handleFormat("bold");
+            } else if (
+              (e.ctrlKey || e.metaKey) &&
+              (e.key === "i" || e.key === "I")
+            ) {
+              e.preventDefault();
+              handleFormat("italic");
+            }
+          }}
+          placeholder={
+            "Enter coaching points or notes...\n• Point 1\n• Point 2"
+          }
+          className="w-full bg-slate-800 border border-slate-700 px-2.5 py-2 rounded-lg text-slate-100 font-medium leading-relaxed focus:outline-none focus:border-emerald-500 resize-y text-xs font-mono"
+        />
+        <div className="mt-1 text-[10px] text-slate-500 flex items-center justify-between">
+          <span>Formatting: **bold**, *italic*</span>
+          <span>Shortcuts: ⌘B / ⌘I</span>
+        </div>
+      </div>
+
+      {/* Typography & Layout */}
+      <div className="space-y-3 pt-2 border-t border-slate-800">
+        <div>
+          <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+            <span className="font-bold uppercase">Font Size</span>
+            <span className="font-semibold text-slate-300">
+              {textItem.fontSize}px
+            </span>
+          </div>
+          <input
+            type="range"
+            min="10"
+            max="32"
+            value={textItem.fontSize}
+            onChange={(e) =>
+              updateText(textItem.id, { fontSize: Number(e.target.value) })
+            }
+            className="w-full accent-emerald-500 bg-slate-800"
+          />
+        </div>
+
+        {/* Alignment & Style Buttons */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center bg-slate-800 p-0.5 rounded-lg border border-slate-700">
+            <button
+              type="button"
+              onClick={() => updateText(textItem.id, { align: "left" })}
+              title="Align Left"
+              className={`p-1.5 rounded-md transition cursor-pointer ${
+                (textItem.align || "left") === "left"
+                  ? "bg-emerald-600 text-white"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <AlignLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => updateText(textItem.id, { align: "center" })}
+              title="Align Center"
+              className={`p-1.5 rounded-md transition cursor-pointer ${
+                textItem.align === "center"
+                  ? "bg-emerald-600 text-white"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <AlignCenter className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => updateText(textItem.id, { align: "right" })}
+              title="Align Right"
+              className={`p-1.5 rounded-md transition cursor-pointer ${
+                textItem.align === "right"
+                  ? "bg-emerald-600 text-white"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <AlignRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => handleFormat("bold")}
+              title="Toggle Bold (⌘B / **text**)"
+              className={`p-1.5 px-2.5 rounded-lg border transition cursor-pointer font-bold ${
+                isBoldActive
+                  ? "bg-emerald-600 border-emerald-500 text-white"
+                  : "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white"
+              }`}
+            >
+              <Bold className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => handleFormat("italic")}
+              title="Toggle Italic (⌘I / *text*)"
+              className={`p-1.5 px-2.5 rounded-lg border transition cursor-pointer italic ${
+                isItalicActive
+                  ? "bg-emerald-600 border-emerald-500 text-white"
+                  : "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white"
+              }`}
+            >
+              <Italic className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Text Color */}
+        <div>
+          <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">
+            Text Color
+          </label>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {textColors.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => updateText(textItem.id, { color: c })}
+                className={`w-6 h-6 rounded-full border transition cursor-pointer ${
+                  textItem.color === c
+                    ? "ring-2 ring-emerald-400 scale-110 border-white"
+                    : "border-slate-700 hover:scale-105"
+                }`}
+                style={{ backgroundColor: c }}
+              />
+            ))}
+            <input
+              type="color"
+              value={textItem.color || "#ffffff"}
+              onChange={(e) =>
+                updateText(textItem.id, { color: e.target.value })
+              }
+              className="w-6 h-6 rounded cursor-pointer bg-transparent border-0"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Card Background & Box Styling */}
+      <div className="space-y-3 pt-2 border-t border-slate-800">
+        <div>
+          <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1.5">
+            Card Background Theme
+          </label>
+          <div className="grid grid-cols-3 gap-1.5">
+            {bgColors.map((bg) => {
+              const isActive = currentBg === bg.value;
+              return (
+                <button
+                  key={bg.label}
+                  type="button"
+                  onClick={() => updateText(textItem.id, { bgColor: bg.value })}
+                  className={`px-2 py-1 rounded-md text-[10px] font-semibold transition border cursor-pointer ${
+                    isActive
+                      ? "border-emerald-400 text-emerald-300 bg-slate-800 shadow"
+                      : "border-slate-700 text-slate-400 hover:text-slate-200 bg-slate-800/60"
+                  }`}
+                >
+                  {bg.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {!isTransparent && (
+          <div>
+            <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+              <span className="font-bold uppercase">Background Opacity</span>
+              <span className="font-semibold text-slate-300">
+                {Math.round((textItem.bgOpacity ?? 0.88) * 100)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0.2"
+              max="1.0"
+              step="0.05"
+              value={textItem.bgOpacity ?? 0.88}
+              onChange={(e) =>
+                updateText(textItem.id, {
+                  bgOpacity: Number(e.target.value),
+                })
+              }
+              className="w-full accent-emerald-500 bg-slate-800"
+            />
+          </div>
+        )}
+
+        {/* Border Style & Color */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="block text-[10px] uppercase font-bold text-slate-400">
+              Card Border
+            </label>
+            <div className="flex items-center gap-1">
+              {(["none", "solid", "dashed"] as const).map((bStyle) => (
+                <button
+                  key={bStyle}
+                  type="button"
+                  onClick={() =>
+                    updateText(textItem.id, { borderStyle: bStyle })
+                  }
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize transition cursor-pointer ${
+                    (textItem.borderStyle ||
+                      (isTransparent ? "none" : "solid")) === bStyle
+                      ? "bg-emerald-600 text-white"
+                      : "bg-slate-800 text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  {bStyle}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {textItem.borderStyle !== "none" && (
+            <div className="flex items-center gap-1.5 pt-1">
+              <span className="text-[10px] text-slate-400 mr-1">Color:</span>
+              {borderColors.map((bc) => (
+                <button
+                  key={bc}
+                  type="button"
+                  onClick={() => updateText(textItem.id, { borderColor: bc })}
+                  className={`w-5 h-5 rounded-full border transition cursor-pointer ${
+                    textItem.borderColor === bc
+                      ? "ring-2 ring-emerald-400 scale-110 border-white"
+                      : "border-slate-700 hover:scale-105"
+                  }`}
+                  style={{ backgroundColor: bc }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   tactics,
@@ -24,7 +410,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
   if (!selectedId || !selectedType) {
     return (
-      <div className="p-4 text-xs text-slate-400 text-center flex flex-col items-center justify-center h-48 border border-slate-800/80 rounded-xl bg-slate-900/50">
+      <div className="p-4 text-xs text-slate-400 text-center flex flex-col items-center justify-center h-48 border border-slate-800 rounded-xl bg-slate-900">
         <span className="text-2xl mb-2">👆</span>
         <div className="font-semibold text-slate-300">Nothing Selected</div>
         <p className="mt-1 text-[11px] text-slate-500">
@@ -56,7 +442,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     ];
 
     return (
-      <div className="space-y-4 p-3 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-slate-200">
+      <div className="space-y-4 p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200">
         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
           <div className="flex items-center gap-2 font-bold text-sm text-slate-100">
             <div
@@ -189,7 +575,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     if (!ball) return null;
 
     return (
-      <div className="space-y-4 p-3 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-slate-200">
+      <div className="space-y-4 p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200">
         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
           <div className="font-bold text-sm text-slate-100 flex items-center gap-1.5">
             <span>⚽</span> Soccer Ball
@@ -252,7 +638,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     };
 
     return (
-      <div className="space-y-4 p-3 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-slate-200">
+      <div className="space-y-4 p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200">
         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
           <div className="font-bold text-sm text-slate-100 flex items-center gap-1.5 capitalize">
             <span>
@@ -339,7 +725,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     ];
 
     return (
-      <div className="space-y-4 p-3 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-slate-200">
+      <div className="space-y-4 p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200">
         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
           <div className="font-bold text-sm text-slate-100 capitalize">
             {line.type} Line
@@ -416,7 +802,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     if (!shape) return null;
 
     return (
-      <div className="space-y-4 p-3 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-slate-200">
+      <div className="space-y-4 p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200">
         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
           <div className="font-bold text-sm text-slate-100 capitalize">
             Tactical {shape.type}
@@ -472,49 +858,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     if (!textItem) return null;
 
     return (
-      <div className="space-y-4 p-3 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-slate-200">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-          <div className="font-bold text-sm text-slate-100">
-            Text Annotation
-          </div>
-          <button
-            onClick={deleteSelected}
-            title="Delete Text"
-            className="p-1.5 hover:bg-rose-950/60 text-rose-400 rounded-lg transition cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div>
-          <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">
-            Note Content
-          </label>
-          <input
-            type="text"
-            value={textItem.text}
-            onChange={(e) => updateText(textItem.id, { text: e.target.value })}
-            className="w-full bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-lg text-slate-100 focus:outline-none focus:border-emerald-500"
-          />
-        </div>
-
-        <div>
-          <div className="flex justify-between text-[10px] text-slate-400 mb-1">
-            <span>Font Size</span>
-            <span>{textItem.fontSize}px</span>
-          </div>
-          <input
-            type="range"
-            min="10"
-            max="32"
-            value={textItem.fontSize}
-            onChange={(e) =>
-              updateText(textItem.id, { fontSize: Number(e.target.value) })
-            }
-            className="w-full accent-emerald-500 bg-slate-800"
-          />
-        </div>
-      </div>
+      <TextPropertiesEditor
+        textItem={textItem}
+        updateText={updateText}
+        deleteSelected={deleteSelected}
+      />
     );
   }
 
