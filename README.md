@@ -1,4 +1,4 @@
-# ⚽ Tactical Soccer Board (West Sacramento Futbol Club)
+# ⚽ Tactical Soccer Board
 
 An interactive, responsive web-based tactical soccer board built with **React**, **TypeScript**, **Tailwind CSS**, and **Vite**.
 

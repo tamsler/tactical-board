@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   MousePointer,
   MoveUpRight,
@@ -29,6 +29,13 @@ export const ToolSelector: React.FC<ToolSelectorProps> = ({
   drawingWidth,
   setDrawingWidth,
 }) => {
+  // The rail scrolls, so tooltips render in a fixed layer to avoid being clipped.
+  const [hoveredTool, setHoveredTool] = useState<{
+    id: ToolType;
+    top: number;
+    left: number;
+  } | null>(null);
+
   const tools: {
     id: ToolType;
     label: string;
@@ -114,38 +121,55 @@ export const ToolSelector: React.FC<ToolSelectorProps> = ({
   ];
 
   return (
-    <div className="flex flex-col gap-2 items-center w-full">
+    <div className="flex flex-col gap-2 items-center w-full h-full min-h-0">
       {/* Tool items */}
-      <div className="flex flex-col gap-1 w-full items-center">
+      <div className="flex flex-col gap-1 w-full items-center flex-1 min-h-0 overflow-y-auto scrollbar-none">
         {tools.map((t) => {
           const isActive = activeTool === t.id;
           return (
             <button
               key={t.id}
               onClick={() => setActiveTool(t.id)}
+              onMouseEnter={(e) => {
+                const r = e.currentTarget.getBoundingClientRect();
+                setHoveredTool({
+                  id: t.id,
+                  top: r.top + r.height / 2,
+                  left: r.right + 10,
+                });
+              }}
+              onMouseLeave={() => setHoveredTool(null)}
               title={t.tooltip}
-              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative group ${
+              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative ${
                 isActive
                   ? "bg-emerald-600 text-white shadow-lg shadow-emerald-900/50 scale-105"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
               }`}
             >
               {t.icon}
-
-              {/* Hover Tooltip */}
-              <div className="absolute left-full ml-2.5 px-2.5 py-1 bg-slate-950 text-slate-200 text-xs rounded-md shadow-xl border border-slate-700 whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none z-50">
-                <div className="font-semibold">{t.label}</div>
-                <div className="text-[10px] text-slate-400">{t.tooltip}</div>
-              </div>
             </button>
           );
         })}
       </div>
 
-      <div className="w-full h-[1px] bg-slate-800 my-1" />
+      {hoveredTool && (
+        <div
+          style={{ top: hoveredTool.top, left: hoveredTool.left }}
+          className="fixed -translate-y-1/2 px-2.5 py-1 bg-slate-950 text-slate-200 text-xs rounded-md shadow-xl border border-slate-700 whitespace-nowrap pointer-events-none z-70"
+        >
+          <div className="font-semibold">
+            {tools.find((t) => t.id === hoveredTool.id)?.label}
+          </div>
+          <div className="text-[10px] text-slate-400">
+            {tools.find((t) => t.id === hoveredTool.id)?.tooltip}
+          </div>
+        </div>
+      )}
+
+      <div className="w-full h-[1px] bg-slate-800 my-1 shrink-0" />
 
       {/* Quick Color Palette for Lines */}
-      <div className="flex flex-col gap-1.5 items-center">
+      <div className="grid grid-cols-2 gap-1.5 place-items-center shrink-0">
         {quickColors.map((c) => (
           <button
             key={c}
@@ -161,10 +185,10 @@ export const ToolSelector: React.FC<ToolSelectorProps> = ({
         ))}
       </div>
 
-      <div className="w-full h-[1px] bg-slate-800 my-1" />
+      <div className="w-full h-[1px] bg-slate-800 my-1 shrink-0" />
 
       {/* Thickness switcher */}
-      <div className="flex flex-col gap-1 items-center">
+      <div className="flex flex-col gap-1 items-center shrink-0">
         {[2, 3.5, 6].map((w) => (
           <button
             key={w}

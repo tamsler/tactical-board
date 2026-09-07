@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Tactical Soccer Board">
+  <defs>
+    <linearGradient id="pitch" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#16a34a" />
+      <stop offset="100%" stop-color="#14532d" />
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="62" height="62" rx="13" fill="url(#pitch)" />
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.9" stroke-width="2">
+    <rect x="8" y="8" width="48" height="48" rx="3" />
+    <line x1="32" y1="8" x2="32" y2="56" />
+    <circle cx="32" cy="32" r="9" />
+    <path d="M8 21h7v22H8" />
+    <path d="M56 21h-7v22h7" />
+  </g>
+  <g stroke="#facc15" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M17 47 40 24" />
+    <path d="M31 22h11v11" />
+  </g>
+</svg>

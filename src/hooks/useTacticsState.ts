@@ -21,6 +21,7 @@ import {
   PITCH_HEIGHT,
   TEAM_COLORS,
 } from "../constants/formations";
+import { track } from "../utils/analytics";
 
 export interface BoardState {
   players: Player[];
@@ -39,8 +40,8 @@ export interface HistoryState {
   future: BoardState[];
 }
 
-// Helper generators for Half Pitch (only Blue team: 7, 9, or 11 players facing top goal)
-function generateHalfPitchPlayers(format: MatchFormat): Player[] {
+// Helper generators for Half Pitch (a single team: 7, 9, or 11 players facing top goal)
+function generateHalfPitchTeamB(format: MatchFormat): Player[] {
   const ts = Date.now();
   if (format === "7v7") {
     return [
@@ -382,317 +383,34 @@ function generateHalfPitchPlayers(format: MatchFormat): Player[] {
   ];
 }
 
-// Helper generators for Just Grass (only Blue team: 7, 9, or 11 players)
-function generateGrassPlayers(format: MatchFormat): Player[] {
-  const ts = Date.now();
-  if (format === "7v7") {
-    return [
-      {
-        id: `player-b-1-${ts}`,
-        team: "B",
-        number: "1",
-        name: "",
-        x: 525,
-        y: 160,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-      {
-        id: `player-b-2-${ts}`,
-        team: "B",
-        number: "2",
-        name: "",
-        x: 740,
-        y: 280,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-      {
-        id: `player-b-3-${ts}`,
-        team: "B",
-        number: "3",
-        name: "",
-        x: 310,
-        y: 280,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-      {
-        id: `player-b-4-${ts}`,
-        team: "B",
-        number: "4",
-        name: "",
-        x: 800,
-        y: 440,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-      {
-        id: `player-b-5-${ts}`,
-        team: "B",
-        number: "5",
-        name: "",
-        x: 525,
-        y: 380,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-      {
-        id: `player-b-6-${ts}`,
-        team: "B",
-        number: "6",
-        name: "",
-        x: 250,
-        y: 440,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-      {
-        id: `player-b-7-${ts}`,
-        team: "B",
-        number: "7",
-        name: "",
-        x: 525,
-        y: 540,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-    ];
-  }
-  if (format === "9v9") {
-    return [
-      {
-        id: `player-b-1-${ts}`,
-        team: "B",
-        number: "1",
-        name: "",
-        x: 525,
-        y: 140,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-      {
-        id: `player-b-2-${ts}`,
-        team: "B",
-        number: "2",
-        name: "",
-        x: 780,
-        y: 250,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-      {
-        id: `player-b-3-${ts}`,
-        team: "B",
-        number: "3",
-        name: "",
-        x: 525,
-        y: 230,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-      {
-        id: `player-b-4-${ts}`,
-        team: "B",
-        number: "4",
-        name: "",
-        x: 270,
-        y: 250,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-      {
-        id: `player-b-5-${ts}`,
-        team: "B",
-        number: "5",
-        name: "",
-        x: 410,
-        y: 380,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-      {
-        id: `player-b-6-${ts}`,
-        team: "B",
-        number: "6",
-        name: "",
-        x: 640,
-        y: 380,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-      {
-        id: `player-b-7-${ts}`,
-        team: "B",
-        number: "7",
-        name: "",
-        x: 800,
-        y: 520,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-      {
-        id: `player-b-8-${ts}`,
-        team: "B",
-        number: "8",
-        name: "",
-        x: 525,
-        y: 540,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-      {
-        id: `player-b-9-${ts}`,
-        team: "B",
-        number: "9",
-        name: "",
-        x: 250,
-        y: 520,
-        color: TEAM_COLORS.teamB.primary,
-        textColor: "#ffffff",
-        radius: 17,
-      },
-    ];
-  }
-  // 11v11
-  return [
-    {
-      id: `player-b-1-${ts}`,
-      team: "B",
-      number: "1",
-      name: "",
-      x: 525,
-      y: 120,
-      color: TEAM_COLORS.teamB.primary,
-      textColor: "#ffffff",
-      radius: 17,
-    },
-    {
-      id: `player-b-2-${ts}`,
-      team: "B",
-      number: "2",
-      name: "",
-      x: 820,
-      y: 230,
-      color: TEAM_COLORS.teamB.primary,
-      textColor: "#ffffff",
-      radius: 17,
-    },
-    {
-      id: `player-b-3-${ts}`,
-      team: "B",
-      number: "3",
-      name: "",
-      x: 620,
-      y: 210,
-      color: TEAM_COLORS.teamB.primary,
-      textColor: "#ffffff",
-      radius: 17,
-    },
-    {
-      id: `player-b-4-${ts}`,
-      team: "B",
-      number: "4",
-      name: "",
-      x: 430,
-      y: 210,
-      color: TEAM_COLORS.teamB.primary,
-      textColor: "#ffffff",
-      radius: 17,
-    },
-    {
-      id: `player-b-5-${ts}`,
-      team: "B",
-      number: "5",
-      name: "",
-      x: 230,
-      y: 230,
-      color: TEAM_COLORS.teamB.primary,
-      textColor: "#ffffff",
-      radius: 17,
-    },
-    {
-      id: `player-b-6-${ts}`,
-      team: "B",
-      number: "6",
-      name: "",
-      x: 525,
-      y: 340,
-      color: TEAM_COLORS.teamB.primary,
-      textColor: "#ffffff",
-      radius: 17,
-    },
-    {
-      id: `player-b-7-${ts}`,
-      team: "B",
-      number: "7",
-      name: "",
-      x: 690,
-      y: 430,
-      color: TEAM_COLORS.teamB.primary,
-      textColor: "#ffffff",
-      radius: 17,
-    },
-    {
-      id: `player-b-8-${ts}`,
-      team: "B",
-      number: "8",
-      name: "",
-      x: 360,
-      y: 430,
-      color: TEAM_COLORS.teamB.primary,
-      textColor: "#ffffff",
-      radius: 17,
-    },
-    {
-      id: `player-b-9-${ts}`,
-      team: "B",
-      number: "9",
-      name: "",
-      x: 820,
-      y: 550,
-      color: TEAM_COLORS.teamB.primary,
-      textColor: "#ffffff",
-      radius: 17,
-    },
-    {
-      id: `player-b-10-${ts}`,
-      team: "B",
-      number: "10",
-      name: "",
-      x: 525,
-      y: 560,
-      color: TEAM_COLORS.teamB.primary,
-      textColor: "#ffffff",
-      radius: 17,
-    },
-    {
-      id: `player-b-11-${ts}`,
-      team: "B",
-      number: "11",
-      name: "",
-      x: 230,
-      y: 550,
-      color: TEAM_COLORS.teamB.primary,
-      textColor: "#ffffff",
-      radius: 17,
-    },
-  ];
+function generateHalfPitchPlayers(
+  format: MatchFormat,
+  team: "A" | "B" = "B",
+): Player[] {
+  const players = generateHalfPitchTeamB(format);
+  if (team === "B") return players;
+  return players.map((p) => ({
+    ...p,
+    id: p.id.replace("player-b-", "player-a-"),
+    team: "A" as const,
+    color: p.isGoalkeeper ? TEAM_COLORS.teamA.gk : TEAM_COLORS.teamA.primary,
+  }));
+}
+
+// Half pitch is the attacking half turned 90deg: a preset's depth (x) becomes y,
+// and its lateral position (y) becomes x, with the goal at the top.
+function toHalfPitchPosition(x: number, y: number): { x: number; y: number } {
+  const padX = 40;
+  const padY = 30;
+  const fieldW = PITCH_WIDTH - padX * 2;
+  const fieldH = PITCH_HEIGHT - padY * 2;
+  const clamp = (v: number) => Math.min(1, Math.max(0, v));
+  const depth = clamp((x - padX) / (PITCH_WIDTH / 2 - padX));
+  const lateral = clamp((y - padY) / fieldH);
+  return {
+    x: padX + lateral * fieldW,
+    y: padY + depth * fieldH,
+  };
 }
 
 // Helper generator for Full Pitch (both teams)
@@ -745,10 +463,11 @@ function generateFullPitchPlayers(format: MatchFormat): Player[] {
 export function createBaseState(
   pitchType: PitchType = "full",
   format: MatchFormat = "11v11",
+  halfTeam: "A" | "B" = "B",
 ): BoardState {
   if (pitchType === "half") {
     return {
-      players: generateHalfPitchPlayers(format),
+      players: generateHalfPitchPlayers(format, halfTeam),
       balls: [{ id: `ball-${Date.now()}`, x: 525, y: 480, size: 11 }],
       equipments: [],
       lines: [],
@@ -760,8 +479,8 @@ export function createBaseState(
   }
   if (pitchType === "blank") {
     return {
-      players: generateGrassPlayers(format),
-      balls: [{ id: `ball-${Date.now()}`, x: 525, y: 340, size: 11 }],
+      players: [],
+      balls: [],
       equipments: [],
       lines: [],
       shapes: [],
@@ -785,10 +504,46 @@ export function createBaseState(
 
 const STORAGE_KEY = "tactical_board_saved_state_v1";
 
+// Identity of the board's contents, ignoring generated ids, so a board can be
+// compared against the untouched default for a layout.
+function boardSignature(s: BoardState): string {
+  const players = s.players
+    .map((p) =>
+      [
+        p.team,
+        p.number,
+        p.name,
+        Math.round(p.x),
+        Math.round(p.y),
+        p.color,
+        p.textColor,
+        p.radius,
+        p.facingAngle,
+        p.isGoalkeeper ? 1 : 0,
+      ].join("|"),
+    )
+    .sort()
+    .join(";");
+  const balls = s.balls
+    .map((b) => [Math.round(b.x), Math.round(b.y), b.size].join("|"))
+    .sort()
+    .join(";");
+  return [
+    players,
+    balls,
+    s.equipments.length,
+    s.lines.length,
+    s.shapes.length,
+    s.texts.length,
+  ].join("//");
+}
+
 interface SavedTacticsData {
   boardState?: BoardState;
   matchFormat?: MatchFormat;
   pitchType?: PitchType;
+  halfPitchTeam?: "A" | "B";
+  hiddenTeams?: { A: boolean; B: boolean };
   selectedFormations?: Record<
     MatchFormat,
     { teamA: string | null; teamB: string | null }
@@ -865,6 +620,12 @@ export function useTacticsState() {
   const [pitchType, setPitchType] = useState<PitchType>(
     () => savedData?.pitchType || "full",
   );
+  const [halfPitchTeam, setHalfPitchTeam] = useState<"A" | "B">(
+    () => savedData?.halfPitchTeam || "B",
+  );
+  const [hiddenTeams, setHiddenTeams] = useState<{ A: boolean; B: boolean }>(
+    () => savedData?.hiddenTeams || { A: false, B: false },
+  );
   const [showGrid, setShowGrid] = useState<boolean>(
     () => savedData?.showGrid ?? false,
   );
@@ -915,6 +676,7 @@ export function useTacticsState() {
         : createBaseState(
             saved?.pitchType || "full",
             saved?.matchFormat || "11v11",
+            saved?.halfPitchTeam || "B",
           );
 
     return {
@@ -933,6 +695,8 @@ export function useTacticsState() {
         boardState: state,
         matchFormat,
         pitchType,
+        halfPitchTeam,
+        hiddenTeams,
         selectedFormations,
         showBuildOutLines,
         grassStyle,
@@ -952,6 +716,8 @@ export function useTacticsState() {
     state,
     matchFormat,
     pitchType,
+    halfPitchTeam,
+    hiddenTeams,
     selectedFormations,
     showBuildOutLines,
     grassStyle,
@@ -1124,6 +890,7 @@ export function useTacticsState() {
 
   // Clear all drawings (lines, shapes, texts)
   const clearDrawings = useCallback(() => {
+    track("drawings_cleared");
     pushState((prev) => ({
       ...prev,
       lines: [],
@@ -1142,7 +909,8 @@ export function useTacticsState() {
 
   // Reset entire board to the base setup of current pitch layout & match format
   const resetBoard = useCallback(() => {
-    const fresh = createBaseState(pitchType, matchFormat);
+    track("board_reset", { match_format: matchFormat, pitch_type: pitchType });
+    const fresh = createBaseState(pitchType, matchFormat, halfPitchTeam);
     pushState(fresh);
     setIsRestoredFromCache(false);
     const defaultA =
@@ -1163,11 +931,16 @@ export function useTacticsState() {
     }));
     setSelectedId(null);
     setSelectedType(null);
-  }, [pitchType, matchFormat, pushState]);
+  }, [pitchType, matchFormat, halfPitchTeam, pushState]);
 
   // Load Formation
   const loadFormation = useCallback(
     (formation: FormationPreset, team: "A" | "B") => {
+      track("formation_applied", {
+        formation: formation.id,
+        team,
+        match_format: matchFormat,
+      });
       setSelectedFormations((prev) => ({
         ...prev,
         [matchFormat]: {
@@ -1181,25 +954,33 @@ export function useTacticsState() {
           ? TEAM_COLORS.teamA.primary
           : TEAM_COLORS.teamB.primary;
         const gkColor = isTeamA ? TEAM_COLORS.teamA.gk : TEAM_COLORS.teamB.gk;
-        const facing = isTeamA ? 0 : 180;
+        const isHalf = pitchType === "half";
+        const facing = isHalf ? 90 : isTeamA ? 0 : 180;
 
-        const newPlayers: Player[] = formation.players.map((p, idx) => ({
-          id: `player-${team.toLowerCase()}-${Date.now()}-${idx}`,
-          team,
-          number: p.number,
-          name: p.name,
-          x: isTeamA ? p.x : PITCH_WIDTH - p.x,
-          y: p.y,
-          color: p.isGoalkeeper ? gkColor : color,
-          textColor: "#ffffff",
-          isGoalkeeper: p.isGoalkeeper,
-          radius: 17,
-          facingAngle: facing,
-          showVisionCone: false,
-        }));
+        const newPlayers: Player[] = formation.players.map((p, idx) => {
+          const pos = isHalf
+            ? toHalfPitchPosition(p.x, p.y)
+            : { x: isTeamA ? p.x : PITCH_WIDTH - p.x, y: p.y };
+          return {
+            id: `player-${team.toLowerCase()}-${Date.now()}-${idx}`,
+            team,
+            number: p.number,
+            name: p.name,
+            x: pos.x,
+            y: pos.y,
+            color: p.isGoalkeeper ? gkColor : color,
+            textColor: "#ffffff",
+            isGoalkeeper: p.isGoalkeeper,
+            radius: 17,
+            facingAngle: facing,
+            showVisionCone: false,
+          };
+        });
 
-        // Keep the other team's players
-        const otherTeamPlayers = prev.players.filter((p) => p.team !== team);
+        // Half pitch holds a single team, so both squads are replaced there.
+        const otherTeamPlayers = prev.players.filter((p) =>
+          isHalf ? p.team !== "A" && p.team !== "B" : p.team !== team,
+        );
 
         return {
           ...prev,
@@ -1207,12 +988,13 @@ export function useTacticsState() {
         };
       });
     },
-    [matchFormat, pushState],
+    [matchFormat, pitchType, pushState],
   );
 
   // Switch Format and load default formations
   const switchFormat = useCallback(
     (format: MatchFormat) => {
+      track("match_format_changed", { match_format: format });
       setMatchFormat(format);
       const defaultA =
         format === "11v11" ? "4-3-3" : format === "9v9" ? "3-2-3" : "2-3-1";
@@ -1226,7 +1008,7 @@ export function useTacticsState() {
         if (pitchType === "half") {
           return {
             ...prev,
-            players: generateHalfPitchPlayers(format),
+            players: generateHalfPitchPlayers(format, halfPitchTeam),
             balls: [{ id: `ball-${Date.now()}`, x: 525, y: 480, size: 11 }],
             title: `Half Pitch Training - ${format}`,
           };
@@ -1234,8 +1016,8 @@ export function useTacticsState() {
         if (pitchType === "blank") {
           return {
             ...prev,
-            players: generateGrassPlayers(format),
-            balls: [{ id: `ball-${Date.now()}`, x: 525, y: 340, size: 11 }],
+            players: [],
+            balls: [],
             title: `Drill / Practice - ${format}`,
           };
         }
@@ -1250,14 +1032,71 @@ export function useTacticsState() {
       setSelectedId(null);
       setSelectedType(null);
     },
-    [pitchType, pushState],
+    [pitchType, pushState, halfPitchTeam],
   );
 
   // Switch Pitch Layout (Full Pitch, Half Pitch, Just Grass)
-  // Only changes the pitch background/field markings without resetting existing players or board items
-  const switchPitchType = useCallback((type: PitchType) => {
-    setPitchType(type);
-  }, []);
+  // Re-seeds the default setup for the new layout, but only while the board is
+  // still untouched, so user work is never discarded.
+  const switchPitchType = useCallback(
+    (type: PitchType) => {
+      if (type === pitchType) return;
+      track("pitch_layout_changed", { pitch_type: type });
+      setPitchType(type);
+
+      const prevBase = createBaseState(pitchType, matchFormat, halfPitchTeam);
+      if (boardSignature(state) !== boardSignature(prevBase)) return;
+
+      const nextBase = createBaseState(type, matchFormat, halfPitchTeam);
+      // Not pushed to history: the layout itself isn't undoable, so an entry here
+      // would let undo restore the old layout's players onto the new pitch.
+      setPresentState((prev) => ({
+        ...nextBase,
+        title: prev.title === prevBase.title ? nextBase.title : prev.title,
+        notes: prev.notes === prevBase.notes ? nextBase.notes : prev.notes,
+      }));
+      setSelectedId(null);
+      setSelectedType(null);
+    },
+    [pitchType, matchFormat, halfPitchTeam, state, setPresentState],
+  );
+
+  // Swap which team is set up on the half pitch. The half pitch only ever holds
+  // one team, so the existing squad is recoloured in place rather than replaced.
+  const switchHalfPitchTeam = useCallback(
+    (team: "A" | "B") => {
+      if (team === halfPitchTeam) return;
+      setHalfPitchTeam(team);
+      if (pitchType !== "half") return;
+
+      const primary =
+        team === "A" ? TEAM_COLORS.teamA.primary : TEAM_COLORS.teamB.primary;
+      const gk = team === "A" ? TEAM_COLORS.teamA.gk : TEAM_COLORS.teamB.gk;
+
+      setPresentState((prev) => ({
+        ...prev,
+        players: prev.players.map((p) =>
+          p.team === "A" || p.team === "B"
+            ? { ...p, team, color: p.isGoalkeeper ? gk : primary }
+            : p,
+        ),
+      }));
+    },
+    [halfPitchTeam, pitchType, setPresentState],
+  );
+
+  const toggleTeamVisibility = useCallback(
+    (team: "A" | "B") => {
+      setHiddenTeams((prev) => ({ ...prev, [team]: !prev[team] }));
+      // Keep a hidden player from staying selected in the properties panel.
+      const selected = state.players.find((p) => p.id === selectedId);
+      if (selected?.team === team) {
+        setSelectedId(null);
+        setSelectedType(null);
+      }
+    },
+    [state.players, selectedId],
+  );
 
   return {
     state,
@@ -1281,6 +1120,10 @@ export function useTacticsState() {
     setShowBuildOutLines,
     switchFormat,
     switchPitchType,
+    halfPitchTeam,
+    switchHalfPitchTeam,
+    hiddenTeams,
+    toggleTeamVisibility,
     selectedId,
     setSelectedId,
     selectedType,

@@ -5,6 +5,7 @@ export const APP_INFO = {
   shortName: "Tactical Board",
   version: packageJson.version,
   author: "Thomas Amsler",
+  siteUrl: "https://tacticalboard.app/",
   githubRepo: "https://github.com/tamsler/tactical-board",
   issuesUrl: "https://github.com/tamsler/tactical-board/issues",
   description:

@@ -1,7 +1,11 @@
 import React from "react";
+import { TEAM_COLORS } from "../../constants/formations";
 
 interface BottomQuickBarProps {
-  onAddPlayer: (team: "A" | "B" | "neutral" | "custom", isGk?: boolean) => void;
+  onAddPlayer: (
+    team: "A" | "B" | "neutral" | "custom",
+    options?: { isGk?: boolean; color?: string; textColor?: string },
+  ) => void;
   onAddBall: () => void;
   onAddEquipment: (
     type:
@@ -20,17 +24,27 @@ export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
 }) => {
   // Preset colored player chips (like in tactical-board.com reference)
   const playerChips = [
-    { team: "A" as const, label: "1", color: "#dc2626", name: "Red Team" },
     {
       team: "A" as const,
       label: "1",
-      color: "#eab308",
+      color: TEAM_COLORS.teamA.primary,
+      name: "Red Team",
+    },
+    {
+      team: "A" as const,
+      label: "1",
+      color: TEAM_COLORS.teamA.gk,
       name: "Yellow GK",
       isGk: true,
     },
     { team: "neutral" as const, label: "1", color: "#a855f7", name: "Purple" },
     { team: "neutral" as const, label: "1", color: "#22c55e", name: "Green" },
-    { team: "B" as const, label: "1", color: "#2563eb", name: "Blue Team" },
+    {
+      team: "B" as const,
+      label: "1",
+      color: TEAM_COLORS.teamB.primary,
+      name: "Blue Team",
+    },
     { team: "B" as const, label: "1", color: "#f97316", name: "Orange" },
     { team: "neutral" as const, label: "1", color: "#06b6d4", name: "Cyan" },
     {
@@ -53,7 +67,13 @@ export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
         {playerChips.map((chip, idx) => (
           <button
             key={idx}
-            onClick={() => onAddPlayer(chip.team, chip.isGk)}
+            onClick={() =>
+              onAddPlayer(chip.team, {
+                isGk: chip.isGk,
+                color: chip.color,
+                textColor: chip.textColor,
+              })
+            }
             title={`Add ${chip.name} Player`}
             style={{
               backgroundColor: chip.color,

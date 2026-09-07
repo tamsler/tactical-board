@@ -10,6 +10,7 @@ import { HelpModal } from "./components/Modal/HelpModal";
 import { Shield, Sliders, ChevronRight, ChevronLeft, X } from "lucide-react";
 import type { Player, Ball, Equipment } from "./types/tactics";
 import { TEAM_COLORS } from "./constants/formations";
+import { track } from "./utils/analytics";
 
 export function App() {
   const tactics = useTacticsState();
@@ -21,7 +22,7 @@ export function App() {
   const [prevSelectedId, setPrevSelectedId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     if (typeof window !== "undefined") {
-      return window.innerWidth >= 1024;
+      return window.innerWidth >= 768;
     }
     return true;
   });
@@ -38,8 +39,9 @@ export function App() {
   // Quick Add handlers for bottom bar
   const handleAddPlayer = (
     team: "A" | "B" | "neutral" | "custom",
-    isGk?: boolean,
+    options?: { isGk?: boolean; color?: string; textColor?: string },
   ) => {
+    const isGk = options?.isGk;
     const isTeamA = team === "A";
     const isTeamB = team === "B";
     const count =
@@ -62,8 +64,8 @@ export function App() {
           ? 700 - (count % 4) * 40
           : 525,
       y: 200 + (count % 5) * 60,
-      color,
-      textColor: "#ffffff",
+      color: options?.color ?? color,
+      textColor: options?.textColor ?? "#ffffff",
       isGoalkeeper: isGk,
       radius: 17,
       facingAngle: isTeamA ? 0 : isTeamB ? 180 : 0,
@@ -120,11 +122,18 @@ export function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
+      <h1 className="sr-only">
+        Tactical Soccer Board – online formation, set piece and drill planner
+      </h1>
+
       {/* Top Header */}
       <TopHeader
         tactics={tactics}
         boardRef={boardRef}
-        onOpenHelp={() => setIsHelpOpen(true)}
+        onOpenHelp={() => {
+          track("help_opened");
+          setIsHelpOpen(true);
+        }}
         onOpenFormations={() => {
           setActiveTab("formations");
           setIsSidebarOpen(true);
@@ -134,7 +143,7 @@ export function App() {
       {/* Main Workspace Area */}
       <div className="flex-1 flex relative overflow-hidden min-h-0 min-w-0">
         {/* Left Tool Palette Sidebar */}
-        <div className="bg-slate-900 border-r border-slate-800 p-1 sm:p-2.5 flex flex-col items-center z-30 shrink-0 overflow-y-auto">
+        <div className="bg-slate-900 border-r border-slate-800 p-1 sm:p-2.5 flex flex-col items-center z-30 shrink-0 overflow-hidden min-h-0">
           <ToolSelector
             activeTool={tactics.activeTool}
             setActiveTool={tactics.setActiveTool}
@@ -239,8 +248,8 @@ export function App() {
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-          className={`absolute right-0 top-1/2 -translate-y-1/2 z-30 bg-slate-800 hover:bg-slate-700 text-slate-300 p-1.5 rounded-l-md border-y border-l border-slate-700 shadow-md transition cursor-pointer ${
-            isSidebarOpen ? "hidden md:block" : "block"
+          className={`absolute top-1/2 -translate-y-1/2 z-30 bg-slate-800 hover:bg-slate-700 text-slate-300 p-1.5 rounded-l-md border-y border-l border-slate-700 shadow-md transition cursor-pointer ${
+            isSidebarOpen ? "hidden md:block md:right-80" : "block right-0"
           }`}
         >
           {isSidebarOpen ? (

@@ -20,7 +20,7 @@ import {
   exportAsJSON,
 } from "../../utils/exportUtils";
 import confetti from "canvas-confetti";
-import wsfcLogo from "../../assets/wsfc-logo.png";
+import { track } from "../../utils/analytics";
 import { APP_INFO } from "../../constants/appInfo";
 
 interface TopHeaderProps {
@@ -51,8 +51,26 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportMenuPos, setExportMenuPos] = useState({ top: 0, right: 0 });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const exportDropdownRef = useRef<HTMLDivElement | null>(null);
+  const exportButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  // The header clips overflow, so the menu is positioned fixed against the button instead.
+  const toggleExportMenu = () => {
+    if (showExportMenu) {
+      setShowExportMenu(false);
+      return;
+    }
+    const rect = exportButtonRef.current?.getBoundingClientRect();
+    if (rect) {
+      setExportMenuPos({
+        top: rect.bottom + 6,
+        right: window.innerWidth - rect.right,
+      });
+    }
+    setShowExportMenu(true);
+  };
 
   // Click outside to close export menu
   useEffect(() => {
@@ -64,11 +82,19 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         setShowExportMenu(false);
       }
     };
+    const handleResize = () => setShowExportMenu(false);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowExportMenu(false);
+    };
     if (showExportMenu) {
       document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("resize", handleResize);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleResize);
     };
   }, [showExportMenu]);
 
@@ -83,6 +109,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         "image/png",
         2.5,
       );
+      track("export", { format: "png" });
       confetti({ particleCount: 40, spread: 60, origin: { y: 0.1 } });
     } catch (err) {
       console.error("Export PNG failed:", err);
@@ -103,6 +130,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         "image/jpeg",
         2.5,
       );
+      track("export", { format: "jpg" });
       confetti({ particleCount: 40, spread: 60, origin: { y: 0.1 } });
     } catch (err) {
       console.error("Export JPG failed:", err);
@@ -122,6 +150,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         state,
         `${(state.title || "tactical-sheet").toLowerCase().replace(/\s+/g, "-")}.pdf`,
       );
+      track("export", { format: "pdf" });
       confetti({ particleCount: 50, spread: 70, origin: { y: 0.1 } });
     } catch (err) {
       console.error("Export PDF failed:", err);
@@ -138,6 +167,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
       boardRef.current,
       `${(state.title || "soccer-tactics").toLowerCase().replace(/\s+/g, "-")}.svg`,
     );
+    track("export", { format: "svg" });
   };
 
   const handleExportJSON = () => {
@@ -146,6 +176,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
       state,
       `${(state.title || "tactics-data").toLowerCase().replace(/\s+/g, "-")}.json`,
     );
+    track("export", { format: "json" });
   };
 
   const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,6 +188,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         const parsed = JSON.parse(event.target?.result as string) as BoardState;
         if (parsed.players && parsed.balls) {
           pushState(parsed);
+          track("import_tactics", { players: parsed.players.length });
           alert("Tactics loaded successfully!");
         } else {
           alert("Invalid tactics file format.");
@@ -170,16 +202,16 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   };
 
   return (
-    <header className="w-full bg-slate-900 border-b border-slate-800 px-2 sm:px-4 py-1.5 md:py-2 flex items-center justify-between gap-1 sm:gap-2 z-40 sticky top-0 shadow-md min-w-0 overflow-x-auto scrollbar-none touch-pan-x">
+    <header className="w-full bg-slate-900 border-b border-slate-800 px-1.5 sm:px-4 py-1.5 md:py-2 flex items-center justify-between gap-1 sm:gap-2 z-40 sticky top-0 shadow-md min-w-0 overflow-x-auto scrollbar-none touch-pan-x">
       {/* App Logo & Title */}
       <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         <div className="flex items-center justify-center h-7 sm:h-10 w-auto shrink-0">
           <img
-            src={wsfcLogo}
-            alt="West Sacramento Futbol Club"
+            src="/logo.svg"
+            alt="Tactical Soccer Board"
             className="h-7 sm:h-10 w-auto object-contain filter drop-shadow-md hover:scale-105 transition-transform"
-            width="32"
-            height="36"
+            width="40"
+            height="40"
           />
         </div>
         <div>
@@ -191,7 +223,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 pushState((prev) => ({ ...prev, title: e.target.value }))
               }
               placeholder="Tactics Title..."
-              className="text-xs sm:text-sm md:text-base font-bold bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-slate-100 px-1 py-0.5 rounded border border-transparent focus:border-slate-600 outline-none transition w-20 sm:w-36 md:w-64 focus:w-28 sm:focus:w-48 md:focus:w-72"
+              className="text-xs sm:text-sm md:text-base font-bold bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-slate-100 px-1 py-0.5 rounded border border-transparent focus:border-slate-600 outline-none transition w-16 sm:w-36 md:w-64 focus:w-28 sm:focus:w-48 md:focus:w-72"
             />
             <span
               title={`Tactical Board v${APP_INFO.version}`}
@@ -281,7 +313,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         <button
           onClick={() => fileInputRef.current?.click()}
           title="Load Tactic JSON"
-          className="flex items-center gap-1 px-2 py-1.5 sm:px-3 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition shrink-0 cursor-pointer"
+          className="hidden sm:flex items-center gap-1 px-2 py-1.5 sm:px-3 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition shrink-0 cursor-pointer"
         >
           <Upload className="w-3.5 h-3.5" />
           <span className="hidden md:inline">Load</span>
@@ -290,7 +322,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         {/* Export Dropdown */}
         <div className="relative" ref={exportDropdownRef}>
           <button
-            onClick={() => setShowExportMenu(!showExportMenu)}
+            ref={exportButtonRef}
+            onClick={toggleExportMenu}
             disabled={isExporting}
             className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white shadow-lg shadow-emerald-900/30 transition cursor-pointer shrink-0"
           >
@@ -298,11 +331,14 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             <span className="hidden sm:inline">
               {isExporting ? "Exporting..." : "Save / Export"}
             </span>
-            <span className="sm:hidden">{isExporting ? "..." : "Export"}</span>
+            <span className="sm:hidden">{isExporting ? "..." : "File"}</span>
           </button>
 
           {showExportMenu && (
-            <div className="fixed sm:absolute right-2 sm:right-0 top-12 sm:top-full mt-1.5 w-52 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 p-1.5 z-70 text-slate-200 text-xs animate-in fade-in zoom-in-95">
+            <div
+              style={{ top: exportMenuPos.top, right: exportMenuPos.right }}
+              className="fixed w-52 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 p-1.5 z-70 text-slate-200 text-xs animate-in fade-in zoom-in-95"
+            >
               <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 Export Board
               </div>
@@ -373,6 +409,45 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                   </div>
                 </div>
               </button>
+
+              {/* Actions that don't fit in the header on small screens */}
+              <div className="sm:hidden">
+                <div className="my-1 border-t border-slate-700" />
+
+                <button
+                  onClick={() => {
+                    setShowExportMenu(false);
+                    fileInputRef.current?.click();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
+                >
+                  <Upload className="w-4 h-4 text-slate-300" />
+                  <div>
+                    <div className="font-semibold">Load Project File</div>
+                    <div className="text-[10px] text-slate-400">
+                      Open a saved .json board
+                    </div>
+                  </div>
+                </button>
+
+                {onOpenHelp && (
+                  <button
+                    onClick={() => {
+                      setShowExportMenu(false);
+                      onOpenHelp();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
+                  >
+                    <HelpCircle className="w-4 h-4 text-slate-300" />
+                    <div>
+                      <div className="font-semibold">Help & Shortcuts</div>
+                      <div className="text-[10px] text-slate-400">
+                        How to use the board
+                      </div>
+                    </div>
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -394,7 +469,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           <button
             onClick={onOpenHelp}
             title="Shortcuts & Instructions"
-            className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition shrink-0 cursor-pointer"
+            className="hidden sm:block p-1.5 sm:p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition shrink-0 cursor-pointer"
           >
             <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>

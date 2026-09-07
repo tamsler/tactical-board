@@ -1,0 +1,20 @@
+{
+  "name": "Tactical Soccer Board",
+  "short_name": "Tactical Board",
+  "description": "An interactive tactical soccer board for designing formations, set pieces, player movements, and coaching drills.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "categories": ["sports", "education", "productivity"],
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

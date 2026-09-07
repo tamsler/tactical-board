@@ -54,6 +54,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
     showGrid,
     showZones,
     showPlayerLabels,
+    hiddenTeams,
     drawingColor,
     drawingWidth,
   } = tactics;
@@ -1249,20 +1250,27 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
           ))}
 
           {/* 5. Players */}
-          {state.players.map((p) => (
-            <PitchPlayer
-              key={p.id}
-              player={p}
-              isSelected={selectedId === p.id}
-              showPlayerLabels={showPlayerLabels}
-              onSelect={(id, e) =>
-                handleEntityPointerDown(id, "player", e as React.PointerEvent)
-              }
-              onPointerDown={(id, e) =>
-                handleEntityPointerDown(id, "player", e)
-              }
-            />
-          ))}
+          {state.players
+            .filter(
+              (p) =>
+                pitchType !== "full" ||
+                (p.team !== "A" && p.team !== "B") ||
+                !hiddenTeams[p.team],
+            )
+            .map((p) => (
+              <PitchPlayer
+                key={p.id}
+                player={p}
+                isSelected={selectedId === p.id}
+                showPlayerLabels={showPlayerLabels}
+                onSelect={(id, e) =>
+                  handleEntityPointerDown(id, "player", e as React.PointerEvent)
+                }
+                onPointerDown={(id, e) =>
+                  handleEntityPointerDown(id, "player", e)
+                }
+              />
+            ))}
 
           {/* 6. Active Drawing Preview */}
           {renderDrawingPreview()}

@@ -15,6 +15,8 @@ import {
   Users,
   Maximize2,
   Tag,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 interface FormationsPanelProps {
@@ -36,6 +38,10 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
     setShowBuildOutLines,
     pitchType,
     switchPitchType,
+    halfPitchTeam,
+    switchHalfPitchTeam,
+    hiddenTeams,
+    toggleTeamVisibility,
     grassStyle,
     setGrassStyle,
     showGrid,
@@ -184,160 +190,245 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
 
   return (
     <div className="space-y-4 text-xs text-slate-200">
-      {/* 0. GAME FORMAT SELECTOR (11v11, 9v9, 7v7) */}
+      {/* 0. FIELD LAYOUT (Full Pitch, Half Pitch, Just Grass) */}
       <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2.5">
         <div className="flex items-center gap-2 font-bold text-sm text-slate-100">
-          <Users className="w-4 h-4 text-emerald-400" />
-          <span>Game Format</span>
+          <Maximize2 className="w-4 h-4 text-emerald-400" />
+          <span>Field Layout</span>
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5 bg-slate-950/60 p-1 rounded-lg border border-slate-800">
-          {formatOptions.map((fmt) => (
-            <button
-              key={fmt.id}
-              onClick={() => switchFormat(fmt.id)}
-              className={`py-1.5 px-2 rounded-md font-bold text-center transition cursor-pointer ${
-                matchFormat === fmt.id
-                  ? "bg-emerald-600 text-white shadow"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
-              }`}
-            >
-              <div className="text-xs">{fmt.label}</div>
-            </button>
-          ))}
+        <div className="grid grid-cols-3 gap-1.5 bg-slate-950/60 p-1.5 rounded-lg border border-slate-800">
+          {pitchLayoutOptions.map((layout) => {
+            const isActive = pitchType === layout.id;
+            return (
+              <button
+                key={layout.id}
+                onClick={() => switchPitchType(layout.id)}
+                title={layout.desc}
+                className={`py-2 px-1 rounded-lg text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                  isActive
+                    ? "bg-slate-800 text-emerald-400 ring-1 ring-emerald-500 shadow"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                }`}
+              >
+                <div className="flex items-center justify-center">
+                  {layout.renderIcon(isActive)}
+                </div>
+                <span className="text-[10px] font-bold tracking-tight truncate w-full">
+                  {layout.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* 7v7 Build Out Line Toggle */}
-        {matchFormat === "7v7" && (
+        {/* Which team is set up on the half pitch */}
+        {pitchType === "half" && (
           <div className="pt-2 border-t border-slate-800">
-            <label className="flex items-center justify-between cursor-pointer p-1.5 rounded-lg bg-sky-950/40 border border-sky-800/60">
-              <span className="text-sky-300 font-semibold flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
-                Show Build-Out Lines
-              </span>
-              <input
-                type="checkbox"
-                checked={showBuildOutLines}
-                onChange={(e) => setShowBuildOutLines(e.target.checked)}
-                className="rounded bg-slate-800 border-slate-700 text-sky-500 focus:ring-0 cursor-pointer"
-              />
-            </label>
+            <div className="text-[11px] font-semibold text-slate-400 mb-1.5 flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Half Pitch Team</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 bg-slate-950/60 p-1.5 rounded-lg border border-slate-800">
+              {(["A", "B"] as const).map((team) => {
+                const isActive = halfPitchTeam === team;
+                const isRed = team === "A";
+                return (
+                  <button
+                    key={team}
+                    onClick={() => switchHalfPitchTeam(team)}
+                    title={`Set up ${isRed ? "Team Red" : "Team Blue"} on the half pitch`}
+                    className={`py-1.5 px-2 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                      isActive
+                        ? isRed
+                          ? "bg-red-600 text-white ring-1 ring-red-400 shadow"
+                          : "bg-sky-600 text-white ring-1 ring-sky-400 shadow"
+                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                    }`}
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-full border border-white/50 shrink-0"
+                      style={{ backgroundColor: isRed ? "#dc2626" : "#0284c7" }}
+                    />
+                    <span>{isRed ? "Red" : "Blue"}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
 
-      {/* 1. FORMATIONS SELECTOR */}
-      <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-3">
-        <div className="flex items-center justify-between font-bold text-sm text-slate-100">
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-emerald-400" />
-            <span>{matchFormat} Formations</span>
+      {/* 1. GAME FORMAT SELECTOR (11v11, 9v9, 7v7) */}
+      {pitchType !== "blank" && (
+        <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2.5">
+          <div className="flex items-center gap-2 font-bold text-sm text-slate-100">
+            <Users className="w-4 h-4 text-emerald-400" />
+            <span>Game Format</span>
           </div>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
-            {currentFormations.length} Presets
-          </span>
-        </div>
 
-        {/* Team A (Home / Red) */}
-        <div>
-          <div className="text-[11px] font-semibold text-red-400 mb-1.5 flex items-center justify-between">
-            <span>Team Red (Attacking Right)</span>
+          <div className="grid grid-cols-3 gap-1.5 bg-slate-950/60 p-1 rounded-lg border border-slate-800">
+            {formatOptions.map((fmt) => (
+              <button
+                key={fmt.id}
+                onClick={() => switchFormat(fmt.id)}
+                className={`py-1.5 px-2 rounded-md font-bold text-center transition cursor-pointer ${
+                  matchFormat === fmt.id
+                    ? "bg-emerald-600 text-white shadow"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                }`}
+              >
+                <div className="text-xs">{fmt.label}</div>
+              </button>
+            ))}
           </div>
-          <div className="grid grid-cols-2 gap-1.5">
-            {currentFormations.map((f) => {
-              const isSelected = selectedFormationA === f.id;
-              return (
-                <button
-                  key={`team-a-${f.id}`}
-                  onClick={() => loadFormation(f, "A")}
-                  className={`px-2.5 py-1.5 rounded-lg border text-[11px] transition text-left cursor-pointer active:scale-95 flex items-center justify-between gap-1 ${
-                    isSelected
-                      ? "bg-red-600 text-white border-red-500 font-bold shadow-md ring-1 ring-red-400"
-                      : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 font-medium"
-                  }`}
-                  title={f.name}
-                >
-                  <span className="truncate">{f.system}</span>
-                  {isSelected && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* Team B (Away / Blue) */}
-        <div className="pt-2 border-t border-slate-800">
-          <div className="text-[11px] font-semibold text-sky-400 mb-1.5 flex items-center justify-between">
-            <span>Team Blue (Attacking Left)</span>
-          </div>
-          <div className="grid grid-cols-2 gap-1.5">
-            {currentFormations.map((f) => {
-              const isSelected = selectedFormationB === f.id;
-              return (
-                <button
-                  key={`team-b-${f.id}`}
-                  onClick={() => loadFormation(f, "B")}
-                  className={`px-2.5 py-1.5 rounded-lg border text-[11px] transition text-left cursor-pointer active:scale-95 flex items-center justify-between gap-1 ${
-                    isSelected
-                      ? "bg-sky-600 text-white border-sky-500 font-bold shadow-md ring-1 ring-sky-400"
-                      : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 font-medium"
-                  }`}
-                  title={f.name}
-                >
-                  <span className="truncate">{f.system}</span>
-                  {isSelected && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
+          {/* 7v7 Build Out Line Toggle */}
+          {matchFormat === "7v7" && (
+            <div className="pt-2 border-t border-slate-800">
+              <label className="flex items-center justify-between cursor-pointer p-1.5 rounded-lg bg-sky-950/40 border border-sky-800/60">
+                <span className="text-sky-300 font-semibold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+                  Show Build-Out Lines
+                </span>
+                <input
+                  type="checkbox"
+                  checked={showBuildOutLines}
+                  onChange={(e) => setShowBuildOutLines(e.target.checked)}
+                  className="rounded bg-slate-800 border-slate-700 text-sky-500 focus:ring-0 cursor-pointer"
+                />
+              </label>
+            </div>
+          )}
         </div>
-      </div>
+      )}
+
+      {/* 2. FORMATIONS SELECTOR */}
+      {pitchType !== "blank" && (
+        <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-3">
+          <div className="flex items-center justify-between font-bold text-sm text-slate-100">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-emerald-400" />
+              <span>{matchFormat} Formations</span>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
+              {currentFormations.length} Presets
+            </span>
+          </div>
+
+          {/* Team A (Home / Red) */}
+          {(pitchType === "full" || halfPitchTeam === "A") && (
+            <div>
+              <div className="text-[11px] font-semibold text-red-400 mb-1.5 flex items-center justify-between">
+                <span>Team Red (Attacking Right)</span>
+                {pitchType === "full" && (
+                  <button
+                    type="button"
+                    onClick={() => toggleTeamVisibility("A")}
+                    title={
+                      hiddenTeams.A
+                        ? "Show Team Red on the pitch"
+                        : "Hide Team Red from the pitch"
+                    }
+                    className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-100 transition cursor-pointer"
+                  >
+                    {hiddenTeams.A ? (
+                      <EyeOff className="w-3.5 h-3.5" />
+                    ) : (
+                      <Eye className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {currentFormations.map((f) => {
+                  const isSelected = selectedFormationA === f.id;
+                  return (
+                    <button
+                      key={`team-a-${f.id}`}
+                      onClick={() => loadFormation(f, "A")}
+                      className={`px-2.5 py-1.5 rounded-lg border text-[11px] transition text-left cursor-pointer active:scale-95 flex items-center justify-between gap-1 ${
+                        isSelected
+                          ? "bg-red-600 text-white border-red-500 font-bold shadow-md ring-1 ring-red-400"
+                          : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 font-medium"
+                      }`}
+                      title={f.name}
+                    >
+                      <span className="truncate">{f.system}</span>
+                      {isSelected && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Team B (Away / Blue) */}
+          {(pitchType === "full" || halfPitchTeam === "B") && (
+            <div
+              className={
+                pitchType === "full" ? "pt-2 border-t border-slate-800" : ""
+              }
+            >
+              <div className="text-[11px] font-semibold text-sky-400 mb-1.5 flex items-center justify-between">
+                <span>Team Blue (Attacking Left)</span>
+                {pitchType === "full" && (
+                  <button
+                    type="button"
+                    onClick={() => toggleTeamVisibility("B")}
+                    title={
+                      hiddenTeams.B
+                        ? "Show Team Blue on the pitch"
+                        : "Hide Team Blue from the pitch"
+                    }
+                    className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-100 transition cursor-pointer"
+                  >
+                    {hiddenTeams.B ? (
+                      <EyeOff className="w-3.5 h-3.5" />
+                    ) : (
+                      <Eye className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {currentFormations.map((f) => {
+                  const isSelected = selectedFormationB === f.id;
+                  return (
+                    <button
+                      key={`team-b-${f.id}`}
+                      onClick={() => loadFormation(f, "B")}
+                      className={`px-2.5 py-1.5 rounded-lg border text-[11px] transition text-left cursor-pointer active:scale-95 flex items-center justify-between gap-1 ${
+                        isSelected
+                          ? "bg-sky-600 text-white border-sky-500 font-bold shadow-md ring-1 ring-sky-400"
+                          : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 font-medium"
+                      }`}
+                      title={f.name}
+                    >
+                      <span className="truncate">{f.system}</span>
+                      {isSelected && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 2. PITCH STYLES & OVERLAYS */}
       <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-3">
         <div className="flex items-center gap-2 font-bold text-sm text-slate-100">
           <Sliders className="w-4 h-4 text-sky-400" />
-          <span>Pitch Layout & Overlays</span>
-        </div>
-
-        {/* Pitch Layout Mode (Full Pitch, Half Pitch, Just Grass) */}
-        <div>
-          <div className="text-[11px] font-semibold text-slate-400 mb-1.5 flex items-center gap-1.5">
-            <Maximize2 className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Field Layout</span>
-          </div>
-          <div className="grid grid-cols-3 gap-1.5 bg-slate-950/60 p-1.5 rounded-lg border border-slate-800">
-            {pitchLayoutOptions.map((layout) => {
-              const isActive = pitchType === layout.id;
-              return (
-                <button
-                  key={layout.id}
-                  onClick={() => switchPitchType(layout.id)}
-                  title={layout.desc}
-                  className={`py-2 px-1 rounded-lg text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
-                    isActive
-                      ? "bg-slate-800 text-emerald-400 ring-1 ring-emerald-500 shadow"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-                  }`}
-                >
-                  <div className="flex items-center justify-center">
-                    {layout.renderIcon(isActive)}
-                  </div>
-                  <span className="text-[10px] font-bold tracking-tight truncate w-full">
-                    {layout.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <span>Pitch Style & Overlays</span>
         </div>
 
         {/* Grass Style Grid */}
-        <div className="pt-2 border-t border-slate-800">
+        <div>
           <div className="text-[11px] font-semibold text-slate-400 mb-1.5">
             Grass Visual Texture
           </div>
