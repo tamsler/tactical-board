@@ -7,6 +7,7 @@ import {
   Bug,
   Code2,
   ExternalLink,
+  Mail,
 } from "lucide-react";
 import { APP_INFO } from "../../constants/appInfo";
 
@@ -157,6 +158,16 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                 <span className="font-mono text-emerald-400 font-semibold">
                   v{APP_INFO.version}
                 </span>
+              </div>
+              <div className="flex items-center justify-between gap-2 text-slate-400">
+                <span>Contact</span>
+                <a
+                  href={`mailto:${APP_INFO.contactEmail}`}
+                  className="flex items-center gap-1.5 font-semibold text-sky-400 hover:text-sky-300 transition cursor-pointer"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>{APP_INFO.contactEmail}</span>
+                </a>
               </div>
 
               <div className="pt-2 border-t border-slate-800/80 flex flex-col sm:flex-row gap-2">

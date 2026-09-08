@@ -8,6 +8,7 @@ export const APP_INFO = {
   siteUrl: "https://tacticalboard.app/",
   githubRepo: "https://github.com/tamsler/tactical-board",
   issuesUrl: "https://github.com/tamsler/tactical-board/issues",
+  contactEmail: "info@tacticalboard.app",
   description:
     "An interactive tactical soccer board for designing formations, set pieces, player movements, and coaching drills.",
 } as const;
