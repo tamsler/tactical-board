@@ -58,6 +58,8 @@ export const SoccerPitch: React.FC<SoccerPitchProps> = ({
   // Build Out Lines positions (equidistant between penalty box and halfway line, or standard ~1/3 mark)
   const leftBuildOutX = padX + fieldW * 0.28;
   const rightBuildOutX = padX + fieldW * 0.72;
+  // Half pitch shows only one build out line (0.28 of a full pitch = 0.56 of a half)
+  const halfBuildOutY = padY + fieldH * 0.56;
 
   // Color schemes based on grassStyle
   const getGrassColors = () => {
@@ -268,6 +270,47 @@ export const SoccerPitch: React.FC<SoccerPitchProps> = ({
             stroke={colors.line}
             strokeWidth="3"
           />
+
+          {/* 7v7 Build Out Line (US Soccer Regulation for U9-U10 7v7 youth soccer) */}
+          {matchFormat === "7v7" && showBuildOutLines && (
+            <g className="build-out-lines">
+              <line
+                x1={padX}
+                y1={halfBuildOutY}
+                x2={padX + fieldW}
+                y2={halfBuildOutY}
+                stroke="#38bdf8"
+                strokeWidth="3.5"
+                strokeDasharray="10 8"
+              />
+              {/* Badge / Label outside the left touchline */}
+              <g opacity="0.95">
+                <rect
+                  x={padX - 40}
+                  y={halfBuildOutY - 8}
+                  width="36"
+                  height="16"
+                  rx="4"
+                  fill="#0f172a"
+                  fillOpacity="0.85"
+                  stroke="#38bdf8"
+                  strokeWidth="1"
+                />
+                <text
+                  x={padX - 22}
+                  y={halfBuildOutY}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill="#38bdf8"
+                  fontSize="10"
+                  fontWeight="bold"
+                  letterSpacing="0.5"
+                >
+                  BOL
+                </text>
+              </g>
+            </g>
+          )}
         </g>
       )}
 
