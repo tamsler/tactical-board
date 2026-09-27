@@ -5,6 +5,8 @@ Product specification and implementation plan · Revised v1.1 · 27 September 20
 Revision of the proposed v1 specification after a source review against commit
 `e1c7311ce8da9f06d277477def0b3ad35bd9825b` (local `develop`). Changes from v1
 are summarized in [Appendix A](#appendix-a-changes-from-the-v1-proposal).
+The static board this builds on is specified in [core-board.md](core-board.md);
+user-visible changes are listed in [CHANGELOG.md](../../CHANGELOG.md).
 
 ## Summary
 
@@ -530,8 +532,16 @@ so it needs a privacy policy, deletion and GDPR/COPPA review first.
 
 ### Project files and file-system access
 
-- The project file is the `TacticsDocument` JSON (`.json`, MIME
-  `application/json`), named from the document title.
+- The project file is the `TacticsDocument` JSON saved as `.tacticalboard`
+  (MIME `application/vnd.tacticalboard+json`), named from the document title.
+  Open and Load also accept `.json`; import detects the format from the
+  contents, not the extension. "Current Frame (legacy JSON)" and the non-beta
+  single-board save stay `.json`.
+- An opened `.json` file is never overwritten: its handle is not kept, so the
+  next Save asks for a `.tacticalboard` location.
+- The web manifest registers `.tacticalboard` as a file handler; when the site
+  is installed as an app (Chrome/Edge desktop), double-clicking a file opens it
+  via `launchQueue`. `.json` is deliberately not registered.
 - **Save** (Ctrl/Cmd+S) writes to the file handle from the last Open or Save
   As; without one it behaves like Save As. **Save As** uses
   `showSaveFilePicker`; **Open** uses `showOpenFilePicker`. Where the API is

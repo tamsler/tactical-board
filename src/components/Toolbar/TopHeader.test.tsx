@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createRef, useEffect } from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { useTacticsState } from "../../hooks/useTacticsState";
@@ -36,7 +36,12 @@ const ctrlS = () => {
 };
 
 describe("TopHeader file menu", () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+  });
+  afterEach(() => vi.restoreAllMocks());
 
   it("keeps the original single-board save without the flag", () => {
     render(<Harness animationEnabled={false} />);

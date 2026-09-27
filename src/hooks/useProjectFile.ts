@@ -3,6 +3,8 @@ import type { useTacticsState } from "./useTacticsState";
 import { LIMITS } from "../animation/model";
 import { parseProjectJSON } from "../animation/migrate";
 import {
+  PROJECT_EXTENSION,
+  PROJECT_MIME,
   downloadBlob,
   pickOpenFile,
   pickSaveFile,
@@ -11,8 +13,21 @@ import {
   writeFile,
 } from "../utils/fileAccess";
 import { track } from "../utils/analytics";
+import { showToast } from "../utils/toast";
 
 type Tactics = ReturnType<typeof useTacticsState>;
+
+interface LaunchWindow {
+  launchQueue?: {
+    setConsumer(
+      consumer: (params: { files?: FileSystemFileHandle[] }) => void,
+    ): void;
+  };
+}
+
+// Opened legacy .json boards are never overwritten; the next Save asks for a .tacticalboard file.
+const isProjectFile = (handle: FileSystemFileHandle) =>
+  handle.name.toLowerCase().endsWith(PROJECT_EXTENSION);
 
 /**
  * Save / Save As / Open for project files. Uses the File System Access API
@@ -32,16 +47,17 @@ export function useProjectFile(
     () => JSON.stringify(projectDocument, null, 2),
     [projectDocument],
   );
-  const suggestedName = `${slugify(projectDocument.title, "tactics")}.json`;
+  const suggestedName = `${slugify(projectDocument.title, "tactics")}${PROJECT_EXTENSION}`;
 
   const saveAs = useCallback(async () => {
     setError(null);
     if (!canPick) {
       downloadBlob(
-        new Blob([contents()], { type: "application/json" }),
+        new Blob([contents()], { type: PROJECT_MIME }),
         suggestedName,
       );
       track("export", { format: "json" });
+      showToast(`Saved ${suggestedName}`);
       return;
     }
     try {
@@ -50,6 +66,7 @@ export function useProjectFile(
       await writeFile(picked, contents());
       setHandle(picked);
       track("export", { format: "json" });
+      showToast(`Saved to ${picked.name}`);
     } catch (e) {
       setError(`Could not save the file. ${(e as Error).message ?? ""}`.trim());
     }
@@ -60,6 +77,7 @@ export function useProjectFile(
     setError(null);
     try {
       await writeFile(handle, contents());
+      showToast(`Saved to ${handle.name}`);
     } catch (e) {
       setError(`Could not save the file. ${(e as Error).message ?? ""}`.trim());
     }
@@ -92,7 +110,10 @@ export function useProjectFile(
       if (!picked) return true;
       const message = await importFile(picked.file);
       if (message) setError(message);
-      else setHandle(picked.handle);
+      else {
+        setHandle(isProjectFile(picked.handle) ? picked.handle : null);
+        showToast(`Opened ${picked.file.name}`);
+      }
     } catch (e) {
       setError(`Could not open the file. ${(e as Error).message ?? ""}`.trim());
     }
@@ -111,6 +132,22 @@ export function useProjectFile(
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [enabled, save, saveAs]);
+
+  // Files opened from the OS (double-click) when the site is installed as an app.
+  useEffect(() => {
+    const queue = (window as LaunchWindow).launchQueue;
+    if (!queue) return;
+    queue.setConsumer(async ({ files }) => {
+      const launched = files?.[0];
+      if (!launched) return;
+      const message = await importFile(await launched.getFile());
+      if (message) setError(message);
+      else {
+        setHandle(canPick && isProjectFile(launched) ? launched : null);
+        showToast(`Opened ${launched.name}`);
+      }
+    });
+  }, [importFile, canPick]);
 
   return {
     fileName: handle?.name ?? null,

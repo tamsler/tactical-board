@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import type { useTacticsState } from "./useTacticsState";
 import { hasShareFragment, parseShareFragment } from "../animation/shareLink";
 import { track } from "../utils/analytics";
+import { showToast } from "../utils/toast";
 
 type Tactics = ReturnType<typeof useTacticsState>;
 
@@ -22,7 +23,10 @@ export function useShareLinkImport(tactics: Tactics) {
     void parseShareFragment(hash).then((result) => {
       clearFragment();
       if (!result.ok) {
-        alert(`This share link could not be opened.\n\n${result.error}`);
+        showToast(
+          `This share link could not be opened. ${result.error}`,
+          "error",
+        );
         return;
       }
       if (
@@ -38,6 +42,7 @@ export function useShareLinkImport(tactics: Tactics) {
         settings: doc.settings,
       });
       track("import_tactics", { players: doc.frames[0].players.length });
+      showToast(`Opened shared board “${doc.title || "Untitled"}”`);
     });
   }, [importProject]);
 }

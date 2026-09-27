@@ -4,6 +4,7 @@ import type { AnimationFrame } from "../../animation/model";
 import type { VideoFormat, VideoView } from "../../animation/videoExport";
 import { downloadBlob, slugify } from "../../utils/fileAccess";
 import { track } from "../../utils/analytics";
+import { showToast } from "../../utils/toast";
 
 interface VideoExportDialogProps {
   format: VideoFormat;
@@ -43,8 +44,10 @@ export const VideoExportDialog: React.FC<VideoExportDialogProps> = ({
           signal: controller.signal,
           onProgress: setProgress,
         });
-        downloadBlob(blob, `${slugify(job.title, "tactics")}.${job.format}`);
+        const filename = `${slugify(job.title, "tactics")}.${job.format}`;
+        downloadBlob(blob, filename);
         track("export", { format: job.format });
+        showToast(`Exported ${filename}`);
         onCloseRef.current();
       } catch (e) {
         if (controller.signal.aborted) return;

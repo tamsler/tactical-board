@@ -1,78 +1,74 @@
 # ⚽ Tactical Soccer Board
 
-An interactive, responsive web-based tactical soccer board built with **React**, **TypeScript**, **Tailwind CSS**, and **Vite**.
+A free tactical board for soccer coaches that runs in the browser. Set up
+formations, draw runs and passes, and export the result as an image or a PDF
+coaching sheet. Boards are saved in your browser; nothing is uploaded.
 
-Designed for coaches and analysts to easily set up formations, design training drills, illustrate passing/movement phases, and export professional diagrams to high-res images and PDF sheets.
+**Open it at [tacticalboard.app](https://tacticalboard.app/).**
 
----
+![Tactical Soccer Board with an 11v11 4-3-3 against 4-4-2](social/app-screenshot.png)
 
-## 🌟 Features
+## Features
 
-- **⚽ Match Formats & Formations**:
-  - **11v11, 9v9, and 7v7** youth formats.
-  - Formations presets (4-3-3, 4-2-3-1, 4-4-2, 3-5-2, 3-4-3, 5-3-2, 3-2-3, 3-3-2, 2-3-1, etc.).
-  - **7v7 Build-Out Lines** regulation overlay.
+- 11v11, 9v9 and 7v7, each with formation presets, plus 7v7 build-out lines.
+- Full pitch, half pitch or plain grass, four pitch styles, and zone and grid
+  overlays.
+- Tools for runs, passes, dribbles, curved runs, screens, freehand lines,
+  shaded zones and text. Anything can be moved or edited afterwards.
+- Export to PNG, JPEG, SVG or a PDF sheet with your coaching notes.
+- Undo and redo, automatic saving, and saving or loading a board as a file.
 
-- **🏟️ Pitch Layouts & Textures**:
-  - **Full Pitch**, **Half Pitch** (goal at top, halfway line at bottom), and **Just Grass** (no lines for custom drills).
-  - Visual themes: Classic FIFA Stripes, Pure Grass Green, Dark Tactical Slate, Blueprint.
-  - Tactical 18-zones / half-spaces and fine coordinate grids.
+### Beta: animation
 
-- **🎨 Tactical Drawing Tools**:
-  - **Solid Arrow**: Player movement and runs.
-  - **Dashed Arrow**: Ball passes and crosses.
-  - **Sine Wave Line**: Smooth mathematical dribble paths.
-  - **Bézier Curved Line**: Arched runs and switch passes with drag handles.
-  - **Screen / Block Bar**: Tactical screening and blocking.
-  - **Tactical Zones & Shapes**: Shaded pressing traps and overload boxes with resize handles.
-  - **Move & Drag Anything**: Reposition any line, endpoint, curve, or shape after creation.
-  - **Text Annotations**: Coaching tags and labels.
+Add `?animate=1` to the address
+([tacticalboard.app/?animate=1](https://tacticalboard.app/?animate=1)) to try
+animated sequences: build frames, play them back, share a board as a link,
+save `.tacticalboard` files and export MP4 or MOV video. Feedback is welcome in
+[issues](https://github.com/tamsler/tactical-board/issues).
 
-- **💾 Export & Save**:
-  - **PNG / JPEG**: High-resolution image export.
-  - **SVG**: Scalable vector graphics.
-  - **PDF Sheet**: Formatted tactical coaching sheet with diagrams and coaching notes.
-  - **JSON**: Save and reload board states anytime.
+See the [CHANGELOG](CHANGELOG.md) for what changed in each version.
 
----
+## Development
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v18+)
-- `npm`
-
-### Installation
+Requires [Node.js](https://nodejs.org/) 20.19+ or 22.12+.
 
 ```bash
-# Clone the repository
 git clone https://github.com/tamsler/tactical-board.git
-
-# Navigate into project directory
 cd tactical-board
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
-### Building for Production
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start the dev server |
+| `npm run build` | Type-check and build to `dist/` |
+| `npm run preview` | Serve the production build |
+| `npm test` | Run the tests once (`npm run test:watch` to watch) |
+| `npm run lint` | Lint with [Oxlint](https://oxc.rs/docs/guide/usage/linter/rules) |
 
-```bash
-npm run build
-```
+To turn the beta on for every page load, start the server with
+`VITE_ENABLE_ANIMATION=true npm run dev`.
 
----
+**Built with** React 19, TypeScript, Vite and Tailwind CSS v4. Exports use
+html-to-image and jsPDF, video uses Mediabunny, and tests use Vitest with
+Testing Library.
 
-## 🛠️ Tech Stack
+### Specs
 
-- **React 19** + **TypeScript**
-- **Vite** + **Tailwind CSS v4**
-- **Lucide Icons**
-- **jsPDF** (PDF export)
+- [docs/specs/core-board.md](docs/specs/core-board.md): the board, tools,
+  formations and exports, with acceptance criteria.
+- [docs/specs/animation.md](docs/specs/animation.md): animation, playback,
+  sharing, files and video export.
 
+When you change behaviour, update the relevant spec and add a CHANGELOG entry
+under **Unreleased**.
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Contact
+
+Thomas Amsler, [info@tacticalboard.app](mailto:info@tacticalboard.app). Bugs
+and ideas go in [GitHub issues](https://github.com/tamsler/tactical-board/issues).
+
+## License
+
+[MIT](LICENSE)

@@ -23,11 +23,16 @@ import {
   exportAsSVG,
   exportAsJSON,
 } from "../../utils/exportUtils";
-import { downloadBlob, slugify } from "../../utils/fileAccess";
+import {
+  PROJECT_ACCEPT,
+  PROJECT_EXTENSION,
+  PROJECT_MIME,
+  downloadBlob,
+  slugify,
+} from "../../utils/fileAccess";
 import type { VideoFormat } from "../../animation/videoExport";
-import confetti from "canvas-confetti";
 import { track } from "../../utils/analytics";
-import { APP_INFO } from "../../constants/appInfo";
+import { showToast } from "../../utils/toast";
 
 interface TopHeaderProps {
   tactics: ReturnType<typeof useTacticsState>;
@@ -128,18 +133,14 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     if (!boardRef.current) return;
     setIsExporting(true);
     setShowExportMenu(false);
+    const filename = `${slugify(state.title, "soccer-tactics")}.png`;
     try {
-      await exportAsImage(
-        boardRef.current,
-        `${(state.title || "soccer-tactics").toLowerCase().replace(/\s+/g, "-")}.png`,
-        "image/png",
-        2.5,
-      );
+      await exportAsImage(boardRef.current, filename, "image/png", 2.5);
       track("export", { format: "png" });
-      confetti({ particleCount: 40, spread: 60, origin: { y: 0.1 } });
+      showToast(`Exported ${filename}`);
     } catch (err) {
       console.error("Export PNG failed:", err);
-      alert("Failed to export image.");
+      showToast("Couldn't export the image. Please try again.", "error");
     } finally {
       setIsExporting(false);
     }
@@ -149,18 +150,14 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     if (!boardRef.current) return;
     setIsExporting(true);
     setShowExportMenu(false);
+    const filename = `${slugify(state.title, "soccer-tactics")}.jpg`;
     try {
-      await exportAsImage(
-        boardRef.current,
-        `${(state.title || "soccer-tactics").toLowerCase().replace(/\s+/g, "-")}.jpg`,
-        "image/jpeg",
-        2.5,
-      );
+      await exportAsImage(boardRef.current, filename, "image/jpeg", 2.5);
       track("export", { format: "jpg" });
-      confetti({ particleCount: 40, spread: 60, origin: { y: 0.1 } });
+      showToast(`Exported ${filename}`);
     } catch (err) {
       console.error("Export JPG failed:", err);
-      alert("Failed to export JPEG.");
+      showToast("Couldn't export the JPEG. Please try again.", "error");
     } finally {
       setIsExporting(false);
     }
@@ -170,17 +167,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     if (!boardRef.current) return;
     setIsExporting(true);
     setShowExportMenu(false);
+    const filename = `${slugify(state.title, "tactical-sheet")}.pdf`;
     try {
       await exportAsPDF(
         boardRef.current,
         getExportBoard?.() ?? state,
-        `${(state.title || "tactical-sheet").toLowerCase().replace(/\s+/g, "-")}.pdf`,
+        filename,
       );
       track("export", { format: "pdf" });
-      confetti({ particleCount: 50, spread: 70, origin: { y: 0.1 } });
+      showToast(`Exported ${filename}`);
     } catch (err) {
       console.error("Export PDF failed:", err);
-      alert("Failed to export PDF.");
+      showToast("Couldn't export the PDF. Please try again.", "error");
     } finally {
       setIsExporting(false);
     }
@@ -189,23 +187,26 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   const handleExportSVG = () => {
     if (!boardRef.current) return;
     setShowExportMenu(false);
-    exportAsSVG(
-      boardRef.current,
-      `${(state.title || "soccer-tactics").toLowerCase().replace(/\s+/g, "-")}.svg`,
-    );
+    const filename = `${slugify(state.title, "soccer-tactics")}.svg`;
+    exportAsSVG(boardRef.current, filename);
     track("export", { format: "svg" });
+    showToast(`Exported ${filename}`);
   };
 
   const handleSaveBoardJSON = () => {
     setShowExportMenu(false);
-    exportAsJSON(state, `${slugify(state.title, "tactics-data")}.json`);
+    const filename = `${slugify(state.title, "tactics-data")}.json`;
+    exportAsJSON(state, filename);
     track("export", { format: "json" });
+    showToast(`Saved ${filename}`);
   };
 
   const handleExportLegacyJSON = () => {
     setShowExportMenu(false);
-    exportAsJSON(state, `${slugify(state.title, "tactics-frame")}-frame.json`);
+    const filename = `${slugify(state.title, "tactics-frame")}-frame.json`;
+    exportAsJSON(state, filename);
     track("export", { format: "json-legacy" });
+    showToast(`Exported ${filename}`);
   };
 
   const handleSave = (saveAs: boolean) => {
@@ -223,15 +224,16 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     e.target.value = "";
     if (!file) return;
     const message = await projectFile.importFile(file);
-    alert(message ?? "Tactics loaded successfully!");
+    if (message) showToast(message, "error");
+    else showToast(`Opened ${file.name}`);
   };
 
   const downloadProject = () =>
     downloadBlob(
       new Blob([JSON.stringify(projectDocument, null, 2)], {
-        type: "application/json",
+        type: PROJECT_MIME,
       }),
-      `${slugify(projectDocument.title, "tactics")}.json`,
+      `${slugify(projectDocument.title, "tactics")}${PROJECT_EXTENSION}`,
     );
 
   return (
@@ -259,12 +261,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               placeholder="Tactics Title..."
               className="text-xs sm:text-sm md:text-base font-bold bg-transparent hover:bg-slate-800/80 focus:bg-slate-800 text-slate-100 px-1 py-0.5 rounded border border-transparent focus:border-slate-600 outline-none transition w-16 sm:w-36 md:w-64 focus:w-28 sm:focus:w-48 md:focus:w-72"
             />
-            <span
-              title={`Tactical Board v${APP_INFO.version}`}
-              className="hidden sm:inline-block text-[10px] font-mono text-slate-400 bg-slate-800/80 border border-slate-700/60 px-1.5 py-0.5 rounded-md shrink-0 cursor-default"
-            >
-              v{APP_INFO.version}
-            </span>
             {isRestoredFromCache && saveStatus.state === "saved" && (
               <span
                 title="Board state automatically restored from local browser storage"
@@ -399,7 +395,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           type="file"
           ref={fileInputRef}
           onChange={handleImportJSON}
-          accept=".json"
+          accept={PROJECT_ACCEPT}
           className="hidden"
         />
 
@@ -452,7 +448,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                     <div className="text-[10px] text-slate-400 truncate">
                       {projectFile.fileName
                         ? `To ${projectFile.fileName}`
-                        : "All frames, as a .json file"}
+                        : "All frames, as a .tacticalboard file"}
                     </div>
                   </div>
                 </button>
@@ -627,7 +623,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                   <div>
                     <div className="font-semibold">Load Project File</div>
                     <div className="text-[10px] text-slate-400">
-                      Open a saved .json board
+                      Open a .tacticalboard or .json board
                     </div>
                   </div>
                 </button>

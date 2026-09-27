@@ -8,6 +8,7 @@ import { BottomQuickBar } from "./components/Toolbar/BottomQuickBar";
 import { PropertiesPanel } from "./components/Sidebar/PropertiesPanel";
 import { FormationsPanel } from "./components/Sidebar/FormationsPanel";
 import { HelpModal } from "./components/Modal/HelpModal";
+import { Toaster } from "./components/Toast/Toaster";
 import { ShareDialog } from "./components/Modal/ShareDialog";
 import { VideoExportDialog } from "./components/Modal/VideoExportDialog";
 import { StorageRecoveryBanner } from "./components/Toolbar/StorageRecoveryBanner";
@@ -333,6 +334,7 @@ export function App() {
 
       {/* Help Modal */}
       <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+      <Toaster />
       {isShareOpen && (
         <ShareDialog
           document={tactics.projectDocument}

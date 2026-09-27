@@ -9,6 +9,14 @@
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "categories": ["sports", "education", "productivity"],
+  "file_handlers": [
+    {
+      "action": "/",
+      "accept": {
+        "application/vnd.tacticalboard+json": [".tacticalboard"]
+      }
+    }
+  ],
   "icons": [
     {
       "src": "/logo.svg",

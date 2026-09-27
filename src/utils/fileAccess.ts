@@ -1,17 +1,37 @@
-const JSON_TYPES = [
+export const PROJECT_EXTENSION = ".tacticalboard";
+export const PROJECT_MIME = "application/vnd.tacticalboard+json";
+/** For file inputs: new project files plus legacy `.json` boards. */
+export const PROJECT_ACCEPT = `${PROJECT_EXTENSION},.json,application/json`;
+
+type PickerTypes = {
+  description: string;
+  accept: Record<string, string[]>;
+}[];
+
+const SAVE_TYPES: PickerTypes = [
   {
-    description: "Tactical board project",
-    accept: { "application/json": [".json"] },
+    description: "Tactical Board project",
+    accept: { [PROJECT_MIME]: [PROJECT_EXTENSION] },
+  },
+];
+
+const OPEN_TYPES: PickerTypes = [
+  {
+    description: "Tactical Board project",
+    accept: {
+      [PROJECT_MIME]: [PROJECT_EXTENSION],
+      "application/json": [".json"],
+    },
   },
 ];
 
 interface FilePickerWindow {
   showSaveFilePicker?: (options: {
     suggestedName?: string;
-    types?: typeof JSON_TYPES;
+    types?: PickerTypes;
   }) => Promise<FileSystemFileHandle>;
   showOpenFilePicker?: (options: {
-    types?: typeof JSON_TYPES;
+    types?: PickerTypes;
     multiple?: boolean;
   }) => Promise<FileSystemFileHandle[]>;
 }
@@ -48,7 +68,7 @@ export async function pickSaveFile(
   try {
     return (await pickerWindow().showSaveFilePicker!({
       suggestedName,
-      types: JSON_TYPES,
+      types: SAVE_TYPES,
     })) as FileSystemFileHandle;
   } catch (e) {
     if (isAbort(e)) return null;
@@ -63,7 +83,7 @@ export async function pickOpenFile(): Promise<{
 } | null> {
   try {
     const [handle] = await pickerWindow().showOpenFilePicker!({
-      types: JSON_TYPES,
+      types: OPEN_TYPES,
       multiple: false,
     });
     return { handle, file: await handle.getFile() };
