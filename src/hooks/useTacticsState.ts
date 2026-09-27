@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import type {
   Player,
   Ball,
@@ -6,12 +6,12 @@ import type {
   DrawingLine,
   TacticalShape,
   TextAnnotation,
-  TacticFrame,
   ToolType,
   GrassStyle,
   PitchType,
   MatchFormat,
   FormationPreset,
+  Point,
 } from "../types/tactics";
 import {
   FORMATIONS_11V11_TEAM_A,
@@ -22,6 +22,33 @@ import {
   TEAM_COLORS,
 } from "../constants/formations";
 import { track } from "../utils/analytics";
+import { createId, randomToken } from "../utils/id";
+import {
+  type DocumentSettings,
+  type SelectedFormations,
+  type SequenceState,
+} from "../animation/model";
+import {
+  applyBoardEdit,
+  assignFormationSlots,
+  boardFromSequence,
+  deleteFrame as deleteFrameCommand,
+  duplicateFrame,
+  moveFrame as moveFrameCommand,
+  renameFrame as renameFrameCommand,
+  sequenceFromBoard,
+  setFrameTiming as setFrameTimingCommand,
+  setPathControl as setPathControlCommand,
+} from "../animation/commands";
+import { toDocument, type ImportedProject } from "../animation/migrate";
+import {
+  buildStoredState,
+  loadStoredState,
+  saveStoredState,
+  type Preferences,
+  type StorageProblem,
+  type StoredState,
+} from "../animation/storage";
 
 export interface BoardState {
   players: Player[];
@@ -34,15 +61,61 @@ export interface BoardState {
   notes: string;
 }
 
+interface HistorySnapshot {
+  sequence: SequenceState;
+  selectedFrameId: string;
+}
+
 export interface HistoryState {
-  past: BoardState[];
-  present: BoardState;
-  future: BoardState[];
+  past: HistorySnapshot[];
+  present: HistorySnapshot;
+  future: HistorySnapshot[];
+  /** In-progress drag of the selected frame; never persisted or in history. */
+  draft: BoardState | null;
+  /** Playback/scrub preview: document edits are rejected. */
+  readOnly: boolean;
+}
+
+const HISTORY_LIMIT = 25;
+const AUTOSAVE_DELAY_MS = 750;
+
+export type SaveStatus =
+  | { state: "saved" }
+  | { state: "error"; reason: "quota" | "unavailable" };
+
+type BoardUpdate = BoardState | ((prev: BoardState) => BoardState);
+
+function commit(curr: HistoryState, next: HistorySnapshot): HistoryState {
+  if (curr.readOnly) return curr;
+  return {
+    past: [...curr.past.slice(-HISTORY_LIMIT), curr.present],
+    present: next,
+    future: [],
+    draft: null,
+    readOnly: false,
+  };
+}
+
+function editSnapshot(
+  snap: HistorySnapshot,
+  update: BoardUpdate,
+): HistorySnapshot {
+  const prevBoard = boardFromSequence(snap.sequence, snap.selectedFrameId);
+  const nextBoard = typeof update === "function" ? update(prevBoard) : update;
+  return {
+    ...snap,
+    sequence: applyBoardEdit(
+      snap.sequence,
+      snap.selectedFrameId,
+      prevBoard,
+      nextBoard,
+    ),
+  };
 }
 
 // Helper generators for Half Pitch (a single team: 7, 9, or 11 players facing top goal)
 function generateHalfPitchTeamB(format: MatchFormat): Player[] {
-  const ts = Date.now();
+  const ts = randomToken();
   if (format === "7v7") {
     return [
       {
@@ -415,7 +488,7 @@ function toHalfPitchPosition(x: number, y: number): { x: number; y: number } {
 
 // Helper generator for Full Pitch (both teams)
 function generateFullPitchPlayers(format: MatchFormat): Player[] {
-  const ts = Date.now();
+  const ts = randomToken();
   let formationA = FORMATIONS_11V11_TEAM_A[0];
   let formationB = FORMATIONS_11V11_TEAM_A[2];
   if (format === "9v9") {
@@ -468,7 +541,7 @@ export function createBaseState(
   if (pitchType === "half") {
     return {
       players: generateHalfPitchPlayers(format, halfTeam),
-      balls: [{ id: `ball-${Date.now()}`, x: 525, y: 480, size: 11 }],
+      balls: [{ id: createId("ball"), x: 525, y: 480, size: 11 }],
       equipments: [],
       lines: [],
       shapes: [],
@@ -492,7 +565,7 @@ export function createBaseState(
   // Full pitch
   return {
     players: generateFullPitchPlayers(format),
-    balls: [{ id: `ball-${Date.now()}`, x: 525, y: 340, size: 11 }],
+    balls: [{ id: createId("ball"), x: 525, y: 340, size: 11 }],
     equipments: [],
     lines: [],
     shapes: [],
@@ -501,8 +574,6 @@ export function createBaseState(
     notes: "Tactical analysis and passing progressions.",
   };
 }
-
-const STORAGE_KEY = "tactical_board_saved_state_v1";
 
 // Identity of the board's contents, ignoring generated ids, so a board can be
 // compared against the untouched default for a layout.
@@ -538,48 +609,13 @@ function boardSignature(s: BoardState): string {
   ].join("//");
 }
 
-interface SavedTacticsData {
-  boardState?: BoardState;
-  matchFormat?: MatchFormat;
-  pitchType?: PitchType;
-  halfPitchTeam?: "A" | "B";
-  hiddenTeams?: { A: boolean; B: boolean };
-  selectedFormations?: Record<
-    MatchFormat,
-    { teamA: string | null; teamB: string | null }
-  >;
-  showBuildOutLines?: boolean;
-  grassStyle?: GrassStyle;
-  showGrid?: boolean;
-  showZones?: boolean;
-  showPlayerLabels?: boolean;
-  drawingColor?: string;
-  drawingWidth?: number;
-  frames?: TacticFrame[];
-  activeFrameIndex?: number;
-}
-
-function loadSavedTactics(): SavedTacticsData | null {
-  try {
-    if (typeof window === "undefined" || !window.localStorage) return null;
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as SavedTacticsData;
-  } catch {
-    return null;
-  }
-}
-
 export function useTacticsState() {
-  const savedData = loadSavedTactics();
-  const hasRestoredFromStorage = !!(
-    savedData?.boardState &&
-    Array.isArray(savedData.boardState.players) &&
-    savedData.boardState.players.length > 0
-  );
+  // Storage is read once per mount, never per render.
+  const [initial] = useState(loadStoredState);
+  const { settings: savedSettings, preferences: savedPrefs } = initial;
 
   const [isRestoredFromCache, setIsRestoredFromCache] = useState<boolean>(
-    () => hasRestoredFromStorage,
+    () => initial.sequence !== null,
   );
 
   // Current active tool
@@ -587,25 +623,15 @@ export function useTacticsState() {
 
   // Game Format: 11v11, 9v9, or 7v7
   const [matchFormat, setMatchFormat] = useState<MatchFormat>(
-    () => savedData?.matchFormat || "11v11",
+    savedSettings.matchFormat,
   );
-  const [showBuildOutLines, setShowBuildOutLines] = useState<boolean>(() =>
-    savedData?.showBuildOutLines !== undefined
-      ? savedData.showBuildOutLines
-      : true,
+  const [showBuildOutLines, setShowBuildOutLines] = useState<boolean>(
+    savedPrefs.showBuildOutLines,
   );
 
   // Selected formations for Team A and Team B across formats
-  const [selectedFormations, setSelectedFormations] = useState<
-    Record<MatchFormat, { teamA: string | null; teamB: string | null }>
-  >(
-    () =>
-      savedData?.selectedFormations || {
-        "11v11": { teamA: "4-3-3", teamB: "4-4-2" },
-        "9v9": { teamA: "3-2-3", teamB: "3-3-2" },
-        "7v7": { teamA: "2-3-1", teamB: "3-2-1" },
-      },
-  );
+  const [selectedFormations, setSelectedFormations] =
+    useState<SelectedFormations>(savedSettings.selectedFormations);
 
   // Selected item ID and its type
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -615,173 +641,266 @@ export function useTacticsState() {
 
   // Pitch visual customization
   const [grassStyle, setGrassStyle] = useState<GrassStyle>(
-    () => savedData?.grassStyle || "stripes",
+    savedPrefs.grassStyle,
   );
   const [pitchType, setPitchType] = useState<PitchType>(
-    () => savedData?.pitchType || "full",
+    savedSettings.pitchType,
   );
   const [halfPitchTeam, setHalfPitchTeam] = useState<"A" | "B">(
-    () => savedData?.halfPitchTeam || "B",
+    savedSettings.halfPitchTeam,
   );
   const [hiddenTeams, setHiddenTeams] = useState<{ A: boolean; B: boolean }>(
-    () => savedData?.hiddenTeams || { A: false, B: false },
+    savedPrefs.hiddenTeams,
   );
-  const [showGrid, setShowGrid] = useState<boolean>(
-    () => savedData?.showGrid ?? false,
-  );
-  const [showZones, setShowZones] = useState<boolean>(
-    () => savedData?.showZones ?? false,
-  );
+  const [showGrid, setShowGrid] = useState<boolean>(savedPrefs.showGrid);
+  const [showZones, setShowZones] = useState<boolean>(savedPrefs.showZones);
   const [showPlayerLabels, setShowPlayerLabels] = useState<boolean>(
-    () => savedData?.showPlayerLabels ?? true,
+    savedPrefs.showPlayerLabels,
   );
 
   // Drawing customization
   const [drawingColor, setDrawingColor] = useState<string>(
-    () => savedData?.drawingColor || "#facc15",
+    savedPrefs.drawingColor,
   );
   const [drawingWidth, setDrawingWidth] = useState<number>(
-    () => savedData?.drawingWidth || 3.5,
+    savedPrefs.drawingWidth,
+  );
+  const [showPreviousFrame, setShowPreviousFrame] = useState<boolean>(
+    savedPrefs.showPreviousFrame,
   );
 
-  // Multi-frame / animation slides
-  const [frames, setFrames] = useState<TacticFrame[]>(
-    () =>
-      savedData?.frames || [
-        {
-          id: "frame-1",
-          title: "Phase 1: Build-up",
-          players: [],
-          balls: [{ id: "ball-1", x: PITCH_WIDTH / 2, y: PITCH_HEIGHT / 2 }],
-          equipments: [],
-          lines: [],
-          shapes: [],
-          texts: [],
-          notes: "Initial team shape and build-up phase.",
-        },
-      ],
-  );
-  const [activeFrameIndex, setActiveFrameIndex] = useState<number>(
-    () => savedData?.activeFrameIndex || 0,
-  );
-
-  // Undo / Redo history
+  // Undo / Redo history over the whole sequence plus the selected frame
   const [history, setHistory] = useState<HistoryState>(() => {
-    const saved = loadSavedTactics();
-    const initial =
-      saved?.boardState &&
-      Array.isArray(saved.boardState.players) &&
-      saved.boardState.players.length > 0
-        ? saved.boardState
-        : createBaseState(
-            saved?.pitchType || "full",
-            saved?.matchFormat || "11v11",
-            saved?.halfPitchTeam || "B",
-          );
-
+    const sequence =
+      initial.sequence ??
+      sequenceFromBoard(
+        createBaseState(
+          savedSettings.pitchType,
+          savedSettings.matchFormat,
+          savedSettings.halfPitchTeam,
+        ),
+      );
     return {
       past: [],
-      present: initial,
+      present: {
+        sequence,
+        selectedFrameId: initial.selectedFrameId ?? sequence.frames[0].id,
+      },
       future: [],
+      draft: null,
+      readOnly: false,
     };
   });
 
-  const state = history.present;
+  const { present, draft } = history;
+  const committedState = useMemo(
+    () => boardFromSequence(present.sequence, present.selectedFrameId),
+    [present],
+  );
+  const state = draft ?? committedState;
+  const frames = present.sequence.frames;
+  const selectedFrameId = present.selectedFrameId;
+  const isAnimated = frames.length > 1;
+  const hasDraft = draft !== null;
 
-  // Auto-persist board and settings to localStorage across browser refreshes
-  useEffect(() => {
-    try {
-      const dataToSave: SavedTacticsData = {
-        boardState: state,
-        matchFormat,
-        pitchType,
-        halfPitchTeam,
-        hiddenTeams,
-        selectedFormations,
-        showBuildOutLines,
-        grassStyle,
-        showGrid,
-        showZones,
-        showPlayerLabels,
-        drawingColor,
-        drawingWidth,
-        frames,
-        activeFrameIndex,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-    } catch {
-      // Ignore quota exceeded or storage unavailable errors
+  // Playback/scrub preview is read-only; the ref guards commands that also touch settings.
+  const isPreviewing = history.readOnly;
+  const previewRef = useRef(false);
+  const setPreviewing = useCallback((previewing: boolean) => {
+    previewRef.current = previewing;
+    setHistory((curr) =>
+      curr.readOnly === previewing && !curr.draft
+        ? curr
+        : { ...curr, readOnly: previewing, draft: null },
+    );
+    if (previewing) {
+      setSelectedId(null);
+      setSelectedType(null);
     }
-  }, [
-    state,
-    matchFormat,
-    pitchType,
-    halfPitchTeam,
-    hiddenTeams,
-    selectedFormations,
-    showBuildOutLines,
-    grassStyle,
-    showGrid,
-    showZones,
-    showPlayerLabels,
-    drawingColor,
-    drawingWidth,
-    frames,
-    activeFrameIndex,
-  ]);
+  }, []);
 
-  // Push new state onto history
+  // Debounced autosave of committed changes only; drag drafts are never written.
+  const settings = useMemo<DocumentSettings>(
+    () => ({ pitchType, matchFormat, halfPitchTeam, selectedFormations }),
+    [pitchType, matchFormat, halfPitchTeam, selectedFormations],
+  );
+  const preferences = useMemo<Preferences>(
+    () => ({
+      grassStyle,
+      showGrid,
+      showZones,
+      showPlayerLabels,
+      showBuildOutLines,
+      drawingColor,
+      drawingWidth,
+      hiddenTeams,
+      showPreviousFrame,
+    }),
+    [
+      grassStyle,
+      showGrid,
+      showZones,
+      showPlayerLabels,
+      showBuildOutLines,
+      drawingColor,
+      drawingWidth,
+      hiddenTeams,
+      showPreviousFrame,
+    ],
+  );
+  const projectDocument = useMemo(
+    () => toDocument(present.sequence, settings),
+    [present.sequence, settings],
+  );
+
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>({ state: "saved" });
+  // Unreadable v2 data pauses autosave until the user decides what to do with it.
+  const [storageProblem, setStorageProblem] = useState<StorageProblem | null>(
+    initial.problem ?? null,
+  );
+  const pendingSaveRef = useRef<StoredState | null>(null);
+  const latestSaveRef = useRef<StoredState | null>(null);
+  const flushSave = useCallback(() => {
+    const data = pendingSaveRef.current;
+    if (!data) return;
+    const result = saveStoredState(data);
+    if (result.ok) {
+      pendingSaveRef.current = null;
+      setSaveStatus({ state: "saved" });
+    } else {
+      setSaveStatus({ state: "error", reason: result.reason });
+      track("animation_save_failed", { reason: result.reason });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (storageProblem) return;
+    const data = buildStoredState(
+      present.sequence,
+      present.selectedFrameId,
+      settings,
+      preferences,
+    );
+    pendingSaveRef.current = data;
+    latestSaveRef.current = data;
+    const timer = setTimeout(flushSave, AUTOSAVE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [present, settings, preferences, storageProblem, flushSave]);
+
+  const retrySave = useCallback(() => {
+    pendingSaveRef.current = latestSaveRef.current;
+    flushSave();
+  }, [flushSave]);
+
+  /** Overwrites unreadable saved data with the current board and resumes autosave. */
+  const discardStoredData = useCallback(() => setStorageProblem(null), []);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flushSave();
+    };
+    window.addEventListener("pagehide", flushSave);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("pagehide", flushSave);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      flushSave();
+    };
+  }, [flushSave]);
+
+  // Push an edit of the selected frame onto history
   const pushState = useCallback(
     (newStateOrUpdater: BoardState | ((prev: BoardState) => BoardState)) => {
-      setHistory((curr) => {
-        const nextState =
-          typeof newStateOrUpdater === "function"
-            ? newStateOrUpdater(curr.present)
-            : newStateOrUpdater;
-
-        return {
-          past: [...curr.past.slice(-25), curr.present], // Keep max 25 history steps
-          present: nextState,
-          future: [],
-        };
-      });
+      setHistory((curr) =>
+        commit(curr, editSnapshot(curr.present, newStateOrUpdater)),
+      );
     },
     [],
   );
 
-  // Directly update present state during dragging without flooding history
+  // Edit the selected frame without an undo entry (layout changes aren't undoable)
   const setPresentState = useCallback(
     (newStateOrUpdater: BoardState | ((prev: BoardState) => BoardState)) => {
-      setHistory((curr) => ({
-        ...curr,
-        present:
-          typeof newStateOrUpdater === "function"
-            ? newStateOrUpdater(curr.present)
-            : newStateOrUpdater,
-      }));
+      setHistory((curr) =>
+        curr.readOnly
+          ? curr
+          : {
+              ...curr,
+              present: editSnapshot(curr.present, newStateOrUpdater),
+              draft: null,
+            },
+      );
     },
     [],
   );
 
-  // Save a snapshot of present state to undo history before an interactive drag
-  const snapshotToHistory = useCallback(() => {
-    setHistory((curr) => ({
-      past: [...curr.past.slice(-25), curr.present],
-      present: curr.present,
-      future: [],
-    }));
+  const replaceSequence = useCallback((sequence: SequenceState) => {
+    setHistory((curr) =>
+      commit(curr, { sequence, selectedFrameId: sequence.frames[0].id }),
+    );
+  }, []);
+
+  // Drag transaction: one history entry on commit, none for a click or a cancel
+  const beginDrag = useCallback(() => {
+    setHistory((curr) =>
+      curr.readOnly
+        ? curr
+        : {
+            ...curr,
+            draft: boardFromSequence(
+              curr.present.sequence,
+              curr.present.selectedFrameId,
+            ),
+          },
+    );
+  }, []);
+
+  // No-op once the draft was dropped (undo, frame switch, cancel) mid-gesture.
+  const updateDrag = useCallback(
+    (updater: (prev: BoardState) => BoardState) => {
+      setHistory((curr) =>
+        curr.draft ? { ...curr, draft: updater(curr.draft) } : curr,
+      );
+    },
+    [],
+  );
+
+  const commitDrag = useCallback(() => {
+    setHistory((curr) => {
+      if (!curr.draft) return curr;
+      const base = boardFromSequence(
+        curr.present.sequence,
+        curr.present.selectedFrameId,
+      );
+      const d = curr.draft;
+      const unchanged =
+        d.players === base.players &&
+        d.balls === base.balls &&
+        d.equipments === base.equipments &&
+        d.lines === base.lines &&
+        d.shapes === base.shapes &&
+        d.texts === base.texts;
+      if (unchanged) return { ...curr, draft: null };
+      return commit(curr, editSnapshot(curr.present, d));
+    });
+  }, []);
+
+  const cancelDrag = useCallback(() => {
+    setHistory((curr) => (curr.draft ? { ...curr, draft: null } : curr));
   }, []);
 
   // Undo
   const undo = useCallback(() => {
     setHistory((curr) => {
-      if (curr.past.length === 0) return curr;
+      if (curr.past.length === 0 || curr.readOnly) return curr;
       const previous = curr.past[curr.past.length - 1];
       const newPast = curr.past.slice(0, curr.past.length - 1);
       return {
         past: newPast,
         present: previous,
         future: [curr.present, ...curr.future],
+        draft: null,
+        readOnly: false,
       };
     });
   }, []);
@@ -789,19 +908,124 @@ export function useTacticsState() {
   // Redo
   const redo = useCallback(() => {
     setHistory((curr) => {
-      if (curr.future.length === 0) return curr;
+      if (curr.future.length === 0 || curr.readOnly) return curr;
       const next = curr.future[0];
       const newFuture = curr.future.slice(1);
       return {
         past: [...curr.past, curr.present],
         present: next,
         future: newFuture,
+        draft: null,
+        readOnly: false,
       };
     });
   }, []);
 
-  const canUndo = history.past.length > 0;
-  const canRedo = history.future.length > 0;
+  const canUndo = history.past.length > 0 && !isPreviewing;
+  const canRedo = history.future.length > 0 && !isPreviewing;
+
+  // Frame commands. Selection is not an undo step, but is restored by undo.
+  const selectFrame = useCallback((frameId: string) => {
+    setHistory((curr) =>
+      curr.present.selectedFrameId === frameId ||
+      !curr.present.sequence.frames.some((f) => f.id === frameId)
+        ? curr
+        : {
+            ...curr,
+            present: { ...curr.present, selectedFrameId: frameId },
+            draft: null,
+          },
+    );
+    setSelectedId(null);
+    setSelectedType(null);
+  }, []);
+
+  const addFrame = useCallback(() => {
+    setHistory((curr) => {
+      const result = duplicateFrame(
+        curr.present.sequence,
+        curr.present.selectedFrameId,
+      );
+      return result
+        ? commit(curr, {
+            sequence: result.seq,
+            selectedFrameId: result.frameId,
+          })
+        : curr;
+    });
+  }, []);
+
+  const deleteFrame = useCallback((frameId: string) => {
+    setHistory((curr) => {
+      const result = deleteFrameCommand(curr.present.sequence, frameId);
+      return result
+        ? commit(curr, {
+            sequence: result.seq,
+            selectedFrameId: result.frameId,
+          })
+        : curr;
+    });
+  }, []);
+
+  const moveFrame = useCallback((frameId: string, toIndex: number) => {
+    setHistory((curr) => {
+      const sequence = moveFrameCommand(
+        curr.present.sequence,
+        frameId,
+        toIndex,
+      );
+      return sequence === curr.present.sequence
+        ? curr
+        : commit(curr, { ...curr.present, sequence });
+    });
+  }, []);
+
+  /** Bends (or straightens with `null`) an entity's move out of `frameId`; one undo step. */
+  const setPathControl = useCallback(
+    (frameId: string, entityId: string, control: Point | null) => {
+      setHistory((curr) => {
+        const sequence = setPathControlCommand(
+          curr.present.sequence,
+          frameId,
+          entityId,
+          control,
+        );
+        return sequence === curr.present.sequence
+          ? curr
+          : commit(curr, { ...curr.present, sequence });
+      });
+    },
+    [],
+  );
+
+  const renameFrame = useCallback((frameId: string, title: string) => {
+    setHistory((curr) =>
+      commit(curr, {
+        ...curr.present,
+        sequence: renameFrameCommand(curr.present.sequence, frameId, title),
+      }),
+    );
+  }, []);
+
+  /** Returns an error message when the timing is outside the allowed limits. */
+  const setFrameTiming = useCallback(
+    (frameId: string, timing: { holdMs?: number; durationMs?: number }) => {
+      const result = setFrameTimingCommand(present.sequence, frameId, timing);
+      if (!result.ok) return result.error;
+      setHistory((curr) => {
+        const next = setFrameTimingCommand(
+          curr.present.sequence,
+          frameId,
+          timing,
+        );
+        return next.ok
+          ? commit(curr, { ...curr.present, sequence: next.value })
+          : curr;
+      });
+      return null;
+    },
+    [present.sequence],
+  );
 
   // Modify individual items
   const updatePlayer = useCallback(
@@ -909,9 +1133,10 @@ export function useTacticsState() {
 
   // Reset entire board to the base setup of current pitch layout & match format
   const resetBoard = useCallback(() => {
+    if (previewRef.current) return;
     track("board_reset", { match_format: matchFormat, pitch_type: pitchType });
     const fresh = createBaseState(pitchType, matchFormat, halfPitchTeam);
-    pushState(fresh);
+    replaceSequence(sequenceFromBoard(fresh));
     setIsRestoredFromCache(false);
     const defaultA =
       matchFormat === "11v11"
@@ -931,11 +1156,53 @@ export function useTacticsState() {
     }));
     setSelectedId(null);
     setSelectedType(null);
-  }, [pitchType, matchFormat, halfPitchTeam, pushState]);
+  }, [pitchType, matchFormat, halfPitchTeam, replaceSequence]);
 
-  // Load Formation
+  // Replace the whole document with an imported project as one undoable step
+  const importProject = useCallback(
+    (project: ImportedProject) => {
+      if (previewRef.current) return;
+      if (project.settings) {
+        setPitchType(project.settings.pitchType);
+        setMatchFormat(project.settings.matchFormat);
+        setHalfPitchTeam(project.settings.halfPitchTeam);
+        setSelectedFormations(project.settings.selectedFormations);
+      }
+      replaceSequence(project.sequence);
+      setSelectedId(null);
+      setSelectedType(null);
+    },
+    [replaceSequence],
+  );
+
+  // Load Formation. Returns false when it cannot be applied.
   const loadFormation = useCallback(
-    (formation: FormationPreset, team: "A" | "B") => {
+    (formation: FormationPreset, team: "A" | "B"): boolean => {
+      if (previewRef.current) return false;
+      const isTeamA = team === "A";
+      const isHalf = pitchType === "half";
+      const slotPosition = (p: { x: number; y: number }) =>
+        isHalf
+          ? toHalfPitchPosition(p.x, p.y)
+          : { x: isTeamA ? p.x : PITCH_WIDTH - p.x, y: p.y };
+      // Half pitch holds a single team, so both squads are replaced there.
+      const isInTeam = (p: Player) =>
+        isHalf ? p.team === "A" || p.team === "B" : p.team === team;
+
+      // Animated boards keep player identities so every frame still refers to them.
+      let moved: Map<string, Player> | null = null;
+      if (isAnimated) {
+        const assigned = assignFormationSlots(
+          state.players.filter(isInTeam),
+          formation.players.map((p) => ({
+            ...slotPosition(p),
+            isGoalkeeper: p.isGoalkeeper,
+          })),
+        );
+        if (!assigned) return false;
+        moved = new Map(assigned.map((p) => [p.id, p]));
+      }
+
       track("formation_applied", {
         formation: formation.id,
         team,
@@ -945,24 +1212,31 @@ export function useTacticsState() {
         ...prev,
         [matchFormat]: {
           ...prev[matchFormat],
-          [team === "A" ? "teamA" : "teamB"]: formation.id,
+          [isTeamA ? "teamA" : "teamB"]: formation.id,
         },
       }));
+
+      if (moved) {
+        const byId = moved;
+        pushState((prev) => ({
+          ...prev,
+          players: prev.players.map((p) => byId.get(p.id) ?? p),
+        }));
+        return true;
+      }
+
       pushState((prev) => {
-        const isTeamA = team === "A";
         const color = isTeamA
           ? TEAM_COLORS.teamA.primary
           : TEAM_COLORS.teamB.primary;
         const gkColor = isTeamA ? TEAM_COLORS.teamA.gk : TEAM_COLORS.teamB.gk;
-        const isHalf = pitchType === "half";
         const facing = isHalf ? 90 : isTeamA ? 0 : 180;
+        const idPrefix = createId(`player-${team.toLowerCase()}`);
 
         const newPlayers: Player[] = formation.players.map((p, idx) => {
-          const pos = isHalf
-            ? toHalfPitchPosition(p.x, p.y)
-            : { x: isTeamA ? p.x : PITCH_WIDTH - p.x, y: p.y };
+          const pos = slotPosition(p);
           return {
-            id: `player-${team.toLowerCase()}-${Date.now()}-${idx}`,
+            id: `${idPrefix}-${idx}`,
             team,
             number: p.number,
             name: p.name,
@@ -977,23 +1251,20 @@ export function useTacticsState() {
           };
         });
 
-        // Half pitch holds a single team, so both squads are replaced there.
-        const otherTeamPlayers = prev.players.filter((p) =>
-          isHalf ? p.team !== "A" && p.team !== "B" : p.team !== team,
-        );
-
         return {
           ...prev,
-          players: [...otherTeamPlayers, ...newPlayers],
+          players: [...prev.players.filter((p) => !isInTeam(p)), ...newPlayers],
         };
       });
+      return true;
     },
-    [matchFormat, pitchType, pushState],
+    [matchFormat, pitchType, pushState, isAnimated, state.players],
   );
 
-  // Switch Format and load default formations
+  // Layout changes regenerate players, so they are locked while animated.
   const switchFormat = useCallback(
     (format: MatchFormat) => {
+      if (isAnimated || previewRef.current) return;
       track("match_format_changed", { match_format: format });
       setMatchFormat(format);
       const defaultA =
@@ -1009,7 +1280,7 @@ export function useTacticsState() {
           return {
             ...prev,
             players: generateHalfPitchPlayers(format, halfPitchTeam),
-            balls: [{ id: `ball-${Date.now()}`, x: 525, y: 480, size: 11 }],
+            balls: [{ id: createId("ball"), x: 525, y: 480, size: 11 }],
             title: `Half Pitch Training - ${format}`,
           };
         }
@@ -1025,14 +1296,14 @@ export function useTacticsState() {
         return {
           ...prev,
           players: generateFullPitchPlayers(format),
-          balls: [{ id: `ball-${Date.now()}`, x: 525, y: 340, size: 11 }],
+          balls: [{ id: createId("ball"), x: 525, y: 340, size: 11 }],
           title: `Match Tactics - ${format}`,
         };
       });
       setSelectedId(null);
       setSelectedType(null);
     },
-    [pitchType, pushState, halfPitchTeam],
+    [pitchType, pushState, halfPitchTeam, isAnimated],
   );
 
   // Switch Pitch Layout (Full Pitch, Half Pitch, Just Grass)
@@ -1040,7 +1311,7 @@ export function useTacticsState() {
   // still untouched, so user work is never discarded.
   const switchPitchType = useCallback(
     (type: PitchType) => {
-      if (type === pitchType) return;
+      if (type === pitchType || isAnimated || previewRef.current) return;
       track("pitch_layout_changed", { pitch_type: type });
       setPitchType(type);
 
@@ -1058,14 +1329,14 @@ export function useTacticsState() {
       setSelectedId(null);
       setSelectedType(null);
     },
-    [pitchType, matchFormat, halfPitchTeam, state, setPresentState],
+    [pitchType, matchFormat, halfPitchTeam, state, setPresentState, isAnimated],
   );
 
   // Swap which team is set up on the half pitch. The half pitch only ever holds
   // one team, so the existing squad is recoloured in place rather than replaced.
   const switchHalfPitchTeam = useCallback(
     (team: "A" | "B") => {
-      if (team === halfPitchTeam) return;
+      if (team === halfPitchTeam || isAnimated || previewRef.current) return;
       setHalfPitchTeam(team);
       if (pitchType !== "half") return;
 
@@ -1082,7 +1353,7 @@ export function useTacticsState() {
         ),
       }));
     },
-    [halfPitchTeam, pitchType, setPresentState],
+    [halfPitchTeam, pitchType, setPresentState, isAnimated],
   );
 
   const toggleTeamVisibility = useCallback(
@@ -1101,8 +1372,10 @@ export function useTacticsState() {
   return {
     state,
     pushState,
-    setPresentState,
-    snapshotToHistory,
+    beginDrag,
+    updateDrag,
+    commitDrag,
+    cancelDrag,
     undo,
     redo,
     canUndo,
@@ -1110,7 +1383,6 @@ export function useTacticsState() {
     activeTool,
     setActiveTool,
     matchFormat,
-    setMatchFormat,
     isRestoredFromCache,
     setIsRestoredFromCache,
     selectedFormationA: selectedFormations[matchFormat]?.teamA ?? null,
@@ -1131,7 +1403,6 @@ export function useTacticsState() {
     grassStyle,
     setGrassStyle,
     pitchType,
-    setPitchType,
     showGrid,
     setShowGrid,
     showZones,
@@ -1142,6 +1413,8 @@ export function useTacticsState() {
     setDrawingColor,
     drawingWidth,
     setDrawingWidth,
+    showPreviousFrame,
+    setShowPreviousFrame,
     updatePlayer,
     updateBall,
     updateEquipment,
@@ -1152,9 +1425,25 @@ export function useTacticsState() {
     clearDrawings,
     resetBoard,
     loadFormation,
+    importProject,
     frames,
-    setFrames,
-    activeFrameIndex,
-    setActiveFrameIndex,
+    selectedFrameId,
+    isAnimated,
+    selectFrame,
+    addFrame,
+    deleteFrame,
+    moveFrame,
+    renameFrame,
+    setFrameTiming,
+    setPathControl,
+    hasDraft,
+    isPreviewing,
+    setPreviewing,
+    settings,
+    projectDocument,
+    saveStatus,
+    retrySave,
+    storageProblem,
+    discardStoredData,
   };
 }

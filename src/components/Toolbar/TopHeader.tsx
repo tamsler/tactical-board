@@ -11,14 +11,20 @@ import {
   HelpCircle,
   History,
   Shield,
+  Save,
+  Link2,
+  Film,
 } from "lucide-react";
 import type { useTacticsState, BoardState } from "../../hooks/useTacticsState";
+import { useProjectFile } from "../../hooks/useProjectFile";
 import {
   exportAsImage,
   exportAsPDF,
   exportAsSVG,
   exportAsJSON,
 } from "../../utils/exportUtils";
+import { downloadBlob, slugify } from "../../utils/fileAccess";
+import type { VideoFormat } from "../../animation/videoExport";
 import confetti from "canvas-confetti";
 import { track } from "../../utils/analytics";
 import { APP_INFO } from "../../constants/appInfo";
@@ -29,6 +35,14 @@ interface TopHeaderProps {
   onToggleSidebar?: () => void;
   onOpenFormations?: () => void;
   onOpenHelp?: () => void;
+  /** Freezes animation playback so exports capture a single pose. */
+  onBeforeExport?: () => void;
+  /** Board shown on screen (the sampled pose while previewing), used for PDF notes and counts. */
+  getExportBoard?: () => BoardState;
+  onShare?: () => void;
+  onExportVideo?: (format: VideoFormat) => void;
+  /** Enables the file picker, Ctrl/Cmd+S and project-format saving for beta users. */
+  animationEnabled?: boolean;
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
@@ -36,6 +50,11 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   boardRef,
   onOpenFormations,
   onOpenHelp,
+  onBeforeExport,
+  getExportBoard,
+  onShare,
+  onExportVideo,
+  animationEnabled = false,
 }) => {
   const {
     state,
@@ -47,7 +66,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     clearDrawings,
     resetBoard,
     isRestoredFromCache,
+    saveStatus,
+    retrySave,
+    projectDocument,
   } = tactics;
+  const projectFile = useProjectFile(tactics, { enabled: animationEnabled });
+  // Boards with frames always save every frame, even without the flag.
+  const saveProjectFormat = animationEnabled || tactics.isAnimated;
 
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -62,6 +87,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
       setShowExportMenu(false);
       return;
     }
+    onBeforeExport?.();
     const rect = exportButtonRef.current?.getBoundingClientRect();
     if (rect) {
       setExportMenuPos({
@@ -147,7 +173,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     try {
       await exportAsPDF(
         boardRef.current,
-        state,
+        getExportBoard?.() ?? state,
         `${(state.title || "tactical-sheet").toLowerCase().replace(/\s+/g, "-")}.pdf`,
       );
       track("export", { format: "pdf" });
@@ -170,36 +196,43 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     track("export", { format: "svg" });
   };
 
-  const handleExportJSON = () => {
+  const handleSaveBoardJSON = () => {
     setShowExportMenu(false);
-    exportAsJSON(
-      state,
-      `${(state.title || "tactics-data").toLowerCase().replace(/\s+/g, "-")}.json`,
-    );
+    exportAsJSON(state, `${slugify(state.title, "tactics-data")}.json`);
     track("export", { format: "json" });
   };
 
-  const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const parsed = JSON.parse(event.target?.result as string) as BoardState;
-        if (parsed.players && parsed.balls) {
-          pushState(parsed);
-          track("import_tactics", { players: parsed.players.length });
-          alert("Tactics loaded successfully!");
-        } else {
-          alert("Invalid tactics file format.");
-        }
-      } catch {
-        alert("Could not parse JSON file.");
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = "";
+  const handleExportLegacyJSON = () => {
+    setShowExportMenu(false);
+    exportAsJSON(state, `${slugify(state.title, "tactics-frame")}-frame.json`);
+    track("export", { format: "json-legacy" });
   };
+
+  const handleSave = (saveAs: boolean) => {
+    setShowExportMenu(false);
+    void (saveAs ? projectFile.saveAs() : projectFile.save());
+  };
+
+  const handleOpen = async () => {
+    setShowExportMenu(false);
+    if (!(await projectFile.open())) fileInputRef.current?.click();
+  };
+
+  const handleImportJSON = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const message = await projectFile.importFile(file);
+    alert(message ?? "Tactics loaded successfully!");
+  };
+
+  const downloadProject = () =>
+    downloadBlob(
+      new Blob([JSON.stringify(projectDocument, null, 2)], {
+        type: "application/json",
+      }),
+      `${slugify(projectDocument.title, "tactics")}.json`,
+    );
 
   return (
     <header className="w-full bg-slate-900 border-b border-slate-800 px-1.5 sm:px-4 py-1.5 md:py-2 flex items-center justify-between gap-1 sm:gap-2 z-40 sticky top-0 shadow-md min-w-0 overflow-x-auto scrollbar-none touch-pan-x">
@@ -219,6 +252,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             <input
               type="text"
               value={state.title}
+              readOnly={tactics.isPreviewing}
               onChange={(e) =>
                 pushState((prev) => ({ ...prev, title: e.target.value }))
               }
@@ -231,13 +265,60 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             >
               v{APP_INFO.version}
             </span>
-            {isRestoredFromCache && (
+            {isRestoredFromCache && saveStatus.state === "saved" && (
               <span
                 title="Board state automatically restored from local browser storage"
                 className="hidden md:inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold text-emerald-400 bg-emerald-950/70 border border-emerald-800/70 px-1.5 py-0.5 rounded-full shrink-0"
               >
                 <History className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-400" />
                 <span className="hidden sm:inline">Restored</span>
+              </span>
+            )}
+            {saveStatus.state === "error" && (
+              <span
+                role="alert"
+                className="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-300 bg-rose-950/70 border border-rose-800/70 px-1.5 py-0.5 rounded-full shrink-0"
+              >
+                {saveStatus.reason === "quota"
+                  ? "Browser storage is full — not saved"
+                  : "Not saved"}
+                <button
+                  type="button"
+                  onClick={retrySave}
+                  className="underline cursor-pointer"
+                >
+                  Retry
+                </button>
+                <button
+                  type="button"
+                  onClick={downloadProject}
+                  className="underline cursor-pointer"
+                >
+                  Download
+                </button>
+              </span>
+            )}
+            {projectFile.fileName && (
+              <span
+                title="Ctrl/Cmd+S saves to this file"
+                className="hidden md:inline-block text-[10px] text-slate-400 bg-slate-800/80 border border-slate-700/60 px-1.5 py-0.5 rounded-md shrink-0 max-w-40 truncate"
+              >
+                {projectFile.fileName}
+              </span>
+            )}
+            {projectFile.error && (
+              <span
+                role="alert"
+                className="inline-flex items-center gap-1 text-[10px] text-amber-300 bg-amber-950/60 border border-amber-800/60 px-1.5 py-0.5 rounded-full shrink-0"
+              >
+                {projectFile.error}
+                <button
+                  type="button"
+                  onClick={projectFile.clearError}
+                  className="underline cursor-pointer"
+                >
+                  Dismiss
+                </button>
               </span>
             )}
           </div>
@@ -278,8 +359,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
         <button
           onClick={clearDrawings}
-          title="Clear Lines & Annotations"
-          className="p-1.5 sm:p-2 rounded-md hover:bg-slate-800 text-amber-400 hover:text-amber-300 transition flex items-center gap-1 text-xs font-semibold"
+          disabled={tactics.isPreviewing}
+          title={
+            tactics.isAnimated
+              ? "Clear Lines & Annotations in this frame"
+              : "Clear Lines & Annotations"
+          }
+          className="p-1.5 sm:p-2 rounded-md hover:bg-slate-800 text-amber-400 hover:text-amber-300 transition flex items-center gap-1 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span className="hidden lg:inline">Clear Lines</span>
@@ -287,12 +373,19 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
         <button
           onClick={() => {
-            if (confirm("Reset the board to standard positions?")) {
+            if (
+              confirm(
+                tactics.isAnimated
+                  ? "Reset the entire board and remove the animation?"
+                  : "Reset the board to standard positions?",
+              )
+            ) {
               resetBoard();
             }
           }}
           title="Reset Whole Board"
-          className="p-1.5 sm:p-2 rounded-md hover:bg-red-950/50 text-red-400 hover:text-red-300 transition flex items-center gap-1 text-xs font-semibold"
+          disabled={tactics.isPreviewing}
+          className="p-1.5 sm:p-2 rounded-md hover:bg-red-950/50 text-red-400 hover:text-red-300 transition flex items-center gap-1 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span className="hidden lg:inline">Reset</span>
@@ -311,9 +404,10 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         />
 
         <button
-          onClick={() => fileInputRef.current?.click()}
-          title="Load Tactic JSON"
-          className="hidden sm:flex items-center gap-1 px-2 py-1.5 sm:px-3 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition shrink-0 cursor-pointer"
+          onClick={handleOpen}
+          disabled={tactics.isPreviewing}
+          title="Open a project file"
+          className="hidden sm:flex items-center gap-1 px-2 py-1.5 sm:px-3 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition shrink-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Upload className="w-3.5 h-3.5" />
           <span className="hidden md:inline">Load</span>
@@ -339,6 +433,76 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               style={{ top: exportMenuPos.top, right: exportMenuPos.right }}
               className="fixed w-52 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 p-1.5 z-70 text-slate-200 text-xs animate-in fade-in zoom-in-95"
             >
+              <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Project
+              </div>
+
+              {saveProjectFormat ? (
+                <button
+                  onClick={() => handleSave(false)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
+                >
+                  <Save className="w-4 h-4 text-purple-400" />
+                  <div className="min-w-0">
+                    <div className="font-semibold">
+                      {animationEnabled
+                        ? "Save (Ctrl/Cmd+S)"
+                        : "Save Project File"}
+                    </div>
+                    <div className="text-[10px] text-slate-400 truncate">
+                      {projectFile.fileName
+                        ? `To ${projectFile.fileName}`
+                        : "All frames, as a .json file"}
+                    </div>
+                  </div>
+                </button>
+              ) : (
+                <button
+                  onClick={handleSaveBoardJSON}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
+                >
+                  <FileDown className="w-4 h-4 text-purple-400" />
+                  <div>
+                    <div className="font-semibold">
+                      Save Project File (JSON)
+                    </div>
+                    <div className="text-[10px] text-slate-400">
+                      Backup & reload later
+                    </div>
+                  </div>
+                </button>
+              )}
+
+              {projectFile.canPick && (
+                <button
+                  onClick={() => handleSave(true)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
+                >
+                  <Save className="w-4 h-4 text-slate-400" />
+                  <div className="font-semibold">Save As…</div>
+                </button>
+              )}
+
+              {onShare && (
+                <button
+                  onClick={() => {
+                    setShowExportMenu(false);
+                    onShare();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
+                >
+                  <Link2 className="w-4 h-4 text-emerald-400" />
+                  <div>
+                    <div className="font-semibold">Share Link…</div>
+                    <div className="text-[10px] text-slate-400">
+                      Board stored in the link
+                    </div>
+                  </div>
+                </button>
+              )}
+
+              <div className="my-1 border-t border-slate-700" />
+
               <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 Export Board
               </div>
@@ -395,30 +559,68 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 </div>
               </button>
 
-              <div className="my-1 border-t border-slate-700" />
+              {onExportVideo && tactics.isAnimated && (
+                <>
+                  <button
+                    onClick={() => {
+                      setShowExportMenu(false);
+                      onExportVideo("mp4");
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
+                  >
+                    <Film className="w-4 h-4 text-emerald-400" />
+                    <div>
+                      <div className="font-semibold">Export Video (MP4)</div>
+                      <div className="text-[10px] text-slate-400">
+                        Plays on phones and in chat apps
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowExportMenu(false);
+                      onExportVideo("mov");
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
+                  >
+                    <Film className="w-4 h-4 text-sky-400" />
+                    <div>
+                      <div className="font-semibold">Export Video (MOV)</div>
+                      <div className="text-[10px] text-slate-400">
+                        QuickTime movie
+                      </div>
+                    </div>
+                  </button>
+                </>
+              )}
 
-              <button
-                onClick={handleExportJSON}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
-              >
-                <FileDown className="w-4 h-4 text-purple-400" />
-                <div>
-                  <div className="font-semibold">Save Project File (JSON)</div>
-                  <div className="text-[10px] text-slate-400">
-                    Backup & reload later
-                  </div>
-                </div>
-              </button>
+              {saveProjectFormat && (
+                <>
+                  <div className="my-1 border-t border-slate-700" />
+
+                  <button
+                    onClick={handleExportLegacyJSON}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
+                  >
+                    <FileDown className="w-4 h-4 text-purple-400" />
+                    <div>
+                      <div className="font-semibold">
+                        Current Frame (legacy JSON)
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        For older versions; no animation
+                      </div>
+                    </div>
+                  </button>
+                </>
+              )}
 
               {/* Actions that don't fit in the header on small screens */}
               <div className="sm:hidden">
                 <div className="my-1 border-t border-slate-700" />
 
                 <button
-                  onClick={() => {
-                    setShowExportMenu(false);
-                    fileInputRef.current?.click();
-                  }}
+                  onClick={handleOpen}
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
                 >
                   <Upload className="w-4 h-4 text-slate-300" />

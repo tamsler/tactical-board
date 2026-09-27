@@ -33,7 +33,7 @@ export type GrassStyle =
   | "indoor";
 
 export interface Point {
-  x: number; // 0 to 100 percentage or coordinate
+  x: number; // logical pitch units
   y: number;
 }
 
@@ -44,8 +44,8 @@ export interface Player {
   team: TeamSide;
   number: string;
   name?: string;
-  x: number; // 0 to 1000 normalized coordinate system
-  y: number; // 0 to 650 normalized coordinate system
+  x: number; // 0 to 1050 logical pitch units (PITCH_WIDTH)
+  y: number; // 0 to 680 logical pitch units (PITCH_HEIGHT)
   color: string;
   textColor: string;
   isGoalkeeper?: boolean;
@@ -141,8 +141,8 @@ export interface TacticFrame {
 export interface FormationPlayerPreset {
   number: string;
   name: string;
-  x: number; // 0 to 1000
-  y: number; // 0 to 650
+  x: number; // 0 to 1050
+  y: number; // 0 to 680
   isGoalkeeper?: boolean;
 }
 

@@ -1,4 +1,5 @@
 import React from "react";
+import { Film } from "lucide-react";
 import { TEAM_COLORS } from "../../constants/formations";
 
 interface BottomQuickBarProps {
@@ -15,13 +16,23 @@ interface BottomQuickBarProps {
       | "mannequin"
       | "mini-goal",
   ) => void;
+  /** Players and balls exist in every frame; equipment belongs to one frame. */
+  isAnimated?: boolean;
+  /** Read-only while previewing an animation. */
+  disabled?: boolean;
+  onAnimate?: () => void;
 }
 
 export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
   onAddPlayer,
   onAddBall,
   onAddEquipment,
+  isAnimated = false,
+  disabled = false,
+  onAnimate,
 }) => {
+  const allFrames = isAnimated ? " to all frames" : "";
+  const thisFrame = isAnimated ? " to this frame" : "";
   // Preset colored player chips (like in tactical-board.com reference)
   const playerChips = [
     {
@@ -58,7 +69,10 @@ export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
   ];
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-2 py-1.5 md:px-3 md:py-2 bg-slate-900 border border-slate-800 rounded-xl md:rounded-2xl shadow-2xl flex items-center gap-2 sm:gap-3 z-20 overflow-x-auto scrollbar-none touch-pan-x justify-start md:justify-between">
+    <fieldset
+      disabled={disabled}
+      className="w-full min-w-0 max-w-5xl mx-auto px-2 py-1.5 md:px-3 md:py-2 bg-slate-900 border border-slate-800 rounded-xl md:rounded-2xl shadow-2xl flex items-center gap-2 sm:gap-3 z-20 overflow-x-auto scrollbar-none touch-pan-x justify-start md:justify-between disabled:opacity-50 disabled:[&_button]:cursor-not-allowed"
+    >
       {/* Quick Player Tokens */}
       <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 py-0.5">
         <span className="text-[10px] uppercase font-bold text-slate-400 mr-0.5 hidden sm:inline">
@@ -74,7 +88,7 @@ export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
                 textColor: chip.textColor,
               })
             }
-            title={`Add ${chip.name} Player`}
+            title={`Add ${chip.name} Player${allFrames}`}
             style={{
               backgroundColor: chip.color,
               color: chip.textColor || "#ffffff",
@@ -93,7 +107,7 @@ export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
         {/* Ball */}
         <button
           onClick={onAddBall}
-          title="Add Soccer Ball"
+          title={`Add Soccer Ball${allFrames}`}
           className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white flex items-center justify-center text-sm md:text-base shadow hover:scale-115 active:scale-95 transition cursor-pointer border border-slate-300 shrink-0"
         >
           ⚽
@@ -102,7 +116,7 @@ export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
         {/* Orange Cone */}
         <button
           onClick={() => onAddEquipment("cone-orange")}
-          title="Add Orange Cone"
+          title={`Add Orange Cone${thisFrame}`}
           className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-xs sm:text-sm shadow hover:scale-110 active:scale-95 transition cursor-pointer border border-slate-700 shrink-0"
         >
           🔶
@@ -111,7 +125,7 @@ export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
         {/* Yellow Cone */}
         <button
           onClick={() => onAddEquipment("cone-yellow")}
-          title="Add Yellow Cone"
+          title={`Add Yellow Cone${thisFrame}`}
           className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-xs sm:text-sm shadow hover:scale-110 active:scale-95 transition cursor-pointer border border-slate-700 shrink-0"
         >
           🟡
@@ -120,7 +134,7 @@ export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
         {/* Dummy / Mannequin */}
         <button
           onClick={() => onAddEquipment("mannequin")}
-          title="Add Defensive Wall Mannequin"
+          title={`Add Defensive Wall Mannequin${thisFrame}`}
           className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 shadow hover:scale-110 active:scale-95 transition cursor-pointer border border-slate-700 shrink-0"
         >
           🧍
@@ -129,12 +143,27 @@ export const BottomQuickBar: React.FC<BottomQuickBarProps> = ({
         {/* Mini Goal */}
         <button
           onClick={() => onAddEquipment("mini-goal")}
-          title="Add Mini Goal"
+          title={`Add Mini Goal${thisFrame}`}
           className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-xs font-bold text-red-400 shadow hover:scale-110 active:scale-95 transition cursor-pointer border border-slate-700 shrink-0"
         >
           🥅
         </button>
       </div>
-    </div>
+
+      {onAnimate && (
+        <>
+          <div className="h-5 md:h-6 w-[1px] bg-slate-800 shrink-0" />
+          <button
+            type="button"
+            onClick={onAnimate}
+            title="Animate player and ball movements across frames"
+            className="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow transition cursor-pointer shrink-0"
+          >
+            <Film className="w-4 h-4" />
+            Animate
+          </button>
+        </>
+      )}
+    </fieldset>
   );
 };

@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
-import { useTacticsState } from "./hooks/useTacticsState";
+import { useCallback, useRef, useState } from "react";
+import { useTacticsState, type BoardState } from "./hooks/useTacticsState";
+import { useShareLinkImport } from "./hooks/useShareLinkImport";
 import { TacticalBoard } from "./components/Pitch/TacticalBoard";
 import { TopHeader } from "./components/Toolbar/TopHeader";
 import { ToolSelector } from "./components/Toolbar/ToolSelector";
@@ -7,10 +8,19 @@ import { BottomQuickBar } from "./components/Toolbar/BottomQuickBar";
 import { PropertiesPanel } from "./components/Sidebar/PropertiesPanel";
 import { FormationsPanel } from "./components/Sidebar/FormationsPanel";
 import { HelpModal } from "./components/Modal/HelpModal";
+import { ShareDialog } from "./components/Modal/ShareDialog";
+import { VideoExportDialog } from "./components/Modal/VideoExportDialog";
+import { StorageRecoveryBanner } from "./components/Toolbar/StorageRecoveryBanner";
 import { Shield, Sliders, ChevronRight, ChevronLeft, X } from "lucide-react";
 import type { Player, Ball, Equipment } from "./types/tactics";
 import { TEAM_COLORS } from "./constants/formations";
 import { track } from "./utils/analytics";
+import { createId } from "./utils/id";
+import { isAnimationFeatureEnabled } from "./animation/featureFlag";
+import { useAnimationPlayback } from "./animation/useAnimationPlayback";
+import { sampleAt } from "./animation/sample";
+import type { VideoFormat } from "./animation/videoExport";
+import { FrameTimeline } from "./components/Animation/FrameTimeline";
 
 export function App() {
   const tactics = useTacticsState();
@@ -27,6 +37,27 @@ export function App() {
     return true;
   });
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [animationEnabled] = useState(isAnimationFeatureEnabled);
+  const [isTimelineOpen, setIsTimelineOpen] = useState(false);
+  // A board that already has frames always shows them, even with the flag off.
+  const showTimeline =
+    tactics.isAnimated || (animationEnabled && isTimelineOpen);
+  const playback = useAnimationPlayback(tactics);
+  useShareLinkImport(tactics);
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [videoFormat, setVideoFormat] = useState<VideoFormat | null>(null);
+  const closeVideoExport = useCallback(() => setVideoFormat(null), []);
+
+  // Exports describe what is on screen: the sampled pose while previewing.
+  const getExportBoard = (): BoardState => {
+    if (!tactics.isPreviewing) return tactics.state;
+    const { frame } = sampleAt(
+      tactics.frames,
+      playback.timeline,
+      playback.controller.getSnapshot().timeMs,
+    );
+    return { ...frame, title: tactics.state.title, notes: frame.notes ?? "" };
+  };
 
   // Auto-switch to properties tab during render when an element is selected
   if (tactics.selectedId !== prevSelectedId) {
@@ -54,7 +85,7 @@ export function App() {
       color = isGk ? TEAM_COLORS.teamB.gk : TEAM_COLORS.teamB.primary;
 
     const newPlayer: Player = {
-      id: `player-${team}-${Date.now()}`,
+      id: createId(`player-${team}`),
       team,
       number: isGk ? "1" : count.toString(),
       name: isGk ? "GK" : "",
@@ -83,7 +114,7 @@ export function App() {
 
   const handleAddBall = () => {
     const newBall: Ball = {
-      id: `ball-${Date.now()}`,
+      id: createId("ball"),
       x: 525 + (Math.random() * 80 - 40),
       y: 340 + (Math.random() * 80 - 40),
       size: 11,
@@ -106,7 +137,7 @@ export function App() {
       | "mini-goal",
   ) => {
     const newEq: Equipment = {
-      id: `eq-${Date.now()}`,
+      id: createId("eq"),
       type,
       x: 525 + (Math.random() * 80 - 40),
       y: 340 + (Math.random() * 80 - 40),
@@ -130,6 +161,14 @@ export function App() {
       <TopHeader
         tactics={tactics}
         boardRef={boardRef}
+        onBeforeExport={playback.pause}
+        getExportBoard={getExportBoard}
+        onShare={animationEnabled ? () => setIsShareOpen(true) : undefined}
+        animationEnabled={animationEnabled}
+        onExportVideo={(format) => {
+          playback.pause();
+          setVideoFormat(format);
+        }}
         onOpenHelp={() => {
           track("help_opened");
           setIsHelpOpen(true);
@@ -139,6 +178,13 @@ export function App() {
           setIsSidebarOpen(true);
         }}
       />
+
+      {tactics.storageProblem && (
+        <StorageRecoveryBanner
+          problem={tactics.storageProblem}
+          onDiscard={tactics.discardStoredData}
+        />
+      )}
 
       {/* Main Workspace Area */}
       <div className="flex-1 flex relative overflow-hidden min-h-0 min-w-0">
@@ -157,8 +203,26 @@ export function App() {
         {/* Central Pitch Stage */}
         <main className="flex-1 flex flex-col items-center justify-between relative p-1 md:p-2 overflow-hidden bg-slate-950/80 min-h-0 min-w-0">
           <div className="flex-1 w-full h-full flex items-center justify-center min-h-0 min-w-0">
-            <TacticalBoard tactics={tactics} boardRef={boardRef} />
+            <TacticalBoard
+              tactics={tactics}
+              boardRef={boardRef}
+              playback={showTimeline ? playback : undefined}
+            />
           </div>
+
+          {/* Frame timeline (animation editor) */}
+          {showTimeline && (
+            <div className="w-full mt-1 z-20 shrink-0">
+              <FrameTimeline
+                tactics={tactics}
+                playback={playback}
+                onClose={() => {
+                  playback.editFrame(tactics.selectedFrameId);
+                  setIsTimelineOpen(false);
+                }}
+              />
+            </div>
+          )}
 
           {/* Bottom Quick-Add Bar */}
           <div className="w-full mt-1 z-20 shrink-0">
@@ -166,6 +230,13 @@ export function App() {
               onAddPlayer={handleAddPlayer}
               onAddBall={handleAddBall}
               onAddEquipment={handleAddEquipment}
+              isAnimated={tactics.isAnimated}
+              disabled={tactics.isPreviewing}
+              onAnimate={
+                animationEnabled && !showTimeline
+                  ? () => setIsTimelineOpen(true)
+                  : undefined
+              }
             />
           </div>
         </main>
@@ -262,6 +333,30 @@ export function App() {
 
       {/* Help Modal */}
       <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+      {isShareOpen && (
+        <ShareDialog
+          document={tactics.projectDocument}
+          onClose={() => setIsShareOpen(false)}
+        />
+      )}
+      {videoFormat && (
+        <VideoExportDialog
+          format={videoFormat}
+          frames={tactics.frames}
+          title={tactics.state.title}
+          view={{
+            grassStyle: tactics.grassStyle,
+            pitchType: tactics.pitchType,
+            matchFormat: tactics.matchFormat,
+            showBuildOutLines: tactics.showBuildOutLines,
+            showGrid: tactics.showGrid,
+            showZones: tactics.showZones,
+            showPlayerLabels: tactics.showPlayerLabels,
+            hiddenTeams: tactics.hiddenTeams,
+          }}
+          onClose={closeVideoExport}
+        />
+      )}
     </div>
   );
 }

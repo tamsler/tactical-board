@@ -13,7 +13,11 @@ export type AnalyticsEvent =
   | "pitch_layout_changed"
   | "board_reset"
   | "drawings_cleared"
-  | "help_opened";
+  | "help_opened"
+  | "animation_created"
+  | "animation_frame_added"
+  | "animation_played"
+  | "animation_save_failed";
 
 type EventParams = Record<string, string | number | boolean>;
 

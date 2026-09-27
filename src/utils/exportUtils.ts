@@ -2,13 +2,21 @@ import { jsPDF } from "jspdf";
 import type { BoardState } from "../hooks/useTacticsState";
 import { PITCH_WIDTH, PITCH_HEIGHT } from "../constants/formations";
 
+// Clone the board SVG without editor-only overlays (ghosts, guides, handles)
+function cloneForExport(svgElement: SVGSVGElement): SVGSVGElement {
+  const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
+  clonedSvg
+    .querySelectorAll("[data-editor-only]")
+    .forEach((node) => node.remove());
+  return clonedSvg;
+}
+
 // Convert SVG to Canvas for PNG / JPEG / PDF export
 export async function svgToCanvas(
   svgElement: SVGSVGElement,
   scale = 2,
 ): Promise<HTMLCanvasElement> {
-  // Clone SVG to avoid modifying the DOM
-  const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
+  const clonedSvg = cloneForExport(svgElement);
 
   // Set explicit width and height on cloned SVG
   clonedSvg.setAttribute("width", (PITCH_WIDTH * scale).toString());
@@ -69,7 +77,7 @@ export function exportAsSVG(
   svgElement: SVGSVGElement,
   filename = "soccer-tactics.svg",
 ) {
-  const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
+  const clonedSvg = cloneForExport(svgElement);
   clonedSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
   const svgData = new XMLSerializer().serializeToString(clonedSvg);
   const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
@@ -188,12 +196,9 @@ export async function exportAsPDF(
   pdf.save(filename);
 }
 
-// Export / Save JSON
-export function exportAsJSON(
-  state: BoardState,
-  filename = "soccer-tactics.json",
-) {
-  const jsonStr = JSON.stringify(state, null, 2);
+// Export / Save JSON (a project document or a legacy single board)
+export function exportAsJSON(data: unknown, filename = "soccer-tactics.json") {
+  const jsonStr = JSON.stringify(data, null, 2);
   const blob = new Blob([jsonStr], { type: "application/json" });
   const url = URL.createObjectURL(blob);
 

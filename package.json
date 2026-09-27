@@ -1,7 +1,7 @@
 {
   "name": "tactical-board",
   "private": true,
-  "version": "1.2.3",
+  "version": "1.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,6 +16,7 @@
     "html-to-image": "^1.11.13",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.42.0",
+    "mediabunny": "^1.60.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

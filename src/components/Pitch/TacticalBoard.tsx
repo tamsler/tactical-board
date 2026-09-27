@@ -28,15 +28,28 @@ import {
   getTBarPath,
   angle,
 } from "../../utils/mathUtils";
+import { createId } from "../../utils/id";
+import { PreviousFrameGhosts } from "../Animation/PreviousFrameGhosts";
+import { SampledBoardLayer } from "../Animation/SampledBoardLayer";
+import type { AnimationPlayback } from "../../animation/useAnimationPlayback";
+import { segmentIndexAt } from "../../animation/timeline";
+import { pathControl } from "../../animation/model";
+import {
+  controlThroughMidpoint,
+  curveMidpoint,
+  straightControl,
+} from "../../animation/path";
 
 interface TacticalBoardProps {
   tactics: ReturnType<typeof useTacticsState>;
   boardRef: React.RefObject<SVGSVGElement | null>;
+  playback?: AnimationPlayback;
 }
 
 export const TacticalBoard: React.FC<TacticalBoardProps> = ({
   tactics,
   boardRef,
+  playback,
 }) => {
   const {
     state,
@@ -85,6 +98,14 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
   const [draggedInitialShape, setDraggedInitialShape] =
     useState<TacticalShape | null>(null);
   const dragHasMovedRef = useRef(false);
+
+  // Bend-handle drag for a curved move into the selected frame (live preview only).
+  const [pathDrag, setPathDrag] = useState<{
+    entityId: string;
+    from: Point;
+    to: Point;
+    control: Point | null;
+  } | null>(null);
 
   // Zoom & Pan state (enhanced for mobile pinch-to-zoom & detailed pitch viewing)
   const [zoom, setZoom] = useState(1.0);
@@ -218,8 +239,8 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
         return;
       }
 
-      // Snapshot to history so moving the entity can be cleanly undone in 1 step
-      tactics.snapshotToHistory();
+      // Drag edits a draft; release commits it as a single undo step
+      tactics.beginDrag();
 
       setSelectedId(id);
       setSelectedType(type);
@@ -280,7 +301,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
       e: React.PointerEvent,
     ) => {
       e.stopPropagation();
-      tactics.snapshotToHistory();
+      tactics.beginDrag();
       setSelectedId(id);
       setSelectedType("line");
 
@@ -314,7 +335,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
   const handleShapeResizePointerDown = useCallback(
     (id: string, e: React.PointerEvent) => {
       e.stopPropagation();
-      tactics.snapshotToHistory();
+      tactics.beginDrag();
       setSelectedId(id);
       setSelectedType("shape");
 
@@ -365,6 +386,16 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
     }
 
     if (e.button !== 0) return; // Only primary button
+
+    // Preview is read-only: only panning a zoomed board is allowed.
+    if (tactics.isPreviewing) {
+      if (zoom > 1.02) {
+        setIsPanning(true);
+        setPanStartPoint({ x: e.clientX, y: e.clientY });
+        setInitialPanOffset({ ...panOffset });
+      }
+      return;
+    }
     const pt = getPitchCoordinates(e);
 
     // Quick creation tools
@@ -373,7 +404,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
         state.players.filter((p) => p.team === "A").length + 1
       ).toString();
       const newPlayer: Player = {
-        id: `player-a-${Date.now()}`,
+        id: createId("player-a"),
         team: "A",
         number: nextNum,
         name: "",
@@ -395,7 +426,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
         state.players.filter((p) => p.team === "B").length + 1
       ).toString();
       const newPlayer: Player = {
-        id: `player-b-${Date.now()}`,
+        id: createId("player-b"),
         team: "B",
         number: nextNum,
         name: "",
@@ -414,7 +445,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
 
     if (activeTool === "add-player-gk-a") {
       const newPlayer: Player = {
-        id: `player-gk-a-${Date.now()}`,
+        id: createId("player-gk-a"),
         team: "A",
         number: "1",
         name: "GK",
@@ -434,7 +465,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
 
     if (activeTool === "add-player-gk-b") {
       const newPlayer: Player = {
-        id: `player-gk-b-${Date.now()}`,
+        id: createId("player-gk-b"),
         team: "B",
         number: "1",
         name: "GK",
@@ -454,7 +485,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
 
     if (activeTool === "add-player-c") {
       const newPlayer: Player = {
-        id: `player-neutral-${Date.now()}`,
+        id: createId("player-neutral"),
         team: "neutral",
         number: "N",
         name: "",
@@ -472,7 +503,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
 
     if (activeTool === "add-ball") {
       const newBall: Ball = {
-        id: `ball-${Date.now()}`,
+        id: createId("ball"),
         x: pt.x,
         y: pt.y,
         size: 11,
@@ -496,7 +527,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
             : "mini-goal";
 
       const newEq: Equipment = {
-        id: `eq-${Date.now()}`,
+        id: createId("eq"),
         type,
         x: pt.x,
         y: pt.y,
@@ -512,7 +543,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
 
     if (activeTool === "text") {
       const newText: TextAnnotation = {
-        id: `text-${Date.now()}`,
+        id: createId("text"),
         x: Math.round(pt.x),
         y: Math.round(pt.y),
         text: "Coaching Notes",
@@ -627,6 +658,14 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
 
     const pt = getPitchCoordinates(e);
 
+    if (pathDrag) {
+      setPathDrag({
+        ...pathDrag,
+        control: controlThroughMidpoint(pathDrag.from, pathDrag.to, pt),
+      });
+      return;
+    }
+
     // 1. If Dragging an existing entity
     if (isDragging && draggedEntityId && selectedType) {
       const dx = pt.x - dragStartMousePos.x;
@@ -644,7 +683,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
                 y: Math.round(draggedInitialLine.controlPoint.y + dy),
               }
             : undefined;
-          tactics.setPresentState((prev) => ({
+          tactics.updateDrag((prev) => ({
             ...prev,
             lines: prev.lines.map((l) =>
               l.id === draggedEntityId
@@ -657,7 +696,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
             { x: Math.round(pt.x), y: Math.round(pt.y) },
             ...draggedInitialLine.points.slice(1),
           ];
-          tactics.setPresentState((prev) => ({
+          tactics.updateDrag((prev) => ({
             ...prev,
             lines: prev.lines.map((l) =>
               l.id === draggedEntityId ? { ...l, points: newPoints } : l,
@@ -668,7 +707,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
             ...draggedInitialLine.points.slice(0, -1),
             { x: Math.round(pt.x), y: Math.round(pt.y) },
           ];
-          tactics.setPresentState((prev) => ({
+          tactics.updateDrag((prev) => ({
             ...prev,
             lines: prev.lines.map((l) =>
               l.id === draggedEntityId ? { ...l, points: newPoints } : l,
@@ -676,7 +715,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
           }));
         } else if (dragMode === "line-control") {
           const newCtrl = { x: Math.round(pt.x), y: Math.round(pt.y) };
-          tactics.setPresentState((prev) => ({
+          tactics.updateDrag((prev) => ({
             ...prev,
             lines: prev.lines.map((l) =>
               l.id === draggedEntityId ? { ...l, controlPoint: newCtrl } : l,
@@ -687,7 +726,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
         if (dragMode === "move") {
           const newX = Math.round(draggedInitialShape.x + dx);
           const newY = Math.round(draggedInitialShape.y + dy);
-          tactics.setPresentState((prev) => ({
+          tactics.updateDrag((prev) => ({
             ...prev,
             shapes: prev.shapes.map((s) =>
               s.id === draggedEntityId ? { ...s, x: newX, y: newY } : s,
@@ -698,7 +737,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
           const newH = Math.round(
             Math.max(25, draggedInitialShape.height + dy),
           );
-          tactics.setPresentState((prev) => ({
+          tactics.updateDrag((prev) => ({
             ...prev,
             shapes: prev.shapes.map((s) =>
               s.id === draggedEntityId
@@ -710,7 +749,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
       } else if (selectedType === "player") {
         const newX = Math.round(draggedInitialPos.x + dx);
         const newY = Math.round(draggedInitialPos.y + dy);
-        tactics.setPresentState((prev) => ({
+        tactics.updateDrag((prev) => ({
           ...prev,
           players: prev.players.map((p) =>
             p.id === draggedEntityId ? { ...p, x: newX, y: newY } : p,
@@ -719,7 +758,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
       } else if (selectedType === "ball") {
         const newX = Math.round(draggedInitialPos.x + dx);
         const newY = Math.round(draggedInitialPos.y + dy);
-        tactics.setPresentState((prev) => ({
+        tactics.updateDrag((prev) => ({
           ...prev,
           balls: prev.balls.map((b) =>
             b.id === draggedEntityId ? { ...b, x: newX, y: newY } : b,
@@ -728,7 +767,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
       } else if (selectedType === "equipment") {
         const newX = Math.round(draggedInitialPos.x + dx);
         const newY = Math.round(draggedInitialPos.y + dy);
-        tactics.setPresentState((prev) => ({
+        tactics.updateDrag((prev) => ({
           ...prev,
           equipments: prev.equipments.map((eq) =>
             eq.id === draggedEntityId ? { ...eq, x: newX, y: newY } : eq,
@@ -737,7 +776,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
       } else if (selectedType === "text") {
         const newX = Math.round(draggedInitialPos.x + dx);
         const newY = Math.round(draggedInitialPos.y + dy);
-        tactics.setPresentState((prev) => ({
+        tactics.updateDrag((prev) => ({
           ...prev,
           texts: prev.texts.map((t) =>
             t.id === draggedEntityId ? { ...t, x: newX, y: newY } : t,
@@ -757,6 +796,32 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
   };
 
   // Pointer up (commit drag, finish drawing, or end pinch/pan)
+  const resetDragState = () => {
+    setIsDragging(false);
+    setDraggedEntityId(null);
+    setDraggedInitialLine(null);
+    setDraggedInitialShape(null);
+    dragHasMovedRef.current = false;
+  };
+
+  // Pointer cancel discards the drag or drawing instead of committing it
+  const handleBoardPointerCancel = (e: React.PointerEvent<SVGSVGElement>) => {
+    activePointersRef.current.delete(e.pointerId);
+    if (activePointersRef.current.size < 2) isPinchingRef.current = false;
+    setIsPanning(false);
+    setPathDrag(null);
+    if (isDragging) {
+      tactics.cancelDrag();
+      resetDragState();
+    }
+    if (isDrawing) {
+      setIsDrawing(false);
+      setDrawStartPoint(null);
+      setCurrentMousePoint(null);
+      setFreehandPoints([]);
+    }
+  };
+
   const handleBoardPointerUp = (e?: React.PointerEvent<SVGSVGElement>) => {
     if (e) {
       activePointersRef.current.delete(e.pointerId);
@@ -771,12 +836,24 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
       setIsPanning(false);
     }
 
+    if (pathDrag) {
+      if (pathDrag.control && previousFrame) {
+        const m = curveMidpoint(pathDrag.from, pathDrag.control, pathDrag.to);
+        const chordMid = straightControl(pathDrag.from, pathDrag.to);
+        // Dropping the handle back on the straight line removes the curve.
+        const straight = Math.hypot(m.x - chordMid.x, m.y - chordMid.y) < 4;
+        tactics.setPathControl(
+          previousFrame.id,
+          pathDrag.entityId,
+          straight ? null : pathDrag.control,
+        );
+      }
+      setPathDrag(null);
+    }
+
     if (isDragging) {
-      setIsDragging(false);
-      setDraggedEntityId(null);
-      setDraggedInitialLine(null);
-      setDraggedInitialShape(null);
-      dragHasMovedRef.current = false;
+      tactics.commitDrag();
+      resetDragState();
     }
 
     if (isDrawing && drawStartPoint && currentMousePoint) {
@@ -788,7 +865,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
       if (dist > 15 || activeTool === "draw-freehand") {
         if (activeTool === "line-run") {
           const newLine: DrawingLine = {
-            id: `line-${Date.now()}`,
+            id: createId("line"),
             type: "straight",
             points: [start, end],
             color: drawingColor,
@@ -799,7 +876,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
           pushState((prev) => ({ ...prev, lines: [...prev.lines, newLine] }));
         } else if (activeTool === "line-pass") {
           const newLine: DrawingLine = {
-            id: `line-${Date.now()}`,
+            id: createId("line"),
             type: "pass",
             points: [start, end],
             color: drawingColor,
@@ -810,7 +887,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
           pushState((prev) => ({ ...prev, lines: [...prev.lines, newLine] }));
         } else if (activeTool === "line-dribble") {
           const newLine: DrawingLine = {
-            id: `line-${Date.now()}`,
+            id: createId("line"),
             type: "dribble",
             points: [start, end],
             color: drawingColor,
@@ -830,7 +907,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
             y: midY + dx * 0.25,
           };
           const newLine: DrawingLine = {
-            id: `line-${Date.now()}`,
+            id: createId("line"),
             type: "curve",
             points: [start, end],
             controlPoint: ctrl,
@@ -842,7 +919,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
           pushState((prev) => ({ ...prev, lines: [...prev.lines, newLine] }));
         } else if (activeTool === "line-block") {
           const newLine: DrawingLine = {
-            id: `line-${Date.now()}`,
+            id: createId("line"),
             type: "block",
             points: [start, end],
             color: drawingColor,
@@ -856,7 +933,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
           freehandPoints.length > 2
         ) {
           const newLine: DrawingLine = {
-            id: `line-${Date.now()}`,
+            id: createId("line"),
             type: "freehand",
             points: freehandPoints,
             color: drawingColor,
@@ -866,7 +943,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
           pushState((prev) => ({ ...prev, lines: [...prev.lines, newLine] }));
         } else if (activeTool === "shape-rect") {
           const newShape: TacticalShape = {
-            id: `shape-${Date.now()}`,
+            id: createId("shape"),
             type: "rectangle",
             x: Math.min(start.x, end.x),
             y: Math.min(start.y, end.y),
@@ -883,7 +960,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
           }));
         } else if (activeTool === "shape-circle") {
           const newShape: TacticalShape = {
-            id: `shape-${Date.now()}`,
+            id: createId("shape"),
             type: "circle",
             x: Math.min(start.x, end.x),
             y: Math.min(start.y, end.y),
@@ -914,14 +991,50 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
       // Don't intercept when typing in inputs/textareas
       if (
         document.activeElement?.tagName === "INPUT" ||
-        document.activeElement?.tagName === "TEXTAREA"
+        document.activeElement?.tagName === "TEXTAREA" ||
+        document.activeElement?.tagName === "SELECT" ||
+        (document.activeElement as HTMLElement | null)?.isContentEditable
       ) {
+        return;
+      }
+
+      const noModifier = !e.metaKey && !e.ctrlKey && !e.altKey;
+      const isFrameKey =
+        e.key === "," ||
+        e.key === "." ||
+        e.key === "PageUp" ||
+        e.key === "PageDown";
+      if (isFrameKey && noModifier) {
+        if (!playback || isDragging || tactics.frames.length < 2) return;
+        e.preventDefault();
+        playback.step(e.key === "," || e.key === "PageUp" ? -1 : 1);
+        return;
+      }
+
+      // Space on a focused button activates that button instead.
+      if (e.key === " " && noModifier && playback) {
+        if (document.activeElement?.tagName === "BUTTON") return;
+        e.preventDefault();
+        if (playback.canPlay) playback.togglePlay();
+        return;
+      }
+
+      if (tactics.isPreviewing) {
+        if (e.key === "Escape" && playback) {
+          const t = playback.controller.getSnapshot().timeMs;
+          const source = segmentIndexAt(playback.timeline, t);
+          playback.editFrame(tactics.frames[source].id);
+        }
         return;
       }
 
       if (e.key === "Delete" || e.key === "Backspace") {
         tactics.deleteSelected();
       } else if (e.key === "Escape") {
+        setPathDrag(null);
+        tactics.cancelDrag();
+        setIsDragging(false);
+        setDraggedEntityId(null);
         setSelectedId(null);
         setSelectedType(null);
         setActiveTool("select");
@@ -940,7 +1053,14 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [tactics, setSelectedId, setSelectedType, setActiveTool]);
+  }, [
+    tactics,
+    playback,
+    setSelectedId,
+    setSelectedType,
+    setActiveTool,
+    isDragging,
+  ]);
 
   // Render live preview while user is actively dragging/drawing
   const renderDrawingPreview = () => {
@@ -1126,8 +1246,27 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
     return null;
   };
 
+  const isPlayerVisible = (p: Player) =>
+    pitchType !== "full" ||
+    (p.team !== "A" && p.team !== "B") ||
+    !hiddenTeams[p.team];
+
+  const selectedFrameIndex = tactics.frames.findIndex(
+    (f) => f.id === tactics.selectedFrameId,
+  );
+  const previousFrame =
+    tactics.showPreviousFrame && selectedFrameIndex > 0
+      ? tactics.frames[selectedFrameIndex - 1]
+      : null;
+  const isPreviewing = tactics.isPreviewing && !!playback;
+
   return (
     <div className="relative w-full h-full flex items-center justify-center select-none overflow-hidden p-0 sm:p-1 min-h-0 min-w-0">
+      {isPreviewing && (
+        <div className="absolute top-2 left-2 z-30 px-2 py-1 rounded-lg bg-sky-950/90 border border-sky-700 text-sky-200 text-[11px] font-semibold pointer-events-none">
+          Preview — select a frame to edit
+        </div>
+      )}
       {/* Floating Zoom Controls for Mobile (both Portrait and Landscape) and Tablets */}
       <div className="flex lg:hidden absolute bottom-2 right-2 sm:bottom-3 sm:right-3 z-30 items-center gap-1 bg-slate-900/95 backdrop-blur-md border border-slate-700/80 p-1 rounded-xl shadow-2xl text-slate-200">
         <button
@@ -1196,7 +1335,7 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
           onPointerDown={handleBoardPointerDown}
           onPointerMove={handleBoardPointerMove}
           onPointerUp={handleBoardPointerUp}
-          onPointerCancel={handleBoardPointerUp}
+          onPointerCancel={handleBoardPointerCancel}
         >
           {/* 1. Pitch Layer */}
           <SoccerPitch
@@ -1208,71 +1347,110 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
             showZones={showZones}
           />
 
-          {/* 2. Tactical Drawings & Annotations Layer */}
-          <PitchDrawings
-            lines={state.lines}
-            shapes={state.shapes}
-            texts={state.texts}
-            selectedId={selectedId}
-            onLinePointerDown={(id, e) =>
-              handleEntityPointerDown(id, "line", e)
-            }
-            onLineHandlePointerDown={handleLineHandlePointerDown}
-            onShapePointerDown={(id, e) =>
-              handleEntityPointerDown(id, "shape", e)
-            }
-            onShapeResizePointerDown={handleShapeResizePointerDown}
-            onTextPointerDown={(id, e) =>
-              handleEntityPointerDown(id, "text", e)
-            }
-          />
-
-          {/* 3. Equipments (Cones, Mannequins, Mini Goals) */}
-          {state.equipments.map((eq) => (
-            <PitchEquipment
-              key={eq.id}
-              equipment={eq}
-              isSelected={selectedId === eq.id}
-              onPointerDown={(id, e) =>
-                handleEntityPointerDown(id, "equipment", e)
-              }
+          {isPreviewing && playback ? (
+            <SampledBoardLayer
+              controller={playback.controller}
+              frames={tactics.frames}
+              timeline={playback.timeline}
+              isPlayerVisible={isPlayerVisible}
+              showPlayerLabels={showPlayerLabels}
             />
-          ))}
-
-          {/* 4. Balls */}
-          {state.balls.map((b) => (
-            <PitchBall
-              key={b.id}
-              ball={b}
-              isSelected={selectedId === b.id}
-              onPointerDown={(id, e) => handleEntityPointerDown(id, "ball", e)}
-            />
-          ))}
-
-          {/* 5. Players */}
-          {state.players
-            .filter(
-              (p) =>
-                pitchType !== "full" ||
-                (p.team !== "A" && p.team !== "B") ||
-                !hiddenTeams[p.team],
-            )
-            .map((p) => (
-              <PitchPlayer
-                key={p.id}
-                player={p}
-                isSelected={selectedId === p.id}
-                showPlayerLabels={showPlayerLabels}
-                onSelect={(id, e) =>
-                  handleEntityPointerDown(id, "player", e as React.PointerEvent)
+          ) : (
+            <>
+              {/* 2. Tactical Drawings & Annotations Layer */}
+              <PitchDrawings
+                lines={state.lines}
+                shapes={state.shapes}
+                texts={state.texts}
+                selectedId={selectedId}
+                onLinePointerDown={(id, e) =>
+                  handleEntityPointerDown(id, "line", e)
                 }
-                onPointerDown={(id, e) =>
-                  handleEntityPointerDown(id, "player", e)
+                onLineHandlePointerDown={handleLineHandlePointerDown}
+                onShapePointerDown={(id, e) =>
+                  handleEntityPointerDown(id, "shape", e)
+                }
+                onShapeResizePointerDown={handleShapeResizePointerDown}
+                onTextPointerDown={(id, e) =>
+                  handleEntityPointerDown(id, "text", e)
                 }
               />
-            ))}
 
-          {/* 6. Active Drawing Preview */}
+              {/* 3. Equipments (Cones, Mannequins, Mini Goals) */}
+              {state.equipments.map((eq) => (
+                <PitchEquipment
+                  key={eq.id}
+                  equipment={eq}
+                  isSelected={selectedId === eq.id}
+                  onPointerDown={(id, e) =>
+                    handleEntityPointerDown(id, "equipment", e)
+                  }
+                />
+              ))}
+
+              {/* 4. Previous-frame ghosts and movement guides (editor only) */}
+              {previousFrame && (
+                <PreviousFrameGhosts
+                  previousPlayers={previousFrame.players}
+                  previousBalls={previousFrame.balls}
+                  currentPlayers={state.players}
+                  currentBalls={state.balls}
+                  isPlayerVisible={isPlayerVisible}
+                  controlFor={(id) =>
+                    pathDrag?.entityId === id && pathDrag.control
+                      ? pathDrag.control
+                      : pathControl(previousFrame, id)
+                  }
+                  onHandlePointerDown={
+                    activeTool === "select" && !isDragging
+                      ? (entityId, from, to, e) => {
+                          e.stopPropagation();
+                          (e.target as Element).setPointerCapture(e.pointerId);
+                          setPathDrag({ entityId, from, to, control: null });
+                        }
+                      : undefined
+                  }
+                  onHandleReset={(entityId) =>
+                    tactics.setPathControl(previousFrame.id, entityId, null)
+                  }
+                />
+              )}
+
+              {/* 5. Balls */}
+              {state.balls.map((b) => (
+                <PitchBall
+                  key={b.id}
+                  ball={b}
+                  isSelected={selectedId === b.id}
+                  onPointerDown={(id, e) =>
+                    handleEntityPointerDown(id, "ball", e)
+                  }
+                />
+              ))}
+
+              {/* 6. Players */}
+              {state.players.filter(isPlayerVisible).map((p) => (
+                <PitchPlayer
+                  key={p.id}
+                  player={p}
+                  isSelected={selectedId === p.id}
+                  showPlayerLabels={showPlayerLabels}
+                  onSelect={(id, e) =>
+                    handleEntityPointerDown(
+                      id,
+                      "player",
+                      e as React.PointerEvent,
+                    )
+                  }
+                  onPointerDown={(id, e) =>
+                    handleEntityPointerDown(id, "player", e)
+                  }
+                />
+              ))}
+            </>
+          )}
+
+          {/* 7. Active Drawing Preview */}
           {renderDrawingPreview()}
         </svg>
       </div>

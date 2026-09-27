@@ -1,11 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import type { useTacticsState } from "../../hooks/useTacticsState";
 import {
   FORMATIONS_11V11_TEAM_A,
   FORMATIONS_9V9_TEAM_A,
   FORMATIONS_7V7_TEAM_A,
 } from "../../constants/formations";
-import type { GrassStyle, MatchFormat, PitchType } from "../../types/tactics";
+import type {
+  FormationPreset,
+  GrassStyle,
+  MatchFormat,
+  PitchType,
+} from "../../types/tactics";
+import { frameLabel } from "../../animation/model";
 import {
   Shield,
   Grid,
@@ -50,7 +56,33 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
     setShowZones,
     showPlayerLabels,
     setShowPlayerLabels,
+    isAnimated,
+    frames,
+    selectedFrameId,
+    isPreviewing,
   } = tactics;
+
+  const [formationError, setFormationError] = useState<string | null>(null);
+  const frameIndex = Math.max(
+    0,
+    frames.findIndex((f) => f.id === selectedFrameId),
+  );
+  const currentFrameLabel = frameLabel(frames[frameIndex], frameIndex);
+
+  const applyFormation = (f: FormationPreset, team: "A" | "B") => {
+    if (loadFormation(f, team)) {
+      setFormationError(null);
+      return;
+    }
+    const count = state.players.filter((p) =>
+      pitchType === "half" ? p.team === "A" || p.team === "B" : p.team === team,
+    ).length;
+    setFormationError(
+      `${f.system} needs ${f.players.length} players, but this team has ${count}. Animated boards keep the same players in every frame.`,
+    );
+  };
+
+  const lockedClass = "disabled:opacity-40 disabled:cursor-not-allowed";
 
   // Active formations list depending on format
   const currentFormations =
@@ -204,8 +236,9 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
               <button
                 key={layout.id}
                 onClick={() => switchPitchType(layout.id)}
+                disabled={isAnimated && !isActive}
                 title={layout.desc}
-                className={`py-2 px-1 rounded-lg text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                className={`py-2 px-1 rounded-lg text-center transition cursor-pointer flex flex-col items-center justify-center gap-1.5 ${lockedClass} ${
                   isActive
                     ? "bg-slate-800 text-emerald-400 ring-1 ring-emerald-500 shadow"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
@@ -237,8 +270,9 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
                   <button
                     key={team}
                     onClick={() => switchHalfPitchTeam(team)}
+                    disabled={isAnimated && !isActive}
                     title={`Set up ${isRed ? "Team Red" : "Team Blue"} on the half pitch`}
-                    className={`py-1.5 px-2 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                    className={`py-1.5 px-2 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${lockedClass} ${
                       isActive
                         ? isRed
                           ? "bg-red-600 text-white ring-1 ring-red-400 shadow"
@@ -257,6 +291,13 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
             </div>
           </div>
         )}
+
+        {isAnimated && (
+          <p className="text-[11px] text-slate-400">
+            Layout, game format and half-pitch team are locked while the board
+            has several frames. Start a new board to change them.
+          </p>
+        )}
       </div>
 
       {/* 1. GAME FORMAT SELECTOR (11v11, 9v9, 7v7) */}
@@ -272,7 +313,8 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
               <button
                 key={fmt.id}
                 onClick={() => switchFormat(fmt.id)}
-                className={`py-1.5 px-2 rounded-md font-bold text-center transition cursor-pointer ${
+                disabled={isAnimated && matchFormat !== fmt.id}
+                className={`py-1.5 px-2 rounded-md font-bold text-center transition cursor-pointer ${lockedClass} ${
                   matchFormat === fmt.id
                     ? "bg-emerald-600 text-white shadow"
                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
@@ -316,6 +358,17 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
             </span>
           </div>
 
+          {isAnimated && (
+            <p className="text-[11px] text-slate-400">
+              Formations move players in {currentFrameLabel} only.
+            </p>
+          )}
+          {formationError && (
+            <p role="alert" className="text-[11px] text-rose-400">
+              {formationError}
+            </p>
+          )}
+
           {/* Team A (Home / Red) */}
           {(pitchType === "full" || halfPitchTeam === "A") && (
             <div>
@@ -346,7 +399,8 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
                   return (
                     <button
                       key={`team-a-${f.id}`}
-                      onClick={() => loadFormation(f, "A")}
+                      onClick={() => applyFormation(f, "A")}
+                      disabled={isPreviewing}
                       className={`px-2.5 py-1.5 rounded-lg border text-[11px] transition text-left cursor-pointer active:scale-95 flex items-center justify-between gap-1 ${
                         isSelected
                           ? "bg-red-600 text-white border-red-500 font-bold shadow-md ring-1 ring-red-400"
@@ -399,7 +453,8 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
                   return (
                     <button
                       key={`team-b-${f.id}`}
-                      onClick={() => loadFormation(f, "B")}
+                      onClick={() => applyFormation(f, "B")}
+                      disabled={isPreviewing}
                       className={`px-2.5 py-1.5 rounded-lg border text-[11px] transition text-left cursor-pointer active:scale-95 flex items-center justify-between gap-1 ${
                         isSelected
                           ? "bg-sky-600 text-white border-sky-500 font-bold shadow-md ring-1 ring-sky-400"
@@ -499,11 +554,14 @@ export const FormationsPanel: React.FC<FormationsPanelProps> = ({
       <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2">
         <div className="flex items-center gap-2 font-bold text-sm text-slate-100">
           <StickyNote className="w-4 h-4 text-amber-400" />
-          <span>Coaching Notes</span>
+          <span>
+            {isAnimated ? `Notes · ${currentFrameLabel}` : "Coaching Notes"}
+          </span>
         </div>
         <textarea
           rows={4}
           value={state.notes}
+          readOnly={isPreviewing}
           onChange={(e) =>
             pushState((prev) => ({ ...prev, notes: e.target.value }))
           }

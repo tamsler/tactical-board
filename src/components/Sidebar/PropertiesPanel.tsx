@@ -406,7 +406,9 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     updateShape,
     updateText,
     deleteSelected,
+    isAnimated,
   } = tactics;
+  const fromAllFrames = isAnimated ? " from all frames" : "";
 
   if (!selectedId || !selectedType) {
     return (
@@ -453,7 +455,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </div>
           <button
             onClick={deleteSelected}
-            title="Delete Player"
+            title={`Delete Player${fromAllFrames}`}
             className="p-1.5 hover:bg-rose-950/60 text-rose-400 rounded-lg transition cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
@@ -582,7 +584,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </div>
           <button
             onClick={deleteSelected}
-            title="Delete Ball"
+            title={`Delete Ball${fromAllFrames}`}
             className="p-1.5 hover:bg-rose-950/60 text-rose-400 rounded-lg transition cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
