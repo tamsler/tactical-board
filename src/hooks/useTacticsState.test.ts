@@ -150,6 +150,34 @@ describe("useTacticsState", () => {
     expect(result.current.state.players.length).toBe(14); // 7 Team A + 7 Team B
   });
 
+  it("copies equipment to all frames as one undo step", () => {
+    const { result } = renderHook(() => useTacticsState());
+    act(() => result.current.addFrame());
+    act(() => result.current.addFrame());
+    act(() => result.current.selectFrame(result.current.frames[0].id));
+    act(() => {
+      result.current.pushState((prev) => ({
+        ...prev,
+        equipments: [{ id: "g1", type: "mini-goal", x: 10, y: 20 }],
+      }));
+    });
+    const hasGoal = () =>
+      result.current.frames.map((f) => f.equipments.some((e) => e.id === "g1"));
+    expect(hasGoal()).toEqual([true, false, false]);
+
+    act(() => {
+      expect(result.current.copyEquipmentToAllFrames("g1")).toBe(true);
+    });
+    expect(hasGoal()).toEqual([true, true, true]);
+
+    act(() => result.current.undo());
+    expect(hasGoal()).toEqual([true, false, false]);
+
+    act(() => result.current.redo());
+    act(() => result.current.removeEquipmentFromAllFrames("g1"));
+    expect(hasGoal()).toEqual([false, false, false]);
+  });
+
   describe("drag transactions", () => {
     const moveFirstPlayer = (
       result: { current: ReturnType<typeof useTacticsState> },

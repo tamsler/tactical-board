@@ -4,13 +4,17 @@ import {
   applyBoardEdit,
   assignFormationSlots,
   boardFromSequence,
+  copyEquipmentToAllFrames,
   deleteFrame,
+  equipmentCopyCount,
   duplicateFrame,
   moveFrame,
+  removeEquipmentFromAllFrames,
   sequenceFromBoard,
   setFrameTiming,
   setPathControl,
 } from "./commands";
+import { LIMITS } from "./model";
 import { checkFrames } from "./validate";
 
 const board: BoardState = {
@@ -298,5 +302,73 @@ describe("assignFormationSlots", () => {
 
   it("rejects a player-count mismatch", () => {
     expect(assignFormationSlots(players, [{ x: 1, y: 1 }])).toBeNull();
+  });
+});
+
+describe("equipment across frames", () => {
+  const goal = { id: "g1", type: "mini-goal", x: 50, y: 60 } as const;
+
+  function withGoalInFrame(frameIndex: number) {
+    const { seq, ids } = threeFrames();
+    const prev = boardFromSequence(seq, ids[frameIndex]);
+    const next = applyBoardEdit(seq, ids[frameIndex], prev, {
+      ...prev,
+      equipments: [...prev.equipments, goal],
+    });
+    return { seq: next, ids };
+  }
+
+  it("keeps new equipment in its own frame", () => {
+    const { seq, ids } = withGoalInFrame(0);
+    expect(equipmentCopyCount(seq, ids[0], "g1")).toBe(1);
+  });
+
+  it("copies an item into every frame in one command", () => {
+    const { seq, ids } = withGoalInFrame(0);
+    const next = copyEquipmentToAllFrames(seq, ids[0], "g1")!;
+    for (const f of next.frames) {
+      expect(f.equipments.filter((e) => e.id === "g1")).toEqual([goal]);
+    }
+    expect(equipmentCopyCount(next, ids[0], "g1")).toBe(3);
+    expect(checkFrames(next.frames).ok).toBe(true);
+  });
+
+  it("overwrites a moved copy and leaves other equipment alone", () => {
+    const { seq, ids } = threeFrames();
+    const prev = boardFromSequence(seq, ids[2]);
+    const moved = applyBoardEdit(seq, ids[2], prev, {
+      ...prev,
+      equipments: [{ ...prev.equipments[0], x: 99 }],
+    });
+    expect(equipmentCopyCount(moved, ids[0], "e1")).toBe(2);
+    const next = copyEquipmentToAllFrames(moved, ids[0], "e1")!;
+    expect(next.frames[2].equipments).toEqual([board.equipments[0]]);
+  });
+
+  it("returns the same sequence when nothing changes", () => {
+    const { seq, ids } = threeFrames();
+    expect(copyEquipmentToAllFrames(seq, ids[0], "e1")).toBe(seq);
+    expect(copyEquipmentToAllFrames(seq, ids[0], "nope")).toBe(seq);
+    expect(removeEquipmentFromAllFrames(seq, "nope")).toBe(seq);
+  });
+
+  it("refuses when a frame is at the equipment limit", () => {
+    const { seq, ids } = withGoalInFrame(0);
+    const full = Array.from(
+      { length: LIMITS.maxItemsPerCollection },
+      (_, i) => ({ ...goal, id: `c${i}` }),
+    );
+    const frames = seq.frames.map((f, i) =>
+      i === 1 ? { ...f, equipments: full } : f,
+    );
+    expect(copyEquipmentToAllFrames({ ...seq, frames }, ids[0], "g1")).toBe(
+      null,
+    );
+  });
+
+  it("removes an item from every frame", () => {
+    const { seq } = threeFrames();
+    const next = removeEquipmentFromAllFrames(seq, "e1");
+    for (const f of next.frames) expect(f.equipments).toEqual([]);
   });
 });

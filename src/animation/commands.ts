@@ -1,5 +1,5 @@
 import type { BoardState } from "../hooks/useTacticsState";
-import type { Ball, Player, Point } from "../types/tactics";
+import type { Ball, Equipment, Player, Point } from "../types/tactics";
 import { createId } from "../utils/id";
 import {
   BALL_POSE_KEYS,
@@ -308,6 +308,75 @@ export function setFrameTiming(
     };
   }
   return { ok: true, value: { ...seq, frames } };
+}
+
+function sameEquipment(a: Equipment, b: Equipment): boolean {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  return [...keys].every(
+    (k) => a[k as keyof Equipment] === b[k as keyof Equipment],
+  );
+}
+
+/** How many frames already hold this equipment item exactly as it is in `frameId`. */
+export function equipmentCopyCount(
+  seq: SequenceState,
+  frameId: string,
+  equipmentId: string,
+): number {
+  const source = seq.frames[frameIndex(seq, frameId)].equipments.find(
+    (e) => e.id === equipmentId,
+  );
+  if (!source) return 0;
+  return seq.frames.filter((f) =>
+    f.equipments.some((e) => e.id === equipmentId && sameEquipment(e, source)),
+  ).length;
+}
+
+/**
+ * Places one equipment item, exactly as it is in `frameId`, in every frame:
+ * frames that already have it (same ID) are overwritten, the rest get it
+ * appended. Returns null when a frame is at the equipment limit.
+ */
+export function copyEquipmentToAllFrames(
+  seq: SequenceState,
+  frameId: string,
+  equipmentId: string,
+): SequenceState | null {
+  const source = seq.frames[frameIndex(seq, frameId)].equipments.find(
+    (e) => e.id === equipmentId,
+  );
+  if (!source) return seq;
+  let changed = false;
+  const frames = seq.frames.map((f) => {
+    const i = f.equipments.findIndex((e) => e.id === equipmentId);
+    if (i !== -1 && sameEquipment(f.equipments[i], source)) return f;
+    changed = true;
+    const equipments = [...f.equipments];
+    if (i === -1) equipments.push(source);
+    else equipments[i] = source;
+    return { ...f, equipments };
+  });
+  if (frames.some((f) => f.equipments.length > LIMITS.maxItemsPerCollection)) {
+    return null;
+  }
+  return changed ? { ...seq, frames } : seq;
+}
+
+/** Removes one equipment item (by ID) from every frame. */
+export function removeEquipmentFromAllFrames(
+  seq: SequenceState,
+  equipmentId: string,
+): SequenceState {
+  let changed = false;
+  const frames = seq.frames.map((f) => {
+    if (!f.equipments.some((e) => e.id === equipmentId)) return f;
+    changed = true;
+    return {
+      ...f,
+      equipments: f.equipments.filter((e) => e.id !== equipmentId),
+    };
+  });
+  return changed ? { ...seq, frames } : seq;
 }
 
 export function renameFrame(

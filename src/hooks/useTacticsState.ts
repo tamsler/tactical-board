@@ -30,11 +30,13 @@ import {
 } from "../animation/model";
 import {
   applyBoardEdit,
+  copyEquipmentToAllFrames as copyEquipmentToAllFramesCommand,
   assignFormationSlots,
   boardFromSequence,
   deleteFrame as deleteFrameCommand,
   duplicateFrame,
   moveFrame as moveFrameCommand,
+  removeEquipmentFromAllFrames as removeEquipmentFromAllFramesCommand,
   renameFrame as renameFrameCommand,
   sequenceFromBoard,
   setFrameTiming as setFrameTimingCommand,
@@ -80,8 +82,7 @@ const HISTORY_LIMIT = 25;
 const AUTOSAVE_DELAY_MS = 750;
 
 export type SaveStatus =
-  | { state: "saved" }
-  | { state: "error"; reason: "quota" | "unavailable" };
+  { state: "saved" } | { state: "error"; reason: "quota" | "unavailable" };
 
 type BoardUpdate = BoardState | ((prev: BoardState) => BoardState);
 
@@ -998,6 +999,48 @@ export function useTacticsState() {
     [],
   );
 
+  /** Copies an equipment item from the selected frame into every frame; one undo step. Returns false at the equipment limit. */
+  const copyEquipmentToAllFrames = useCallback(
+    (equipmentId: string) => {
+      if (
+        copyEquipmentToAllFramesCommand(
+          present.sequence,
+          present.selectedFrameId,
+          equipmentId,
+        ) === null
+      ) {
+        return false;
+      }
+      setHistory((curr) => {
+        const sequence = copyEquipmentToAllFramesCommand(
+          curr.present.sequence,
+          curr.present.selectedFrameId,
+          equipmentId,
+        );
+        return sequence === null || sequence === curr.present.sequence
+          ? curr
+          : commit(curr, { ...curr.present, sequence });
+      });
+      return true;
+    },
+    [present],
+  );
+
+  /** Removes an equipment item from every frame; one undo step. */
+  const removeEquipmentFromAllFrames = useCallback((equipmentId: string) => {
+    setHistory((curr) => {
+      const sequence = removeEquipmentFromAllFramesCommand(
+        curr.present.sequence,
+        equipmentId,
+      );
+      return sequence === curr.present.sequence
+        ? curr
+        : commit(curr, { ...curr.present, sequence });
+    });
+    setSelectedId(null);
+    setSelectedType(null);
+  }, []);
+
   const renameFrame = useCallback((frameId: string, title: string) => {
     setHistory((curr) =>
       commit(curr, {
@@ -1436,6 +1479,8 @@ export function useTacticsState() {
     renameFrame,
     setFrameTiming,
     setPathControl,
+    copyEquipmentToAllFrames,
+    removeEquipmentFromAllFrames,
     hasDraft,
     isPreviewing,
     setPreviewing,

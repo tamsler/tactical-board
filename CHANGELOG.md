@@ -10,6 +10,12 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
 
 ## [Unreleased]
 
+### Added
+
+- **(beta)** Equipment on an animated board can be copied to every frame, or
+  removed from every frame, from the Properties panel. The panel shows how many
+  frames hold the item as it is in the selected frame.
+
 ## [1.4.0] - 2026-09-27
 
 ### Added

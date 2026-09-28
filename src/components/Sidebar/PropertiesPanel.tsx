@@ -9,8 +9,11 @@ import {
   Bold,
   Italic,
   FileText,
+  Layers,
 } from "lucide-react";
+import { equipmentCopyCount } from "../../animation/commands";
 import { getContrastTextColor } from "../../utils/mathUtils";
+import { showToast } from "../../utils/toast";
 import { isFormatActive, toggleMarkdownFormat } from "../../utils/textUtils";
 
 interface PropertiesPanelProps {
@@ -407,6 +410,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     updateText,
     deleteSelected,
     isAnimated,
+    frames,
+    selectedFrameId,
   } = tactics;
   const fromAllFrames = isAnimated ? " from all frames" : "";
 
@@ -617,6 +622,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     if (!eq) return null;
 
     const currentScale = eq.scale ?? 1.0;
+    const copies = isAnimated
+      ? equipmentCopyCount(
+          { title: state.title, frames },
+          selectedFrameId,
+          eq.id,
+        )
+      : 1;
 
     const getEquipmentTitle = () => {
       switch (eq.type) {
@@ -656,12 +668,49 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </div>
           <button
             onClick={deleteSelected}
-            title="Delete Equipment"
+            title={isAnimated ? "Delete from this frame" : "Delete Equipment"}
             className="p-1.5 hover:bg-rose-950/60 text-rose-400 rounded-lg transition cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Equipment belongs to one frame; these apply it to the whole animation */}
+        {isAnimated && (
+          <div className="space-y-2">
+            <div className="text-[10px] text-slate-400">
+              {copies === frames.length
+                ? `In all ${frames.length} frames`
+                : `In ${copies} of ${frames.length} frames`}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  if (!tactics.copyEquipmentToAllFrames(eq.id)) {
+                    showToast(
+                      "A frame already has the maximum amount of equipment.",
+                      "error",
+                    );
+                  }
+                }}
+                disabled={copies === frames.length}
+                title="Place this item, as it is here, in every frame"
+                className="flex-1 flex items-center justify-center gap-1 py-1 px-1 rounded text-[10px] font-semibold transition cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-slate-800"
+              >
+                <Layers className="w-3 h-3" />
+                Copy to all frames
+              </button>
+              <button
+                onClick={() => tactics.removeEquipmentFromAllFrames(eq.id)}
+                title="Remove this item from every frame"
+                className="flex-1 flex items-center justify-center gap-1 py-1 px-1 rounded text-[10px] font-semibold transition cursor-pointer bg-slate-800 hover:bg-rose-950/60 text-rose-400"
+              >
+                <Trash2 className="w-3 h-3" />
+                Remove from all
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Scale / Size Slider */}
         <div>

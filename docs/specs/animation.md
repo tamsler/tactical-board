@@ -170,6 +170,13 @@ arrows are not reinterpreted as motion paths. The document title is shared;
 the frame inspector edits frame label and notes. Clearing drawings affects the
 selected frame only.
 
+Equipment added after frames exist can be applied to the whole animation from
+the Properties panel: **Copy to all frames** places the item, as it is in the
+selected frame, in every frame (overwriting copies with the same ID, refused
+if a frame is at the equipment limit), and **Remove from all** deletes it from
+every frame. Each is one undo step. The panel shows how many frames hold the
+item exactly as it is in the selected frame.
+
 ### Layout lock
 
 Half-pitch mode remaps formations, so it is a different layout. While a
