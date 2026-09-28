@@ -17,7 +17,6 @@ import type { Player, Ball, Equipment } from "./types/tactics";
 import { TEAM_COLORS } from "./constants/formations";
 import { track } from "./utils/analytics";
 import { createId } from "./utils/id";
-import { isAnimationFeatureEnabled } from "./animation/featureFlag";
 import { useAnimationPlayback } from "./animation/useAnimationPlayback";
 import { sampleAt } from "./animation/sample";
 import type { VideoFormat } from "./animation/videoExport";
@@ -38,11 +37,8 @@ export function App() {
     return true;
   });
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const [animationEnabled] = useState(isAnimationFeatureEnabled);
   const [isTimelineOpen, setIsTimelineOpen] = useState(false);
-  // A board that already has frames always shows them, even with the flag off.
-  const showTimeline =
-    tactics.isAnimated || (animationEnabled && isTimelineOpen);
+  const showTimeline = tactics.isAnimated || isTimelineOpen;
   const playback = useAnimationPlayback(tactics);
   useShareLinkImport(tactics);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -131,11 +127,7 @@ export function App() {
 
   const handleAddEquipment = (
     type:
-      | "cone-orange"
-      | "cone-yellow"
-      | "cone-blue"
-      | "mannequin"
-      | "mini-goal",
+      "cone-orange" | "cone-yellow" | "cone-blue" | "mannequin" | "mini-goal",
   ) => {
     const newEq: Equipment = {
       id: createId("eq"),
@@ -164,8 +156,7 @@ export function App() {
         boardRef={boardRef}
         onBeforeExport={playback.pause}
         getExportBoard={getExportBoard}
-        onShare={animationEnabled ? () => setIsShareOpen(true) : undefined}
-        animationEnabled={animationEnabled}
+        onShare={() => setIsShareOpen(true)}
         onExportVideo={(format) => {
           playback.pause();
           setVideoFormat(format);
@@ -234,9 +225,7 @@ export function App() {
               isAnimated={tactics.isAnimated}
               disabled={tactics.isPreviewing}
               onAnimate={
-                animationEnabled && !showTimeline
-                  ? () => setIsTimelineOpen(true)
-                  : undefined
+                showTimeline ? undefined : () => setIsTimelineOpen(true)
               }
             />
           </div>

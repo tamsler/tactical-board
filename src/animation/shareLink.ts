@@ -75,11 +75,17 @@ async function decompress(
   return new TextDecoder().decode(out);
 }
 
+/** The current page without its fragment or the retired `?animate=1` beta flag. */
+function currentPageUrl(): string {
+  const url = new URL(window.location.href);
+  url.hash = "";
+  url.searchParams.delete("animate");
+  return url.toString();
+}
+
 export async function createShareLink(
   doc: TacticsDocument,
-  baseUrl: string = window.location.origin +
-    window.location.pathname +
-    window.location.search,
+  baseUrl: string = currentPageUrl(),
 ): Promise<string> {
   const payload = toBase64Url(await compress(JSON.stringify(doc)));
   return `${baseUrl}${PREFIX}${LINK_VERSION}.${payload}`;

@@ -245,7 +245,8 @@ Selected".
 | JPEG | Same as PNG, quality 0.95 |
 | SVG | Vector clone of the board |
 | PDF | A4 landscape. Header with the title (fallback "Soccer Tactical Board Plan") and "Created: {date} \| Tactical Blueprint"; the pitch image on the left; "COACHING NOTES" on the right (fallback "No notes provided for this drill.") with Team Red / Team Blue player counts and ball/equipment counts; footer "Tactical Soccer Board Pro • Exported Tactical Sheet" |
-| JSON | "Save Project File (JSON)" downloads the board as `{title}.json` (fallback `tactics-data.json`) |
+| Project | "Save (Ctrl/Cmd+S)" writes every frame as a `.tacticalboard` file (see [animation.md](animation.md)) |
+| JSON | "Current Frame (legacy JSON)" downloads the selected frame as `{title}-frame.json` (fallback `tactics-frame-frame.json`) for older versions |
 
 - **Exports** leave out editor-only overlays (`data-editor-only`). File names
   are the board title in lowercase with punctuation replaced by hyphens.

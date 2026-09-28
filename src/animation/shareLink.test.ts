@@ -36,6 +36,19 @@ const doc = toDocument(
 const base = "https://tacticalboard.app/";
 
 describe("share links", () => {
+  it("links to the current page without the retired ?animate=1 flag", async () => {
+    const before = window.location.href;
+    window.history.replaceState(null, "", "/board?animate=1&lang=en#old");
+    try {
+      const link = await createShareLink(doc);
+      expect(
+        link.startsWith(`${window.location.origin}/board?lang=en#share=`),
+      ).toBe(true);
+    } finally {
+      window.history.replaceState(null, "", before);
+    }
+  });
+
   it("round-trips a document through the URL fragment (A15)", async () => {
     const link = await createShareLink(doc, base);
     const hash = link.slice(base.length);

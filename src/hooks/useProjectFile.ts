@@ -32,16 +32,12 @@ const isProjectFile = (handle: FileSystemFileHandle) =>
 /**
  * Save / Save As / Open for project files. Uses the File System Access API
  * where available and falls back to download and file-input upload.
- * With `enabled: false` there is no file picker and no Ctrl/Cmd+S shortcut.
  */
-export function useProjectFile(
-  tactics: Tactics,
-  { enabled }: { enabled: boolean },
-) {
+export function useProjectFile(tactics: Tactics) {
   const { projectDocument, importProject, isPreviewing } = tactics;
   const [handle, setHandle] = useState<FileSystemFileHandle | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const canPick = enabled && supportsFileSystemAccess();
+  const canPick = supportsFileSystemAccess();
 
   const contents = useCallback(
     () => JSON.stringify(projectDocument, null, 2),
@@ -121,7 +117,6 @@ export function useProjectFile(
   }, [canPick, importFile]);
 
   useEffect(() => {
-    if (!enabled) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
@@ -131,7 +126,7 @@ export function useProjectFile(
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [enabled, save, saveAs]);
+  }, [save, saveAs]);
 
   // Files opened from the OS (double-click) when the site is installed as an app.
   useEffect(() => {

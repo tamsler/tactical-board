@@ -15,15 +15,14 @@ coaching sheet. Boards are saved in your browser; nothing is uploaded.
   overlays.
 - Tools for runs, passes, dribbles, curved runs, screens, freehand lines,
   shaded zones and text. Anything can be moved or edited afterwards.
+- Animated sequences: build frames, move players and the ball, bend their
+  runs, and play them back. Export the animation as MP4 or MOV video.
 - Export to PNG, JPEG, SVG or a PDF sheet with your coaching notes.
-- Undo and redo, automatic saving, and saving or loading a board as a file.
+- Share a board as a link, with the whole board stored in the link itself.
+- Undo and redo, automatic saving, and saving or opening `.tacticalboard`
+  project files.
 
-### Beta: animation
-
-Add `?animate=1` to the address
-([tacticalboard.app/?animate=1](https://tacticalboard.app/?animate=1)) to try
-animated sequences: build frames, play them back, share a board as a link,
-save `.tacticalboard` files and export MP4 or MOV video. Feedback is welcome in
+Feedback is welcome in
 [issues](https://github.com/tamsler/tactical-board/issues).
 
 See the [CHANGELOG](CHANGELOG.md) for what changed in each version.
@@ -46,9 +45,6 @@ npm run dev
 | `npm run preview` | Serve the production build |
 | `npm test` | Run the tests once (`npm run test:watch` to watch) |
 | `npm run lint` | Lint with [Oxlint](https://oxc.rs/docs/guide/usage/linter/rules) |
-
-To turn the beta on for every page load, start the server with
-`VITE_ENABLE_ANIMATION=true npm run dev`.
 
 **Built with** React 19, TypeScript, Vite and Tailwind CSS v4. Exports use
 html-to-image and jsPDF, video uses Mediabunny, and tests use Vitest with

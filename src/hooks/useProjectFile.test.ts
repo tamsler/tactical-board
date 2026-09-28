@@ -22,7 +22,7 @@ const legacyBoard = {
 function setup() {
   return renderHook(() => {
     const tactics = useTacticsState();
-    const file = useProjectFile(tactics, { enabled: true });
+    const file = useProjectFile(tactics);
     return { tactics, file };
   });
 }

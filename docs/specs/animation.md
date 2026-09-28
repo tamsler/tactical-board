@@ -331,7 +331,6 @@ The renderer never writes sampled values into frames.
 | `src/components/Animation/PlaybackControls.tsx` | Transport and seek |
 | `src/components/Animation/FrameInspector.tsx` | Label, hold, duration |
 | `src/components/Animation/PreviousFrameGhosts.tsx` | Previous-frame ghosts and movement guides (`data-editor-only`) |
-| `src/animation/featureFlag.ts` | `VITE_ENABLE_ANIMATION` / `?animate=1` check |
 
 `useTacticsState` keeps its facade. Internally, history holds
 `{ sequence, selectedFrameId }` snapshots; `state` (a `BoardState`) is derived
@@ -447,22 +446,13 @@ slice follows Phase 2 plus minimal playback.
 
 ### Feature flag and analytics
 
-The animation UI is hidden unless `VITE_ENABLE_ANIMATION=true` at build time or
-the URL contains `?animate=1`. Domain modules and P0 fixes ship unflagged.
-
-Beta scope (until general rollout):
-
-| Behind the flag | For everyone |
-|---|---|
-| Animate button, timeline, playback | P0 static-board fixes |
-| Save/Save As/Open with the file picker, Ctrl/Cmd+S | v2 storage and migration, save status, recovery banner |
-| Project-format (v3) Save and "Current Frame (legacy JSON)" | Original "Save Project File (JSON)" single-board download |
-| Share Link… (links keep `?animate=1`) | Opening share links and importing v2/v3 files |
-
-A board that already has more than one frame — from a share link, an imported
-file or earlier beta use — always shows its timeline, video export and
-project-format Save, even without the flag, so frames are never hidden or
-dropped.
+During the beta (1.3.0–1.4.0) the animation UI was hidden unless
+`VITE_ENABLE_ANIMATION=true` at build time or the URL contained `?animate=1`.
+Since 1.5.0 there is no flag: the Animate button, timeline, file picker,
+Ctrl/Cmd+S, project-format Save, "Current Frame (legacy JSON)" and Share Link
+are available to everyone, and the original single-board "Save Project File
+(JSON)" menu item is gone. Share links drop `?animate=1` from the page URL;
+old links that still carry it open normally.
 
 Add to the `AnalyticsEvent` union: `animation_created`,
 `animation_frame_added`, `animation_played`, `animation_save_failed`. Events
@@ -542,8 +532,7 @@ so it needs a privacy policy, deletion and GDPR/COPPA review first.
 - The project file is the `TacticsDocument` JSON saved as `.tacticalboard`
   (MIME `application/vnd.tacticalboard+json`), named from the document title.
   Open and Load also accept `.json`; import detects the format from the
-  contents, not the extension. "Current Frame (legacy JSON)" and the non-beta
-  single-board save stay `.json`.
+  contents, not the extension. "Current Frame (legacy JSON)" stays `.json`.
 - An opened `.json` file is never overwritten: its handle is not kept, so the
   next Save asks for a `.tacticalboard` location.
 - The web manifest registers `.tacticalboard` as a file handler; when the site

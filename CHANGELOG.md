@@ -4,17 +4,34 @@ All notable changes to Tactical Soccer Board are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and versions follow [Semantic Versioning](https://semver.org/). Features marked
-**(beta)** are only available with `?animate=1` (or a build with
-`VITE_ENABLE_ANIMATION=true`); see
+**(beta)** in 1.3.0 and 1.4.0 needed `?animate=1` (or a build with
+`VITE_ENABLE_ANIMATION=true`); since 1.5.0 they are available to everyone. See
 [docs/specs/animation.md](docs/specs/animation.md) for details.
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-28
+
 ### Added
 
-- **(beta)** Equipment on an animated board can be copied to every frame, or
-  removed from every frame, from the Properties panel. The panel shows how many
-  frames hold the item as it is in the selected frame.
+- Equipment on an animated board can be copied to every frame, or removed from
+  every frame, from the Properties panel. The panel shows how many frames hold
+  the item as it is in the selected frame.
+
+### Changed
+
+- Animation is out of beta and available to everyone: the Animate button,
+  timeline and playback, video export, share links, Save/Save As/Open with
+  `.tacticalboard` files, Ctrl/Cmd+S and "Current Frame (legacy JSON)".
+  `?animate=1` is no longer needed; old links that include it still work, and
+  new share links leave it out.
+
+### Removed
+
+- The `VITE_ENABLE_ANIMATION` build flag and `?animate=1` URL switch.
+- "Save Project File (JSON)" from the Save / Export menu. Save now writes a
+  `.tacticalboard` file; "Current Frame (legacy JSON)" still exports the old
+  single-board `.json` for older versions.
 
 ## [1.4.0] - 2026-09-27
 
@@ -184,7 +201,8 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
 
 - Player numbers stay readable on light jerseys.
 
-[Unreleased]: https://github.com/tamsler/tactical-board/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/tamsler/tactical-board/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/tamsler/tactical-board/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/tamsler/tactical-board/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/tamsler/tactical-board/compare/v1.2.3...v1.3.0
 [1.2.3]: https://github.com/tamsler/tactical-board/compare/v1.2.2...v1.2.3

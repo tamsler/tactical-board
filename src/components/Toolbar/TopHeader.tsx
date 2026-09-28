@@ -46,8 +46,6 @@ interface TopHeaderProps {
   getExportBoard?: () => BoardState;
   onShare?: () => void;
   onExportVideo?: (format: VideoFormat) => void;
-  /** Enables the file picker, Ctrl/Cmd+S and project-format saving for beta users. */
-  animationEnabled?: boolean;
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
@@ -59,7 +57,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   getExportBoard,
   onShare,
   onExportVideo,
-  animationEnabled = false,
 }) => {
   const {
     state,
@@ -75,9 +72,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     retrySave,
     projectDocument,
   } = tactics;
-  const projectFile = useProjectFile(tactics, { enabled: animationEnabled });
-  // Boards with frames always save every frame, even without the flag.
-  const saveProjectFormat = animationEnabled || tactics.isAnimated;
+  const projectFile = useProjectFile(tactics);
 
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -191,14 +186,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     exportAsSVG(boardRef.current, filename);
     track("export", { format: "svg" });
     showToast(`Exported ${filename}`);
-  };
-
-  const handleSaveBoardJSON = () => {
-    setShowExportMenu(false);
-    const filename = `${slugify(state.title, "tactics-data")}.json`;
-    exportAsJSON(state, filename);
-    track("export", { format: "json" });
-    showToast(`Saved ${filename}`);
   };
 
   const handleExportLegacyJSON = () => {
@@ -433,41 +420,20 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 Project
               </div>
 
-              {saveProjectFormat ? (
-                <button
-                  onClick={() => handleSave(false)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
-                >
-                  <Save className="w-4 h-4 text-purple-400" />
-                  <div className="min-w-0">
-                    <div className="font-semibold">
-                      {animationEnabled
-                        ? "Save (Ctrl/Cmd+S)"
-                        : "Save Project File"}
-                    </div>
-                    <div className="text-[10px] text-slate-400 truncate">
-                      {projectFile.fileName
-                        ? `To ${projectFile.fileName}`
-                        : "All frames, as a .tacticalboard file"}
-                    </div>
+              <button
+                onClick={() => handleSave(false)}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
+              >
+                <Save className="w-4 h-4 text-purple-400" />
+                <div className="min-w-0">
+                  <div className="font-semibold">Save (Ctrl/Cmd+S)</div>
+                  <div className="text-[10px] text-slate-400 truncate">
+                    {projectFile.fileName
+                      ? `To ${projectFile.fileName}`
+                      : "All frames, as a .tacticalboard file"}
                   </div>
-                </button>
-              ) : (
-                <button
-                  onClick={handleSaveBoardJSON}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
-                >
-                  <FileDown className="w-4 h-4 text-purple-400" />
-                  <div>
-                    <div className="font-semibold">
-                      Save Project File (JSON)
-                    </div>
-                    <div className="text-[10px] text-slate-400">
-                      Backup & reload later
-                    </div>
-                  </div>
-                </button>
-              )}
+                </div>
+              </button>
 
               {projectFile.canPick && (
                 <button
@@ -590,26 +556,22 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 </>
               )}
 
-              {saveProjectFormat && (
-                <>
-                  <div className="my-1 border-t border-slate-700" />
+              <div className="my-1 border-t border-slate-700" />
 
-                  <button
-                    onClick={handleExportLegacyJSON}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
-                  >
-                    <FileDown className="w-4 h-4 text-purple-400" />
-                    <div>
-                      <div className="font-semibold">
-                        Current Frame (legacy JSON)
-                      </div>
-                      <div className="text-[10px] text-slate-400">
-                        For older versions; no animation
-                      </div>
-                    </div>
-                  </button>
-                </>
-              )}
+              <button
+                onClick={handleExportLegacyJSON}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer"
+              >
+                <FileDown className="w-4 h-4 text-purple-400" />
+                <div>
+                  <div className="font-semibold">
+                    Current Frame (legacy JSON)
+                  </div>
+                  <div className="text-[10px] text-slate-400">
+                    For older versions; no animation
+                  </div>
+                </div>
+              </button>
 
               {/* Actions that don't fit in the header on small screens */}
               <div className="sm:hidden">
