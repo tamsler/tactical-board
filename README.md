@@ -46,9 +46,9 @@ npm run dev
 | `npm test` | Run the tests once (`npm run test:watch` to watch) |
 | `npm run lint` | Lint with [Oxlint](https://oxc.rs/docs/guide/usage/linter/rules) |
 
-**Built with** React 19, TypeScript, Vite and Tailwind CSS v4. Exports use
-html-to-image and jsPDF, video uses Mediabunny, and tests use Vitest with
-Testing Library.
+**Built with** React 19, TypeScript, Vite and Tailwind CSS v4. Images are
+drawn with the browser's Canvas API, PDFs use jsPDF, video uses Mediabunny,
+and tests use Vitest with Testing Library.
 
 ### Specs
 

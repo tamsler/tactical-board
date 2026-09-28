@@ -31,6 +31,7 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
 ### Removed
 
 - The `VITE_ENABLE_ANIMATION` build flag and `?animate=1` URL switch.
+- The unused `html-to-image` and `@testing-library/jest-dom` dependencies.
 - "Save Project File (JSON)" from the Save / Export menu. Save now writes a
   `.tacticalboard` file; "Current Frame (legacy JSON)" still exports the old
   single-board `.json` for older versions.
