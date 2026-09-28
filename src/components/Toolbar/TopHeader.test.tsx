@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createRef } from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { useTacticsState } from "../../hooks/useTacticsState";
+import { dismissToast, toastStore } from "../../utils/toast";
 import { TopHeader } from "./TopHeader";
 
 function Harness() {
@@ -45,5 +46,18 @@ describe("TopHeader file menu", () => {
     expect(screen.getByText(/legacy json/i)).toBeTruthy();
     expect(screen.queryByText("Save Project File (JSON)")).toBeNull();
     expect(ctrlS()).toBe(true);
+  });
+
+  it("names the legacy export tactics-frame.json when the title is empty", () => {
+    toastStore.getSnapshot().forEach((t) => dismissToast(t.id));
+    render(<Harness />);
+    fireEvent.change(screen.getByPlaceholderText("Tactics Title..."), {
+      target: { value: "" },
+    });
+    openMenu();
+    fireEvent.click(screen.getByText(/legacy json/i));
+    expect(toastStore.getSnapshot().map((t) => t.message)).toContain(
+      "Exported tactics-frame.json",
+    );
   });
 });

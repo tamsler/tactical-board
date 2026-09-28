@@ -33,6 +33,11 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
   `.tacticalboard` file; "Current Frame (legacy JSON)" still exports the old
   single-board `.json` for older versions.
 
+### Fixed
+
+- "Current Frame (legacy JSON)" on an untitled board is named
+  `tactics-frame.json` instead of `tactics-frame-frame.json`.
+
 ## [1.4.0] - 2026-09-27
 
 ### Added

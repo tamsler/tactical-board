@@ -190,7 +190,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
   const handleExportLegacyJSON = () => {
     setShowExportMenu(false);
-    const filename = `${slugify(state.title, "tactics-frame")}-frame.json`;
+    const filename = `${slugify(state.title, "tactics")}-frame.json`;
     exportAsJSON(state, filename);
     track("export", { format: "json-legacy" });
     showToast(`Exported ${filename}`);

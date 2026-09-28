@@ -2,6 +2,9 @@
 
 Product specification and implementation plan · Revised v1.1 · 27 September 2026
 
+**Status:** generally available since app v1.5.0 (28 September 2026); the
+feature flag described in §"Feature flag and analytics" was removed then.
+
 Revision of the proposed v1 specification after a source review against commit
 `e1c7311ce8da9f06d277477def0b3ad35bd9825b` (local `develop`). Changes from v1
 are summarized in [Appendix A](#appendix-a-changes-from-the-v1-proposal).
@@ -539,7 +542,7 @@ so it needs a privacy policy, deletion and GDPR/COPPA review first.
   is installed as an app (Chrome/Edge desktop), double-clicking a file opens it
   via `launchQueue`. `.json` is deliberately not registered.
 - **Save** (Ctrl/Cmd+S) writes to the file handle from the last Open or Save
-  As; without one it behaves like Save As. **Save As** uses
+  As; without one it behaves like Save As. **Save As** (Ctrl/Cmd+Shift+S) uses
   `showSaveFilePicker`; **Open** uses `showOpenFilePicker`. Where the API is
   missing, Save/Save As download the file and Open uses a file input.
 - The file handle lives in memory only; after a reload the next Save asks for

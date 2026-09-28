@@ -1,6 +1,6 @@
 # Tactical Board: core board specification
 
-Behavioural specification of the static tactical board, as of v1.3.0. It
+Behavioural specification of the static tactical board, as of v1.5.0. It
 describes what the app does *without* animation frames, so changes can be
 checked against it. Animation, playback, sharing, file Save/Open and video
 export are specified in [animation.md](animation.md); where the two overlap
@@ -176,7 +176,7 @@ user-visible changes in [CHANGELOG.md](../../CHANGELOG.md).
 |---|---|
 | Player | Number/label (max 4 characters), name/role, jersey colour palette (text colour set automatically), Goalkeeper Styling, Vision Cone / Body Angle, and a Facing Angle slider (0–360) when the cone is on |
 | Ball | Ball Size slider (8–24) |
-| Equipment | Size Scale slider (0.5–2.5, step 0.1) and presets Small 0.7, Normal 1.0, Large 1.4, Extra 1.8 |
+| Equipment | Size Scale slider (0.5–2.5, step 0.1) and presets Small 0.7, Normal 1.0, Large 1.4, Extra 1.8. On an animated board also "Copy to all frames" and "Remove from all" (see [animation.md](animation.md) §4) |
 | Line | Colour (the 7 drawing colours), Line Width slider (2–10, step 0.5), Label Annotation |
 | Shape | Fill Opacity slider (0.05–0.8, step 0.05), Zone Title |
 | Text | Text editing with the formatting toolbar and shortcuts, Font Size (10–32), colours, Background Opacity (0.2–1.0, step 0.05), alignment and border |
@@ -207,6 +207,9 @@ Selected".
   | Escape | Cancel the drag, deselect, and switch to Select |
   | Ctrl/Cmd+Z | Undo |
   | Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y | Redo |
+
+  Ctrl/Cmd+S (Save) and Ctrl/Cmd+Shift+S (Save As) work everywhere, including
+  while typing; see [animation.md](animation.md).
 
 ## 9. History
 
@@ -246,7 +249,7 @@ Selected".
 | SVG | Vector clone of the board |
 | PDF | A4 landscape. Header with the title (fallback "Soccer Tactical Board Plan") and "Created: {date} \| Tactical Blueprint"; the pitch image on the left; "COACHING NOTES" on the right (fallback "No notes provided for this drill.") with Team Red / Team Blue player counts and ball/equipment counts; footer "Tactical Soccer Board Pro • Exported Tactical Sheet" |
 | Project | "Save (Ctrl/Cmd+S)" writes every frame as a `.tacticalboard` file (see [animation.md](animation.md)) |
-| JSON | "Current Frame (legacy JSON)" downloads the selected frame as `{title}-frame.json` (fallback `tactics-frame-frame.json`) for older versions |
+| JSON | "Current Frame (legacy JSON)" downloads the selected frame as `{title}-frame.json` (fallback `tactics-frame.json`) for older versions |
 
 - **Exports** leave out editor-only overlays (`data-editor-only`). File names
   are the board title in lowercase with punctuation replaced by hyphens.
