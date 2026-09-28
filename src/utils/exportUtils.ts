@@ -1,4 +1,3 @@
-import { jsPDF } from "jspdf";
 import type { BoardState } from "../hooks/useTacticsState";
 import { PITCH_WIDTH, PITCH_HEIGHT } from "../constants/formations";
 
@@ -100,6 +99,9 @@ export async function exportAsPDF(
 ) {
   const canvas = await svgToCanvas(svgElement, 2.5);
   const imgData = canvas.toDataURL("image/png");
+
+  // Loaded on demand: jsPDF is large and only needed for PDF export
+  const { jsPDF } = await import("jspdf");
 
   // Landscape A4: 297mm x 210mm
   const pdf = new jsPDF({

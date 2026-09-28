@@ -25,6 +25,8 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
   `.tacticalboard` files, Ctrl/Cmd+S and "Current Frame (legacy JSON)".
   `?animate=1` is no longer needed; old links that include it still work, and
   new share links leave it out.
+- Faster first load: the PDF library is downloaded only when you export a PDF,
+  roughly halving the main script (832 kB to 432 kB).
 
 ### Removed
 
