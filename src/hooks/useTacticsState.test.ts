@@ -589,4 +589,96 @@ describe("useTacticsState", () => {
       expect(result.current.canUndo).toBe(false);
     });
   });
+
+  describe("format, layout, formations and reset", () => {
+    const positions = (players: Player[], team: string) =>
+      players.filter((p) => p.team === team).map((p) => [p.x, p.y]);
+
+    it("renames the board with the format, and undo restores the board (C2)", () => {
+      const { result } = renderHook(() => useTacticsState());
+      const before = result.current.state;
+      expect(before.title).toBe("Match Tactics - 11v11");
+
+      act(() => result.current.switchFormat("9v9"));
+      expect(result.current.state.title).toBe("Match Tactics - 9v9");
+      expect(result.current.state.players).toHaveLength(18);
+
+      act(() => result.current.undo());
+      expect(result.current.state.players).toEqual(before.players);
+      expect(result.current.state.title).toBe("Match Tactics - 11v11");
+    });
+
+    it("re-seeds an untouched board when the layout changes (C3)", () => {
+      const { result } = renderHook(() => useTacticsState());
+
+      act(() => result.current.switchPitchType("half"));
+      expect(result.current.pitchType).toBe("half");
+      expect(result.current.state.title).toBe("Half Pitch Training - 11v11");
+      expect(result.current.state.players).toHaveLength(11);
+      expect(result.current.state.balls[0]).toMatchObject({ x: 525, y: 480 });
+
+      act(() => result.current.switchPitchType("blank"));
+      expect(result.current.state.title).toBe("Drill / Practice - 11v11");
+      expect(result.current.state.players).toHaveLength(0);
+      expect(result.current.state.balls).toHaveLength(0);
+
+      act(() => result.current.switchPitchType("full"));
+      expect(result.current.state.title).toBe("Match Tactics - 11v11");
+      expect(result.current.state.players).toHaveLength(22);
+      expect(result.current.canUndo).toBe(false);
+    });
+
+    it("keeps players and title when the layout changes after an edit (C4)", () => {
+      const { result } = renderHook(() => useTacticsState());
+      const id = result.current.state.players[0].id;
+      act(() => result.current.updatePlayer(id, { x: 111, y: 222 }));
+      const edited = result.current.state;
+
+      act(() => result.current.switchPitchType("half"));
+
+      expect(result.current.pitchType).toBe("half");
+      expect(result.current.state.players).toEqual(edited.players);
+      expect(result.current.state.title).toBe(edited.title);
+    });
+
+    it("applies a formation to one team and highlights it (C5)", () => {
+      const { result } = renderHook(() => useTacticsState());
+      const preset = FORMATIONS_11V11_TEAM_A.find((f) => f.system === "3-5-2")!;
+      const teamA = positions(result.current.state.players, "A");
+      const teamB = positions(result.current.state.players, "B");
+
+      act(() => result.current.loadFormation(preset, "A"));
+
+      expect(positions(result.current.state.players, "A")).not.toEqual(teamA);
+      expect(positions(result.current.state.players, "A")).toHaveLength(11);
+      expect(positions(result.current.state.players, "B")).toEqual(teamB);
+      expect(result.current.selectedFormationA).toBe(preset.id);
+
+      act(() => result.current.undo());
+      expect(positions(result.current.state.players, "A")).toEqual(teamA);
+    });
+
+    it("resets to the default board, and undo restores the edit (C10)", () => {
+      const { result } = renderHook(() => useTacticsState());
+      const fresh = positions(result.current.state.players, "A");
+      const id = result.current.state.players[0].id;
+      act(() => result.current.updatePlayer(id, { x: 111, y: 222 }));
+      act(() => {
+        result.current.pushState((prev) => ({
+          ...prev,
+          equipments: [{ id: "c1", type: "cone-orange", x: 10, y: 10 }],
+        }));
+      });
+
+      act(() => result.current.resetBoard());
+      expect(positions(result.current.state.players, "A")).toEqual(fresh);
+      expect(result.current.state.equipments).toHaveLength(0);
+
+      act(() => result.current.undo());
+      expect(result.current.state.equipments).toHaveLength(1);
+      expect(
+        result.current.state.players.find((p) => p.id === id),
+      ).toMatchObject({ x: 111, y: 222 });
+    });
+  });
 });
