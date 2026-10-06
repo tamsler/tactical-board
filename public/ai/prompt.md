@@ -377,6 +377,7 @@ copy them from the example for a readable dark caption box.
   plus 24 for the box: at `fontSize` 13 that is 7.5 units per character. Use
   `\n` for a second line.
 - `text` may contain `**bold**` / `*italic*` markers, up to 2 000 characters.
+  `isBold` and `isItalic` are booleans that style the whole text instead.
   `align` is `left`, `center` or `right` (alignment inside the box);
   `borderStyle` is `none`, `solid` or `dashed`.
 - **Captions:** one per frame, at most 60 characters, describing the action

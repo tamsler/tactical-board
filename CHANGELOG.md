@@ -10,6 +10,11 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
 
 ## [Unreleased]
 
+### Fixed
+
+- The prompt on the "Create drills with AI" page now tells the assistant
+  about italic text (`isItalic`), which the board already accepted.
+
 ## [1.7.0] - 2026-10-06
 
 ### Added

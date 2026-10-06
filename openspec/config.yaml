@@ -23,8 +23,11 @@ context: |
   - docs/agent/ is shipped product, not internal documentation. It is built
     into public/ai/prompt.md by `npm run build:ai`. Any change to the
     document format or its validation must update
-    docs/agent/document-format.md and keep docs/agent/examples/ valid
-    (`npm run check:board -- <file>`).
+    docs/agent/document-format.md, add or extend an example in
+    docs/agent/examples/ that uses the new field or value
+    (`npm run check:board -- <file>` validates it), and commit the
+    regenerated public/ai/ files. Tests fail when the format reference
+    omits a field the validator accepts or when public/ai/ is stale.
 
 rules:
   proposal:
@@ -36,6 +39,9 @@ rules:
     - Give exact values (units, limits, durations, storage keys) where the
       behaviour depends on them.
   tasks:
+    - For a change to the document format or its validation, include tasks
+      to update docs/agent/document-format.md, to add or extend an example
+      drill that uses the new field or value, and to run npm run build:ai.
     - Include tests alongside the code they cover (Vitest, files named
       *.test.ts or *.test.tsx next to the source).
     - End with a task to add a CHANGELOG.md entry under Unreleased for any
