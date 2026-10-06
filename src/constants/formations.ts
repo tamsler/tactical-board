@@ -276,7 +276,14 @@ export const FORMATIONS_7V7_TEAM_A: FormationPreset[] = [
 // Backward-compatible alias
 export const FORMATIONS_TEAM_A = FORMATIONS_11V11_TEAM_A;
 
-// Helper to mirror formation for Team B (defending right, attacking left)
+/**
+ * A Team A preset position turned to face the other way (defending right,
+ * attacking left). Both axes flip, so a right back stays on his team's right.
+ */
+export function mirrorForTeamB<T extends { x: number; y: number }>(p: T): T {
+  return { ...p, x: PITCH_WIDTH - p.x, y: PITCH_HEIGHT - p.y };
+}
+
 export function getMirroredFormationForTeamB(
   formation: FormationPreset,
 ): FormationPreset {
@@ -284,11 +291,7 @@ export function getMirroredFormationForTeamB(
     id: `${formation.id}-team-b`,
     name: formation.name,
     system: formation.system,
-    players: formation.players.map((p) => ({
-      ...p,
-      x: PITCH_WIDTH - p.x,
-      // keep y coordinate
-    })),
+    players: formation.players.map(mirrorForTeamB),
   };
 }
 

@@ -5,6 +5,7 @@ import {
   FORMATIONS_11V11_TEAM_A,
   FORMATIONS_7V7_TEAM_A,
 } from "../constants/formations";
+import type { Player } from "../types/tactics";
 
 describe("useTacticsState", () => {
   beforeEach(() => {
@@ -20,6 +21,45 @@ describe("useTacticsState", () => {
     expect(result.current.state.balls.length).toBe(1);
     expect(result.current.canUndo).toBe(false);
     expect(result.current.canRedo).toBe(false);
+  });
+
+  describe("team sides", () => {
+    const byName = (players: Player[], team: string, name: string) =>
+      players.find((p) => p.team === team && p.name === name);
+
+    it("puts each full-pitch team's right back on its own right", () => {
+      const { result } = renderHook(() => useTacticsState());
+      const { players } = result.current.state;
+      // Team A faces right, so its right is the bottom of the screen; Team B is turned around.
+      expect(byName(players, "A", "RB")).toMatchObject({ x: 260, y: 550 });
+      expect(byName(players, "B", "RB")).toMatchObject({ x: 800, y: 130 });
+    });
+
+    it("keeps Team B's sides when a formation is applied", () => {
+      const { result } = renderHook(() => useTacticsState());
+      act(() => {
+        result.current.loadFormation(FORMATIONS_11V11_TEAM_A[0], "B");
+      });
+      const { players } = result.current.state;
+      expect(byName(players, "B", "RB")).toMatchObject({ x: 790, y: 130 });
+      expect(byName(players, "B", "LW")).toMatchObject({ x: 550, y: 550 });
+    });
+
+    it("puts the half-pitch team's right back on the left of the screen", () => {
+      const { result } = renderHook(() => useTacticsState());
+      act(() => result.current.switchPitchType("half"));
+      // The team defends the top goal and faces down the screen.
+      const seeded = result.current.state.players;
+      expect(byName(seeded, "B", "RB")!).toMatchObject({ x: 240, y: 220 });
+      expect(byName(seeded, "B", "LB")!).toMatchObject({ x: 810, y: 220 });
+
+      act(() => {
+        result.current.loadFormation(FORMATIONS_11V11_TEAM_A[0], "B");
+      });
+      const applied = result.current.state.players;
+      expect(byName(applied, "B", "RB")!.x).toBeLessThan(525);
+      expect(byName(applied, "B", "LB")!.x).toBeGreaterThan(525);
+    });
   });
 
   it("handles undo and redo actions correctly", () => {

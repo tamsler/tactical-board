@@ -20,6 +20,7 @@ import {
   PITCH_WIDTH,
   PITCH_HEIGHT,
   TEAM_COLORS,
+  mirrorForTeamB,
 } from "../constants/formations";
 import { track } from "../utils/analytics";
 import { createId, randomToken } from "../utils/id";
@@ -137,7 +138,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
         team: "B",
         number: "2",
         name: "RD",
-        x: 740,
+        x: 310,
         y: 220,
         color: TEAM_COLORS.teamB.primary,
         textColor: "#ffffff",
@@ -149,7 +150,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
         team: "B",
         number: "3",
         name: "LD",
-        x: 310,
+        x: 740,
         y: 220,
         color: TEAM_COLORS.teamB.primary,
         textColor: "#ffffff",
@@ -173,7 +174,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
         team: "B",
         number: "7",
         name: "RM",
-        x: 800,
+        x: 250,
         y: 440,
         color: TEAM_COLORS.teamB.primary,
         textColor: "#ffffff",
@@ -185,7 +186,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
         team: "B",
         number: "11",
         name: "LM",
-        x: 250,
+        x: 800,
         y: 440,
         color: TEAM_COLORS.teamB.primary,
         textColor: "#ffffff",
@@ -226,7 +227,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
         team: "B",
         number: "2",
         name: "RB",
-        x: 780,
+        x: 270,
         y: 210,
         color: TEAM_COLORS.teamB.primary,
         textColor: "#ffffff",
@@ -250,7 +251,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
         team: "B",
         number: "3",
         name: "LB",
-        x: 270,
+        x: 780,
         y: 210,
         color: TEAM_COLORS.teamB.primary,
         textColor: "#ffffff",
@@ -262,7 +263,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
         team: "B",
         number: "6",
         name: "CM",
-        x: 420,
+        x: 630,
         y: 350,
         color: TEAM_COLORS.teamB.primary,
         textColor: "#ffffff",
@@ -274,7 +275,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
         team: "B",
         number: "8",
         name: "CM",
-        x: 630,
+        x: 420,
         y: 350,
         color: TEAM_COLORS.teamB.primary,
         textColor: "#ffffff",
@@ -286,7 +287,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
         team: "B",
         number: "7",
         name: "RW",
-        x: 800,
+        x: 250,
         y: 520,
         color: TEAM_COLORS.teamB.primary,
         textColor: "#ffffff",
@@ -310,7 +311,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
         team: "B",
         number: "11",
         name: "LW",
-        x: 250,
+        x: 800,
         y: 520,
         color: TEAM_COLORS.teamB.primary,
         textColor: "#ffffff",
@@ -339,7 +340,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
       team: "B",
       number: "2",
       name: "RB",
-      x: 810,
+      x: 240,
       y: 220,
       color: TEAM_COLORS.teamB.primary,
       textColor: "#ffffff",
@@ -351,7 +352,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
       team: "B",
       number: "4",
       name: "CB",
-      x: 620,
+      x: 430,
       y: 190,
       color: TEAM_COLORS.teamB.primary,
       textColor: "#ffffff",
@@ -363,7 +364,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
       team: "B",
       number: "5",
       name: "CB",
-      x: 430,
+      x: 620,
       y: 190,
       color: TEAM_COLORS.teamB.primary,
       textColor: "#ffffff",
@@ -375,7 +376,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
       team: "B",
       number: "3",
       name: "LB",
-      x: 240,
+      x: 810,
       y: 220,
       color: TEAM_COLORS.teamB.primary,
       textColor: "#ffffff",
@@ -399,7 +400,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
       team: "B",
       number: "8",
       name: "CM",
-      x: 680,
+      x: 370,
       y: 410,
       color: TEAM_COLORS.teamB.primary,
       textColor: "#ffffff",
@@ -411,7 +412,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
       team: "B",
       number: "10",
       name: "AM",
-      x: 370,
+      x: 680,
       y: 410,
       color: TEAM_COLORS.teamB.primary,
       textColor: "#ffffff",
@@ -423,7 +424,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
       team: "B",
       number: "7",
       name: "RW",
-      x: 820,
+      x: 230,
       y: 550,
       color: TEAM_COLORS.teamB.primary,
       textColor: "#ffffff",
@@ -447,7 +448,7 @@ function generateHalfPitchTeamB(format: MatchFormat): Player[] {
       team: "B",
       number: "11",
       name: "LW",
-      x: 230,
+      x: 820,
       y: 550,
       color: TEAM_COLORS.teamB.primary,
       textColor: "#ffffff",
@@ -471,8 +472,9 @@ function generateHalfPitchPlayers(
   }));
 }
 
-// Half pitch is the attacking half turned 90deg: a preset's depth (x) becomes y,
-// and its lateral position (y) becomes x, with the goal at the top.
+// Half pitch is the team's own half turned 90deg, with its goal at the top: a
+// preset's depth (x) becomes y, and its lateral position (y) becomes x. The team
+// faces down the screen, so its right side is the left of the screen.
 function toHalfPitchPosition(x: number, y: number): { x: number; y: number } {
   const padX = 40;
   const padY = 30;
@@ -482,7 +484,7 @@ function toHalfPitchPosition(x: number, y: number): { x: number; y: number } {
   const depth = clamp((x - padX) / (PITCH_WIDTH / 2 - padX));
   const lateral = clamp((y - padY) / fieldH);
   return {
-    x: padX + lateral * fieldW,
+    x: padX + (1 - lateral) * fieldW,
     y: padY + depth * fieldH,
   };
 }
@@ -520,8 +522,7 @@ function generateFullPitchPlayers(format: MatchFormat): Player[] {
     team: "B",
     number: p.number,
     name: p.name,
-    x: PITCH_WIDTH - p.x,
-    y: p.y,
+    ...mirrorForTeamB({ x: p.x, y: p.y }),
     color: p.isGoalkeeper ? TEAM_COLORS.teamB.gk : TEAM_COLORS.teamB.primary,
     textColor: "#ffffff",
     isGoalkeeper: p.isGoalkeeper,
@@ -1227,7 +1228,9 @@ export function useTacticsState() {
       const slotPosition = (p: { x: number; y: number }) =>
         isHalf
           ? toHalfPitchPosition(p.x, p.y)
-          : { x: isTeamA ? p.x : PITCH_WIDTH - p.x, y: p.y };
+          : isTeamA
+            ? { x: p.x, y: p.y }
+            : mirrorForTeamB({ x: p.x, y: p.y });
       // Half pitch holds a single team, so both squads are replaced there.
       const isInTeam = (p: Player) =>
         isHalf ? p.team === "A" || p.team === "B" : p.team === team;
