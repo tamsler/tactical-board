@@ -1,0 +1,44 @@
+schema: spec-driven
+
+context: |
+  Baseline specs. Behaviour as of v1.6.0 is specified in
+  docs/specs/core-board.md (static board) and docs/specs/animation.md
+  (frames, playback, sharing, project files, video export). Read the relevant
+  sections before writing a proposal. openspec/specs/ holds requirements
+  added or changed since then and takes precedence where the two overlap.
+
+  Changing baseline behaviour. A requirement that exists only in docs/specs/
+  cannot be the target of a MODIFIED or REMOVED delta. Write it as ADDED in
+  the capability it belongs to, stating the full new behaviour, and add a
+  task that replaces the superseded passage in docs/specs/ with a link to the
+  new capability spec. Do not backfill specs for behaviour the change leaves
+  alone.
+
+  Product constraints.
+  - The app is client-only. Boards live in localStorage, project files and
+    share links; nothing is uploaded. Do not propose a backend or accounts.
+  - Boards saved by earlier versions must keep opening: the v1 and v2
+    localStorage keys, legacy BoardState JSON, .tacticalboard files and
+    share links. A format change needs a migration and a schema version bump.
+  - docs/agent/ is shipped product, not internal documentation. It is built
+    into public/ai/prompt.md by `npm run build:ai`. Any change to the
+    document format or its validation must update
+    docs/agent/document-format.md and keep docs/agent/examples/ valid
+    (`npm run check:board -- <file>`).
+
+rules:
+  proposal:
+    - State what is out of scope.
+    - Name the docs/specs/ sections the change touches, if any.
+  specs:
+    - Describe behaviour a coach or a file author can observe, not React
+      components or function names.
+    - Give exact values (units, limits, durations, storage keys) where the
+      behaviour depends on them.
+  tasks:
+    - Include tests alongside the code they cover (Vitest, files named
+      *.test.ts or *.test.tsx next to the source).
+    - End with a task to add a CHANGELOG.md entry under Unreleased for any
+      user-visible change.
+    - End with a verification task that runs npm test, npm run lint and
+      npm run build.

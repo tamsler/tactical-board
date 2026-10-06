@@ -64,8 +64,11 @@ and tests use Vitest with Testing Library.
   -- <file>` validates a file; `npm run build:ai` regenerates the prompt and
   examples served at `/ai/`.
 
-When you change behaviour, update the relevant spec and add a CHANGELOG entry
-under **Unreleased**.
+Behaviour changes go through [OpenSpec](https://github.com/Fission-AI/OpenSpec):
+a proposal in `openspec/changes/` is reviewed, implemented, then archived into
+[openspec/specs/](openspec/specs/), which takes precedence over the two
+documents above for anything it covers. Add a CHANGELOG entry under
+**Unreleased** for every user-visible change.
 
 ## Contact
 
