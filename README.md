@@ -47,6 +47,7 @@ npm run dev
 | `npm run build` | Type-check and build to `dist/` |
 | `npm run preview` | Serve the production build |
 | `npm test` | Run the tests once (`npm run test:watch` to watch) |
+| `npm run test:e2e` | Run the browser tests with [Playwright](https://playwright.dev/) (first run `npx playwright install chromium`) |
 | `npm run lint` | Lint with [Oxlint](https://oxc.rs/docs/guide/usage/linter/rules) |
 
 **Built with** React 19, TypeScript, Vite and Tailwind CSS v4. Images are

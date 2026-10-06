@@ -29,6 +29,8 @@ This project is spec-driven with [OpenSpec](https://github.com/Fission-AI/OpenSp
 
 ## Before calling work done
 
-Run `npm test`, `npm run lint` and `npm run build`. Add a
+Run `npm test`, `npm run lint` and `npm run build`. For changes to pointer
+or touch handling, zoom, export, storage or share links, also run
+`npm run test:e2e` (Playwright, in [e2e/](e2e/)); CI runs all four. Add a
 [CHANGELOG.md](CHANGELOG.md) entry under **Unreleased** for anything a user
 can see.

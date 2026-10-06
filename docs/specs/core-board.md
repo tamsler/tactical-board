@@ -323,7 +323,25 @@ Selected".
 | C14 | Visibility | Hiding Team Red on the full pitch removes its players from the view and exports but keeps them in the saved board |
 | C15 | Keyboard | Shortcuts work on the board and are ignored while typing in the title, notes or property fields |
 
-Automated coverage today: `src/hooks/useTacticsState.test.ts` (C1, C2, C6,
-C8, C9, C11), `src/utils/mathUtils.test.ts` (line geometry and contrast),
-`src/utils/textUtils.test.ts` (text formatting), and
-`src/animation/validate.test.ts` (C13).
+Automated coverage today:
+
+- `src/hooks/useTacticsState.test.ts`: C1–C6, C8–C11.
+- `src/components/Pitch/TacticalBoard.pointer.test.tsx`: C6, C7, C8 and C14
+  through pointer events on the rendered board.
+- `src/components/Pitch/TacticalBoard.test.tsx`: arrow-key nudging and the
+  typing guard (part of C15).
+- `src/components/Sidebar/PropertiesPanel.test.tsx`: editing and deleting the
+  selected player, line, zone and text.
+- `src/animation/validate.test.ts`: C13.
+- `src/utils/mathUtils.test.ts` (line geometry and contrast) and
+  `src/utils/textUtils.test.ts` (text formatting).
+
+- `e2e/` (Playwright, `npm run test:e2e`, real Chromium): a mouse drag, a
+  touch drag and a drag at 200% zoom land where the pointer went; reload
+  restores the board (C11); PNG, JPEG, SVG and PDF export produce valid files
+  and the SVG has no editor overlays (C12, in part); a share link opens after
+  confirmation; a held arrow key undoes in one step.
+
+Not automated: what an exported image or PDF looks like; pinch-zoom and pan;
+video export; and dragging line and resize handles. The component tests run
+in jsdom with the board stubbed to a 1050 × 680 box.

@@ -17,6 +17,7 @@ risk, not demand. Item 1 exists to change that.
 | 3 | Ball possession (the ball follows a player) | Large | A dribble currently needs the ball and the player moved separately in every frame. Needs design work: possession must be explicit, never inferred from proximity. | [animation.md](specs/animation.md) §11 |
 | 4 | Board library | Large | The app holds one board at a time; a second drill means saving a file and loading another. The spec defers an IndexedDB library. | [animation.md](specs/animation.md) §13 |
 | 5 | Cross-tab conflict detection | Medium | Two tabs on the app overwrite each other's autosave without warning. How often this happens in practice is unknown. | [animation.md](specs/animation.md) §8 |
+| 6 | Open a share link pasted into an open tab | Small | A share link is read on page load only. Pasting one into the address bar of a tab that already has the app open changes the URL but not the board, until the coach reloads. The spec does not say when a link is read, only the code comment does ("once, on page load"), so decide first whether this is a bug or a behaviour change. | `src/hooks/useShareLinkImport.ts`, [animation.md](specs/animation.md) §13 |
 
 ## Smaller deferred items
 
@@ -36,12 +37,21 @@ above:
 
 ## Engineering gap
 
-The two largest UI files are thinly tested:
-`src/components/Pitch/TacticalBoard.tsx` has tests for arrow-key nudging only,
-and `src/components/Sidebar/PropertiesPanel.tsx` has none. Pointer
-interaction is untested because the Playwright suite planned in the animation
-spec was deferred. Changes that touch these files should add tests as they
-go.
+The board and the Properties panel have component tests (jsdom), and a small
+Playwright suite in `e2e/` checks real-browser behaviour: mouse and touch
+drags, a zoomed drag, reload, share links and the four static exports. CI
+(`.github/workflows/ci.yml`) runs lint, unit tests, build and the browser
+tests on every push. See the coverage list in
+[core-board.md](specs/core-board.md) §14. Still untested:
+
+- What exported images and PDFs look like (only file validity is checked),
+  and video export.
+- Pinch-zoom and pan.
+- Dragging line endpoints, curve handles, resize handles and bend handles.
+- Animation playback in the browser.
+- The other large components: `FormationsPanel.tsx`, `SoccerPitch.tsx`,
+  `App.tsx`.
+- Firefox and Safari: the browser tests run in Chromium only.
 
 ## Order agreed so far
 
