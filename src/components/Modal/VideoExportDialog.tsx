@@ -34,9 +34,12 @@ export const VideoExportDialog: React.FC<VideoExportDialogProps> = ({
     const controller = new AbortController();
     const job = started.current;
     (async () => {
+      // Loaded with the exporter so the error class stays out of the main bundle.
+      let Unsupported: (new (...args: never[]) => Error) | undefined;
       try {
-        const { exportAnimationVideo } =
+        const { exportAnimationVideo, VideoExportUnsupportedError } =
           await import("../../animation/videoExport");
+        Unsupported = VideoExportUnsupportedError;
         const blob = await exportAnimationVideo({
           frames: job.frames,
           view: job.view,
@@ -51,6 +54,10 @@ export const VideoExportDialog: React.FC<VideoExportDialogProps> = ({
         onCloseRef.current();
       } catch (e) {
         if (controller.signal.aborted) return;
+        track("video_export_failed", {
+          format: job.format,
+          reason: Unsupported && e instanceof Unsupported ? "unsupported" : "error",
+        });
         setError((e as Error).message || "The video could not be created.");
       }
     })();

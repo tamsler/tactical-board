@@ -14,7 +14,8 @@ coaching sheet. Boards are saved in your browser; nothing is uploaded.
 - Full pitch, half pitch or plain grass, four pitch styles, and zone and grid
   overlays.
 - Tools for runs, passes, dribbles, curved runs, screens, freehand lines,
-  shaded zones and text. Anything can be moved or edited afterwards.
+  shaded zones and text. Anything can be moved or edited afterwards, and
+  nudged into place with the arrow keys.
 - Animated sequences: build frames, move players and the ball, bend their
   runs, and play them back. Export the animation as MP4 or MOV video.
 - Export to PNG, JPEG, SVG or a PDF sheet with your coaching notes.
@@ -27,6 +28,13 @@ coaching sheet. Boards are saved in your browser; nothing is uploaded.
 
 Feedback is welcome in
 [issues](https://github.com/tamsler/tactical-board/issues).
+
+**Privacy.** Boards never leave your browser unless you save, export or share
+them yourself. The site uses Google Analytics to count which features are
+used (for example "a share link was copied"). Those events carry counts and
+fixed categories only, never titles, notes, names, pasted text or links; the
+exact list is in
+[openspec/specs/usage-analytics/spec.md](openspec/specs/usage-analytics/spec.md).
 
 See the [CHANGELOG](CHANGELOG.md) for what changed in each version.
 
@@ -52,7 +60,9 @@ npm run dev
 
 **Built with** React 19, TypeScript, Vite and Tailwind CSS v4. Images are
 drawn with the browser's Canvas API, PDFs use jsPDF, video uses Mediabunny,
-and tests use Vitest with Testing Library.
+and tests use Vitest with Testing Library, plus Playwright for a small set of
+browser tests. GitHub Actions runs lint, both test suites and the build on
+every push.
 
 ### Specs
 
@@ -60,6 +70,9 @@ and tests use Vitest with Testing Library.
   formations and exports, with acceptance criteria.
 - [docs/specs/animation.md](docs/specs/animation.md): animation, playback,
   sharing, files and video export.
+- [openspec/specs/](openspec/specs/): behaviour added or changed since v1.6.0,
+  one folder per capability (`keyboard-positioning`, `usage-analytics`).
+- [docs/roadmap.md](docs/roadmap.md): candidate features, not committed work.
 - [docs/agent/document-format.md](docs/agent/document-format.md): the
   `.tacticalboard` file format, written for AI agents. `npm run check:board
   -- <file>` validates a file; `npm run build:ai` regenerates the prompt and

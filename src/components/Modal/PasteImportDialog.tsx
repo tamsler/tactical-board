@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   Check,
@@ -10,9 +10,11 @@ import {
 } from "lucide-react";
 import type { ImportedProject } from "../../animation/migrate";
 import { checkPastedDocument, feedbackFor } from "../../animation/pasteImport";
+import { track } from "../../utils/analytics";
 
 interface PasteImportDialogProps {
-  onImport: (project: ImportedProject) => void;
+  /** `warnings` is the number of advisory warnings the opened drill had. */
+  onImport: (project: ImportedProject, warnings: number) => void;
   onClose: () => void;
 }
 
@@ -31,20 +33,45 @@ export const PasteImportDialog: React.FC<PasteImportDialogProps> = ({
   );
   const hasFeedback =
     check !== null && (!check.ok || check.warnings.length > 0);
+  const warningCount = check?.ok ? check.warnings.length : 0;
+  // How far the coach got, for usage events. Never the pasted text itself.
+  const result =
+    check === null
+      ? "empty"
+      : !check.ok
+        ? "invalid"
+        : warningCount > 0
+          ? "warnings"
+          : "valid";
+
+  // The ref keeps Strict Mode's second mount from reporting a second open.
+  const reportedOpen = useRef(false);
+  useEffect(() => {
+    if (reportedOpen.current) return;
+    reportedOpen.current = true;
+    track("ai_paste_opened");
+  }, []);
+
+  // Every way out that does not open a board.
+  const close = useCallback(() => {
+    track("ai_paste_abandoned", { result });
+    onClose();
+  }, [onClose, result]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") close();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+  }, [close]);
 
   const copyFeedback = async () => {
     if (!check) return;
     try {
       await navigator.clipboard.writeText(feedbackFor(check));
       setCopied(true);
+      track("ai_paste_feedback_copied", { result, warnings: warningCount });
     } catch {
       setCopied(false);
     }
@@ -52,7 +79,7 @@ export const PasteImportDialog: React.FC<PasteImportDialogProps> = ({
 
   return (
     <div
-      onClick={onClose}
+      onClick={close}
       className="fixed inset-0 z-80 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
     >
       <div
@@ -72,7 +99,7 @@ export const PasteImportDialog: React.FC<PasteImportDialogProps> = ({
           </h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={close}
             title="Close"
             className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-100 cursor-pointer"
           >
@@ -162,7 +189,7 @@ export const PasteImportDialog: React.FC<PasteImportDialogProps> = ({
             type="button"
             disabled={!check?.ok}
             onClick={() => {
-              if (check?.ok) onImport(check.project);
+              if (check?.ok) onImport(check.project, warningCount);
             }}
             title="Replaces the current board; you can undo"
             className="h-10 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"

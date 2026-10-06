@@ -6,6 +6,7 @@ import {
   createShareLink,
   supportsShareLinks,
 } from "../../animation/shareLink";
+import { track } from "../../utils/analytics";
 
 interface ShareDialogProps {
   document: TacticsDocument;
@@ -48,6 +49,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);
+      track("share_link_copied", { frames: doc.frames.length });
     } catch {
       inputRef.current?.select();
     }

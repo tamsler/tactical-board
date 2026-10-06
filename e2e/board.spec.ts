@@ -156,3 +156,37 @@ test("a share link opens the shared board after confirmation", async ({
   expect(question).toContain("Open the shared board?");
   await expectSaved(page, (doc) => doc.frames.length, example.frames);
 });
+
+test("opening a share link reports its source and no board content", async ({
+  page,
+}) => {
+  const examples = await (await page.request.get("/ai/examples.json")).json();
+  const example = examples[0];
+  page.once("dialog", (dialog) => void dialog.accept());
+  await page.goto("about:blank");
+  await openBoard(page, example.link);
+  await expect(page.getByPlaceholder("Tactics Title...")).toHaveValue(
+    example.title,
+  );
+
+  // index.html queues every gtag call on window.dataLayer; the network
+  // request to Google is blocked by openBoard.
+  const events = await page.evaluate(() =>
+    ((window as { dataLayer?: ArrayLike<unknown>[] }).dataLayer ?? [])
+      .map((entry) => Array.from(entry))
+      .filter((entry) => entry[0] === "event")
+      .map((entry) => ({ name: entry[1], params: entry[2] })),
+  );
+
+  expect(events.filter((e) => e.name === "import_tactics")).toEqual([
+    {
+      name: "import_tactics",
+      params: {
+        source: "share_link",
+        players: example.players,
+        frames: example.frames,
+      },
+    },
+  ]);
+  expect(JSON.stringify(events)).not.toContain(example.title);
+});

@@ -10,6 +10,17 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-10-06
+
+### Changed
+
+- The app now counts a few more anonymous usage events, to show which newer
+  features are used: copying a share link, opening or leaving Paste from AI,
+  a video export that fails, and whether an opened board came from a file, a
+  share link or an AI assistant. Events carry counts and fixed categories
+  only. Board content (titles, notes, names, pasted text, links) is never
+  sent.
+
 ### Fixed
 
 - The prompt on the "Create drills with AI" page now tells the assistant
@@ -245,7 +256,8 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
 
 - Player numbers stay readable on light jerseys.
 
-[Unreleased]: https://github.com/tamsler/tactical-board/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/tamsler/tactical-board/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/tamsler/tactical-board/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/tamsler/tactical-board/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/tamsler/tactical-board/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/tamsler/tactical-board/compare/v1.4.0...v1.5.0

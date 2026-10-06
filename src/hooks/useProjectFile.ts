@@ -90,7 +90,9 @@ export function useProjectFile(tactics: Tactics) {
       if (!result.ok) return `Invalid tactics file. ${result.error}`;
       importProject(result.value);
       track("import_tactics", {
+        source: "file",
         players: result.value.sequence.frames[0].players.length,
+        frames: result.value.sequence.frames.length,
       });
       return null;
     },

@@ -4,20 +4,21 @@ Ideas for what to build next, collected on 6 October 2026 at v1.6.0. Nothing
 here is committed work. An item becomes work when it gets an OpenSpec proposal
 in `openspec/changes/`; remove it from this list when that change is archived.
 
-There is no user signal behind the ordering yet (no open issues, no feedback,
-and no analytics for the newest features), so the order reflects size and
-risk, not demand. Item 1 exists to change that.
+There is no user signal behind the ordering yet (no open issues and no
+feedback), so the order reflects size and risk, not demand. Usage events for
+sharing, Paste from AI and video export were added in the
+`add-feature-usage-analytics` change (`openspec/specs/usage-analytics/`);
+revisit the order once they have collected a few weeks of data.
 
 ## Candidates
 
 | # | Candidate | Size | Why | Source |
 |---|---|---|---|---|
-| 1 | Usage analytics for share links, video export and Paste from AI | Small | These features send no events, so there is no way to tell whether the experimental AI feature or sharing is used. Informs every later choice. | `src/utils/analytics.ts` |
-| 2 | Easing (`easeInOut`) per frame | Medium | Every move is linear, which makes playback look mechanical. The formula is already specified. Adds an optional field to the document format. | [animation.md](specs/animation.md) §11 |
-| 3 | Ball possession (the ball follows a player) | Large | A dribble currently needs the ball and the player moved separately in every frame. Needs design work: possession must be explicit, never inferred from proximity. | [animation.md](specs/animation.md) §11 |
-| 4 | Board library | Large | The app holds one board at a time; a second drill means saving a file and loading another. The spec defers an IndexedDB library. | [animation.md](specs/animation.md) §13 |
-| 5 | Cross-tab conflict detection | Medium | Two tabs on the app overwrite each other's autosave without warning. How often this happens in practice is unknown. | [animation.md](specs/animation.md) §8 |
-| 6 | Open a share link pasted into an open tab | Small | A share link is read on page load only. Pasting one into the address bar of a tab that already has the app open changes the URL but not the board, until the coach reloads. The spec does not say when a link is read, only the code comment does ("once, on page load"), so decide first whether this is a bug or a behaviour change. | `src/hooks/useShareLinkImport.ts`, [animation.md](specs/animation.md) §13 |
+| 1 | Easing (`easeInOut`) per frame | Medium | Every move is linear, which makes playback look mechanical. The formula is already specified. Adds an optional field to the document format. | [animation.md](specs/animation.md) §11 |
+| 2 | Ball possession (the ball follows a player) | Large | A dribble currently needs the ball and the player moved separately in every frame. Needs design work: possession must be explicit, never inferred from proximity. | [animation.md](specs/animation.md) §11 |
+| 3 | Board library | Large | The app holds one board at a time; a second drill means saving a file and loading another. The spec defers an IndexedDB library. | [animation.md](specs/animation.md) §13 |
+| 4 | Cross-tab conflict detection | Medium | Two tabs on the app overwrite each other's autosave without warning. How often this happens in practice is unknown. | [animation.md](specs/animation.md) §8 |
+| 5 | Open a share link pasted into an open tab | Small | A share link is read on page load only. Pasting one into the address bar of a tab that already has the app open changes the URL but not the board, until the coach reloads. The spec does not say when a link is read, only the code comment does ("once, on page load"), so decide first whether this is a bug or a behaviour change. | `src/hooks/useShareLinkImport.ts`, [animation.md](specs/animation.md) §13 |
 
 ## Smaller deferred items
 
@@ -57,6 +58,7 @@ tests on every push. See the coverage list in
 
 1. Arrow-key nudging was the first OpenSpec change (`add-arrow-key-nudge`)
    and is specified in `openspec/specs/keyboard-positioning/`.
-2. Undecided. Easing and possession improve how animations look; the board
+2. Usage analytics was the second (`add-feature-usage-analytics`).
+3. Undecided. Easing and possession improve how animations look; the board
    library helps coaches who manage several drills. Choose once there is
-   signal from coaches or from item 1.
+   signal from coaches or from the usage events.

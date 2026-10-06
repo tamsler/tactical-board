@@ -460,8 +460,9 @@ old links that still carry it open normally.
 
 Add to the `AnalyticsEvent` union: `animation_created`,
 `animation_frame_added`, `animation_played`, `animation_save_failed`. Events
-carry counts only (frames, duration buckets), never player names or
-coordinates.
+carry counts only (frames, duration buckets); the full rule for what no event
+may carry is in
+[usage-analytics](../../openspec/specs/usage-analytics/spec.md).
 
 Rollback hides the animation UI while preserving stored sequences; a board
 with several frames opens on its selected frame and is never stripped.

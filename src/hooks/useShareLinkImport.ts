@@ -41,7 +41,11 @@ export function useShareLinkImport(tactics: Tactics) {
         sequence: { title: doc.title, frames: doc.frames },
         settings: doc.settings,
       });
-      track("import_tactics", { players: doc.frames[0].players.length });
+      track("import_tactics", {
+        source: "share_link",
+        players: doc.frames[0].players.length,
+        frames: doc.frames.length,
+      });
       showToast(`Opened shared board “${doc.title || "Untitled"}”`);
     });
   }, [importProject]);

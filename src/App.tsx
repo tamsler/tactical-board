@@ -337,11 +337,14 @@ export function App() {
       {isPasteOpen && (
         <PasteImportDialog
           onClose={() => setIsPasteOpen(false)}
-          onImport={(project) => {
+          onImport={(project, warnings) => {
             tactics.importProject(project);
             setIsPasteOpen(false);
             track("import_tactics", {
+              source: "ai_paste",
               players: project.sequence.frames[0].players.length,
+              frames: project.sequence.frames.length,
+              warnings,
             });
             showToast(
               `Opened “${project.sequence.title || "Untitled"}” from AI`,

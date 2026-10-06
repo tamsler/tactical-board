@@ -293,7 +293,7 @@ Selected".
 - **Analytics:** `track(event, params)` sends GA4 events and does nothing when
   `gtag` is missing. Core events:
   - `export` with `format`
-  - `import_tactics`
+  - `import_tactics` (parameters in [usage-analytics](../../openspec/specs/usage-analytics/spec.md))
   - `formation_applied`
   - `match_format_changed`
   - `pitch_layout_changed`
@@ -301,7 +301,9 @@ Selected".
   - `drawings_cleared`
   - `help_opened`
 
-  Events carry counts and identifiers only, never player names or positions.
+  Events for sharing, Paste from AI and failed video exports, and the rule
+  for what no event may carry, are specified in
+  [usage-analytics](../../openspec/specs/usage-analytics/spec.md).
 
 ## 14. Acceptance criteria
 
