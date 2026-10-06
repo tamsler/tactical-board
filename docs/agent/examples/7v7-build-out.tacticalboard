@@ -1,0 +1,211 @@
+{
+  "kind": "tactical-board-document",
+  "schemaVersion": 3,
+  "title": "U10 7v7 - Building out of the back (1-2-3-1)",
+  "settings": {
+    "pitchType": "full",
+    "matchFormat": "7v7",
+    "halfPitchTeam": "B",
+    "selectedFormations": {
+      "7v7": { "teamA": "2-3-1", "teamB": null }
+    }
+  },
+  "frames": [
+    {
+      "id": "frame-1",
+      "title": "Goal kick set-up",
+      "players": [
+        { "id": "a-gk", "team": "A", "number": "1", "name": "GK", "color": "#eab308", "textColor": "#ffffff", "isGoalkeeper": true, "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 90, "y": 340 },
+        { "id": "a-rd", "team": "A", "number": "2", "name": "RD", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 240, "y": 470 },
+        { "id": "a-ld", "team": "A", "number": "3", "name": "LD", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 240, "y": 210 },
+        { "id": "a-rm", "team": "A", "number": "7", "name": "RM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 360, "y": 530 },
+        { "id": "a-cm", "team": "A", "number": "8", "name": "CM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 350, "y": 340 },
+        { "id": "a-lm", "team": "A", "number": "11", "name": "LM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 360, "y": 150 },
+        { "id": "a-st", "team": "A", "number": "9", "name": "ST", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 480, "y": 340 },
+        { "id": "b-gk", "team": "B", "number": "1", "name": "GK", "color": "#10b981", "textColor": "#ffffff", "isGoalkeeper": true, "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 960, "y": 340 },
+        { "id": "b-rb", "team": "B", "number": "2", "name": "RB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 600, "y": 160 },
+        { "id": "b-cb", "team": "B", "number": "4", "name": "CB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 620, "y": 340 },
+        { "id": "b-lb", "team": "B", "number": "3", "name": "LB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 600, "y": 520 },
+        { "id": "b-m8", "team": "B", "number": "8", "name": "CM", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 430, "y": 430 },
+        { "id": "b-m10", "team": "B", "number": "10", "name": "CM", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 430, "y": 250 },
+        { "id": "b-st", "team": "B", "number": "9", "name": "ST", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 330, "y": 375 }
+      ],
+      "balls": [{ "id": "ball-1", "x": 116, "y": 340, "size": 11 }],
+      "equipments": [],
+      "lines": [
+        { "id": "run-1-a-rd", "type": "straight", "points": [{ "x": 222, "y": 486 }, { "x": 168, "y": 534 }], "color": "#facc15", "width": 3, "style": "solid", "arrowEnd": "arrow" },
+        { "id": "run-1-a-ld", "type": "straight", "points": [{ "x": 222, "y": 194 }, { "x": 168, "y": 146 }], "color": "#facc15", "width": 3, "style": "solid", "arrowEnd": "arrow" },
+        { "id": "run-1-a-rm", "type": "straight", "points": [{ "x": 374, "y": 549 }, { "x": 406, "y": 591 }], "color": "#facc15", "width": 3, "style": "solid", "arrowEnd": "arrow" },
+        { "id": "run-1-a-lm", "type": "straight", "points": [{ "x": 374, "y": 131 }, { "x": 406, "y": 89 }], "color": "#facc15", "width": 3, "style": "solid", "arrowEnd": "arrow" }
+      ],
+      "shapes": [],
+      "texts": [
+        { "id": "caption-1", "x": 48, "y": 21, "text": "1. Goal kick: Blue waits behind the build-out line", "fontSize": 13, "color": "#ffffff", "bgColor": "#0f172a", "bgOpacity": 0.9, "isBold": true, "align": "left", "borderStyle": "solid", "borderColor": "#334155" }
+      ],
+      "notes": "Goal kick. Blue must wait behind the build-out line until the ball is played. Red starts in the 2-3-1.",
+      "holdMs": 1500,
+      "durationMs": 1500
+    },
+    {
+      "id": "frame-2",
+      "title": "Split wide",
+      "players": [
+        { "id": "a-gk", "team": "A", "number": "1", "name": "GK", "color": "#eab308", "textColor": "#ffffff", "isGoalkeeper": true, "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 90, "y": 340 },
+        { "id": "a-rd", "team": "A", "number": "2", "name": "RD", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 150, "y": 550 },
+        { "id": "a-ld", "team": "A", "number": "3", "name": "LD", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 150, "y": 130 },
+        { "id": "a-rm", "team": "A", "number": "7", "name": "RM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 420, "y": 610 },
+        { "id": "a-cm", "team": "A", "number": "8", "name": "CM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 265, "y": 305 },
+        { "id": "a-lm", "team": "A", "number": "11", "name": "LM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 420, "y": 70 },
+        { "id": "a-st", "team": "A", "number": "9", "name": "ST", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 540, "y": 340 },
+        { "id": "b-gk", "team": "B", "number": "1", "name": "GK", "color": "#10b981", "textColor": "#ffffff", "isGoalkeeper": true, "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 960, "y": 340 },
+        { "id": "b-rb", "team": "B", "number": "2", "name": "RB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 600, "y": 160 },
+        { "id": "b-cb", "team": "B", "number": "4", "name": "CB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 620, "y": 340 },
+        { "id": "b-lb", "team": "B", "number": "3", "name": "LB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 600, "y": 520 },
+        { "id": "b-m8", "team": "B", "number": "8", "name": "CM", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 430, "y": 430 },
+        { "id": "b-m10", "team": "B", "number": "10", "name": "CM", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 430, "y": 250 },
+        { "id": "b-st", "team": "B", "number": "9", "name": "ST", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 330, "y": 375 }
+      ],
+      "balls": [{ "id": "ball-1", "x": 116, "y": 340, "size": 11 }],
+      "equipments": [],
+      "lines": [
+        { "id": "pass-2", "type": "pass", "points": [{ "x": 120, "y": 364 }, { "x": 146, "y": 526 }], "color": "#ffffff", "width": 3, "style": "dashed", "arrowEnd": "arrow" }
+      ],
+      "shapes": [],
+      "texts": [
+        { "id": "caption-2", "x": 48, "y": 21, "text": "2. Make the pitch big: defenders split, mids go wide", "fontSize": 13, "color": "#ffffff", "bgColor": "#0f172a", "bgOpacity": 0.9, "isBold": true, "align": "left", "borderStyle": "solid", "borderColor": "#334155" }
+      ],
+      "notes": "Defenders split either side of the penalty area, wide mids go high and wide, CM shows for the ball, ST stretches the pitch.",
+      "holdMs": 600,
+      "durationMs": 1300,
+      "paths": {
+        "b-st": { "x": 320, "y": 460 }
+      }
+    },
+    {
+      "id": "frame-3",
+      "title": "Keeper plays out",
+      "players": [
+        { "id": "a-gk", "team": "A", "number": "1", "name": "GK", "color": "#eab308", "textColor": "#ffffff", "isGoalkeeper": true, "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 100, "y": 365 },
+        { "id": "a-rd", "team": "A", "number": "2", "name": "RD", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 150, "y": 550 },
+        { "id": "a-ld", "team": "A", "number": "3", "name": "LD", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 160, "y": 130 },
+        { "id": "a-rm", "team": "A", "number": "7", "name": "RM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 430, "y": 610 },
+        { "id": "a-cm", "team": "A", "number": "8", "name": "CM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 255, "y": 365 },
+        { "id": "a-lm", "team": "A", "number": "11", "name": "LM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 430, "y": 70 },
+        { "id": "a-st", "team": "A", "number": "9", "name": "ST", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 540, "y": 340 },
+        { "id": "b-gk", "team": "B", "number": "1", "name": "GK", "color": "#10b981", "textColor": "#ffffff", "isGoalkeeper": true, "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 960, "y": 340 },
+        { "id": "b-rb", "team": "B", "number": "2", "name": "RB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 600, "y": 160 },
+        { "id": "b-cb", "team": "B", "number": "4", "name": "CB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 620, "y": 340 },
+        { "id": "b-lb", "team": "B", "number": "3", "name": "LB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 600, "y": 520 },
+        { "id": "b-m8", "team": "B", "number": "8", "name": "CM", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 385, "y": 480 },
+        { "id": "b-m10", "team": "B", "number": "10", "name": "CM", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 410, "y": 300 },
+        { "id": "b-st", "team": "B", "number": "9", "name": "ST", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 245, "y": 470 }
+      ],
+      "balls": [{ "id": "ball-1", "x": 175, "y": 543, "size": 11 }],
+      "equipments": [],
+      "lines": [
+        { "id": "pass-3", "type": "pass", "points": [{ "x": 185, "y": 521 }, { "x": 245, "y": 387 }], "color": "#ffffff", "width": 3, "style": "dashed", "arrowEnd": "arrow" }
+      ],
+      "shapes": [],
+      "texts": [
+        { "id": "caption-3", "x": 48, "y": 21, "text": "3. GK to the right defender; Blue presses", "fontSize": 13, "color": "#ffffff", "bgColor": "#0f172a", "bgOpacity": 0.9, "isBold": true, "align": "left", "borderStyle": "solid", "borderColor": "#334155" }
+      ],
+      "notes": "GK passes to the right defender's front foot. Blue's striker presses on a curve to block the pass back inside. CM moves to offer a safe angle.",
+      "holdMs": 400,
+      "durationMs": 1200
+    },
+    {
+      "id": "frame-4",
+      "title": "Bounce inside",
+      "players": [
+        { "id": "a-gk", "team": "A", "number": "1", "name": "GK", "color": "#eab308", "textColor": "#ffffff", "isGoalkeeper": true, "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 100, "y": 340 },
+        { "id": "a-rd", "team": "A", "number": "2", "name": "RD", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 160, "y": 540 },
+        { "id": "a-ld", "team": "A", "number": "3", "name": "LD", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 200, "y": 120 },
+        { "id": "a-rm", "team": "A", "number": "7", "name": "RM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 440, "y": 600 },
+        { "id": "a-cm", "team": "A", "number": "8", "name": "CM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 255, "y": 365 },
+        { "id": "a-lm", "team": "A", "number": "11", "name": "LM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 470, "y": 70 },
+        { "id": "a-st", "team": "A", "number": "9", "name": "ST", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 550, "y": 330 },
+        { "id": "b-gk", "team": "B", "number": "1", "name": "GK", "color": "#10b981", "textColor": "#ffffff", "isGoalkeeper": true, "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 960, "y": 340 },
+        { "id": "b-rb", "team": "B", "number": "2", "name": "RB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 600, "y": 160 },
+        { "id": "b-cb", "team": "B", "number": "4", "name": "CB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 620, "y": 340 },
+        { "id": "b-lb", "team": "B", "number": "3", "name": "LB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 600, "y": 520 },
+        { "id": "b-m8", "team": "B", "number": "8", "name": "CM", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 350, "y": 455 },
+        { "id": "b-m10", "team": "B", "number": "10", "name": "CM", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 305, "y": 320 },
+        { "id": "b-st", "team": "B", "number": "9", "name": "ST", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 190, "y": 515 }
+      ],
+      "balls": [{ "id": "ball-1", "x": 236, "y": 347, "size": 11 }],
+      "equipments": [],
+      "lines": [
+        { "id": "pass-4", "type": "pass", "points": [{ "x": 232, "y": 323 }, { "x": 204, "y": 144 }], "color": "#ffffff", "width": 3, "style": "dashed", "arrowEnd": "arrow" }
+      ],
+      "shapes": [],
+      "texts": [
+        { "id": "caption-4", "x": 48, "y": 21, "text": "4. Play inside to the CM", "fontSize": 13, "color": "#ffffff", "bgColor": "#0f172a", "bgOpacity": 0.9, "isBold": true, "align": "left", "borderStyle": "solid", "borderColor": "#334155" }
+      ],
+      "notes": "RD plays inside to the CM before the press arrives. CM receives side-on so the switch is open. LD moves wider and higher.",
+      "holdMs": 300,
+      "durationMs": 1300
+    },
+    {
+      "id": "frame-5",
+      "title": "Switch play",
+      "players": [
+        { "id": "a-gk", "team": "A", "number": "1", "name": "GK", "color": "#eab308", "textColor": "#ffffff", "isGoalkeeper": true, "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 105, "y": 330 },
+        { "id": "a-rd", "team": "A", "number": "2", "name": "RD", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 180, "y": 520 },
+        { "id": "a-ld", "team": "A", "number": "3", "name": "LD", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 200, "y": 120 },
+        { "id": "a-rm", "team": "A", "number": "7", "name": "RM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 450, "y": 590 },
+        { "id": "a-cm", "team": "A", "number": "8", "name": "CM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 300, "y": 345 },
+        { "id": "a-lm", "team": "A", "number": "11", "name": "LM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 480, "y": 70 },
+        { "id": "a-st", "team": "A", "number": "9", "name": "ST", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 570, "y": 320 },
+        { "id": "b-gk", "team": "B", "number": "1", "name": "GK", "color": "#10b981", "textColor": "#ffffff", "isGoalkeeper": true, "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 960, "y": 340 },
+        { "id": "b-rb", "team": "B", "number": "2", "name": "RB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 555, "y": 130 },
+        { "id": "b-cb", "team": "B", "number": "4", "name": "CB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 620, "y": 340 },
+        { "id": "b-lb", "team": "B", "number": "3", "name": "LB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 600, "y": 520 },
+        { "id": "b-m8", "team": "B", "number": "8", "name": "CM", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 350, "y": 420 },
+        { "id": "b-m10", "team": "B", "number": "10", "name": "CM", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 275, "y": 235 },
+        { "id": "b-st", "team": "B", "number": "9", "name": "ST", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 225, "y": 430 }
+      ],
+      "balls": [{ "id": "ball-1", "x": 226, "y": 123, "size": 11 }],
+      "equipments": [],
+      "lines": [
+        { "id": "pass-5", "type": "pass", "points": [{ "x": 250, "y": 119 }, { "x": 481, "y": 74 }], "color": "#ffffff", "width": 3, "style": "dashed", "arrowEnd": "arrow" }
+      ],
+      "shapes": [],
+      "texts": [
+        { "id": "caption-5", "x": 48, "y": 21, "text": "5. Switch to the free defender", "fontSize": 13, "color": "#ffffff", "bgColor": "#0f172a", "bgOpacity": 0.9, "isBold": true, "align": "left", "borderStyle": "solid", "borderColor": "#334155" }
+      ],
+      "notes": "CM switches to the free left defender, away from the press. LM stays wide, ST pins the centre back.",
+      "holdMs": 300,
+      "durationMs": 1400
+    },
+    {
+      "id": "frame-6",
+      "title": "Break the line",
+      "players": [
+        { "id": "a-gk", "team": "A", "number": "1", "name": "GK", "color": "#eab308", "textColor": "#ffffff", "isGoalkeeper": true, "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 110, "y": 340 },
+        { "id": "a-rd", "team": "A", "number": "2", "name": "RD", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 210, "y": 500 },
+        { "id": "a-ld", "team": "A", "number": "3", "name": "LD", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 235, "y": 130 },
+        { "id": "a-rm", "team": "A", "number": "7", "name": "RM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 470, "y": 580 },
+        { "id": "a-cm", "team": "A", "number": "8", "name": "CM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 360, "y": 300 },
+        { "id": "a-lm", "team": "A", "number": "11", "name": "LM", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 505, "y": 70 },
+        { "id": "a-st", "team": "A", "number": "9", "name": "ST", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "facingAngle": 0, "showVisionCone": false, "x": 585, "y": 295 },
+        { "id": "b-gk", "team": "B", "number": "1", "name": "GK", "color": "#10b981", "textColor": "#ffffff", "isGoalkeeper": true, "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 960, "y": 340 },
+        { "id": "b-rb", "team": "B", "number": "2", "name": "RB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 560, "y": 105 },
+        { "id": "b-cb", "team": "B", "number": "4", "name": "CB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 620, "y": 340 },
+        { "id": "b-lb", "team": "B", "number": "3", "name": "LB", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 600, "y": 520 },
+        { "id": "b-m8", "team": "B", "number": "8", "name": "CM", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 380, "y": 400 },
+        { "id": "b-m10", "team": "B", "number": "10", "name": "CM", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 300, "y": 190 },
+        { "id": "b-st", "team": "B", "number": "9", "name": "ST", "color": "#3b82f6", "textColor": "#ffffff", "radius": 17, "facingAngle": 180, "showVisionCone": false, "x": 250, "y": 330 }
+      ],
+      "balls": [{ "id": "ball-1", "x": 531, "y": 73, "size": 11 }],
+      "equipments": [],
+      "lines": [],
+      "shapes": [],
+      "texts": [
+        { "id": "caption-6", "x": 48, "y": 21, "text": "6. Forward pass beyond the build-out line", "fontSize": 13, "color": "#ffffff", "bgColor": "#0f172a", "bgOpacity": 0.9, "isBold": true, "align": "left", "borderStyle": "solid", "borderColor": "#334155" }
+      ],
+      "notes": "LD plays forward to the left mid beyond the build-out line. Coaching points: open body shape, play away from pressure, support underneath the ball.",
+      "holdMs": 2500,
+      "durationMs": 1000
+    }
+  ]
+}

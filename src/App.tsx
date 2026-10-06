@@ -9,6 +9,7 @@ import { PropertiesPanel } from "./components/Sidebar/PropertiesPanel";
 import { FormationsPanel } from "./components/Sidebar/FormationsPanel";
 import { HelpModal } from "./components/Modal/HelpModal";
 import { Toaster } from "./components/Toast/Toaster";
+import { PasteImportDialog } from "./components/Modal/PasteImportDialog";
 import { ShareDialog } from "./components/Modal/ShareDialog";
 import { VideoExportDialog } from "./components/Modal/VideoExportDialog";
 import { StorageRecoveryBanner } from "./components/Toolbar/StorageRecoveryBanner";
@@ -17,6 +18,7 @@ import type { Player, Ball, Equipment } from "./types/tactics";
 import { TEAM_COLORS } from "./constants/formations";
 import { track } from "./utils/analytics";
 import { createId } from "./utils/id";
+import { showToast } from "./utils/toast";
 import { useAnimationPlayback } from "./animation/useAnimationPlayback";
 import { sampleAt } from "./animation/sample";
 import type { VideoFormat } from "./animation/videoExport";
@@ -42,6 +44,7 @@ export function App() {
   const playback = useAnimationPlayback(tactics);
   useShareLinkImport(tactics);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isPasteOpen, setIsPasteOpen] = useState(false);
   const [videoFormat, setVideoFormat] = useState<VideoFormat | null>(null);
   const closeVideoExport = useCallback(() => setVideoFormat(null), []);
 
@@ -157,6 +160,7 @@ export function App() {
         onBeforeExport={playback.pause}
         getExportBoard={getExportBoard}
         onShare={() => setIsShareOpen(true)}
+        onPasteImport={() => setIsPasteOpen(true)}
         onExportVideo={(format) => {
           playback.pause();
           setVideoFormat(format);
@@ -328,6 +332,21 @@ export function App() {
         <ShareDialog
           document={tactics.projectDocument}
           onClose={() => setIsShareOpen(false)}
+        />
+      )}
+      {isPasteOpen && (
+        <PasteImportDialog
+          onClose={() => setIsPasteOpen(false)}
+          onImport={(project) => {
+            tactics.importProject(project);
+            setIsPasteOpen(false);
+            track("import_tactics", {
+              players: project.sequence.frames[0].players.length,
+            });
+            showToast(
+              `Opened “${project.sequence.title || "Untitled"}” from AI`,
+            );
+          }}
         />
       )}
       {videoFormat && (

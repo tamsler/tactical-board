@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Soccer Drills with AI – Tactical Soccer Board</title>
+    <meta
+      name="description"
+      content="Describe a soccer drill in a sentence and let an AI assistant draw and animate it on the Tactical Soccer Board. Copy the prompt, paste the result, no sign-up required."
+    />
+    <link rel="canonical" href="https://tacticalboard.app/ai/" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Tactical Soccer Board" />
+    <meta property="og:url" content="https://tacticalboard.app/ai/" />
+    <meta property="og:title" content="Create Soccer Drills with AI" />
+    <meta
+      property="og:description"
+      content="Describe a drill in a sentence and let an AI assistant draw and animate it on the Tactical Soccer Board."
+    />
+    <meta
+      property="og:image"
+      content="https://tacticalboard.app/og-image.png"
+    />
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #1e293b;
+        --border: #334155;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #10b981;
+        --accent-strong: #059669;
+        --warn: #fcd34d;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          16px/1.6 system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+      }
+      main {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      a {
+        color: var(--accent);
+      }
+      h1 {
+        font-size: 1.9rem;
+        line-height: 1.2;
+        margin: 16px 0 8px;
+      }
+      h2 {
+        font-size: 1.25rem;
+        margin: 40px 0 8px;
+      }
+      p,
+      li {
+        color: var(--text);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border: 1px solid var(--warn);
+        border-radius: 999px;
+        color: var(--warn);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        margin: 12px 0;
+      }
+      ol.steps {
+        padding-left: 0;
+        list-style: none;
+        counter-reset: step;
+      }
+      ol.steps > li {
+        counter-increment: step;
+        position: relative;
+        padding-left: 44px;
+        margin: 18px 0;
+      }
+      ol.steps > li::before {
+        content: counter(step);
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--accent-strong);
+        color: #fff;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      button,
+      .button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 44px;
+        padding: 0 18px;
+        border: 0;
+        border-radius: 10px;
+        background: var(--accent-strong);
+        color: #fff;
+        font: inherit;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      button:hover,
+      .button:hover {
+        background: var(--accent);
+      }
+      .button.secondary {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin-top: 10px;
+      }
+      blockquote {
+        margin: 8px 0;
+        padding: 10px 14px;
+        border-left: 3px solid var(--accent);
+        background: var(--panel);
+        border-radius: 0 10px 10px 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+      }
+      th,
+      td {
+        text-align: left;
+        vertical-align: top;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--border);
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      #examples .panel {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+      }
+      #examples h3 {
+        margin: 0;
+        font-size: 1rem;
+      }
+      #examples p {
+        margin: 0;
+      }
+      code {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 1px 6px;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a href="/">← Tactical Soccer Board</a>
+      <h1>Create drills with AI</h1>
+      <p><span class="badge">Experimental</span></p>
+      <p>
+        Describe a drill in a sentence, and an AI assistant such as Claude,
+        ChatGPT or Gemini writes it as an animated board you can open, edit and
+        share. Nothing is uploaded to us: you copy a prompt to your own
+        assistant and paste its answer into the board.
+      </p>
+
+      <h2>How it works</h2>
+      <ol class="steps">
+        <li>
+          <strong>Copy the prompt.</strong> It teaches the assistant how the
+          board works: the pitch, the players and how animation frames fit
+          together.
+          <div class="row">
+            <button type="button" id="copy-prompt">Copy the prompt</button>
+            <a class="button secondary" href="/ai/prompt.md">View it</a>
+            <span id="copy-status" class="muted" role="status"></span>
+          </div>
+        </li>
+        <li>
+          <strong>Start a new chat and paste it</strong> as your first message.
+          Then describe the drill you want, for example:
+          <blockquote>
+            7v7 field, U10 boys, drill for building out of the back in a 1-2-3-1
+          </blockquote>
+          <blockquote>
+            Half pitch, U12 girls: a finishing drill with a cross from the right
+            and runs to the near and far post
+          </blockquote>
+          <blockquote>
+            4v2 rondo in a square for U11s; a defender wins the ball and swaps
+            with the passer
+          </blockquote>
+        </li>
+        <li>
+          <strong>Copy the assistant's answer</strong> (the block that starts
+          with <code>{ "kind": "tactical-board-document"</code>) and open the
+          board. Press <strong>Paste from AI</strong> at the top of the board
+          (on a phone it is in the <strong>File</strong> menu), paste, and press
+          <strong>Open on board</strong>.
+          <div class="row">
+            <a class="button" href="/">Open the board</a>
+          </div>
+        </li>
+        <li>
+          <strong>If the board reports a problem,</strong> press
+          <strong>Copy feedback for the AI</strong>, paste that into the chat,
+          and the assistant sends a corrected drill. Then press play, and drag
+          anything that is not quite right.
+        </li>
+      </ol>
+
+      <h2>Which assistant to use</h2>
+      <p>
+        A drill is a long, exact document: every player is listed in every
+        frame. Use the most capable model your assistant offers, with "thinking"
+        or "reasoning" switched on if there is such a setting. Small, fast
+        models tend to lose track of positions between frames.
+      </p>
+      <div class="table-wrap" id="models"></div>
+      <p class="muted">
+        Tested in October 2026 with one request each ("7v7 field, U10 boys,
+        drill for building out of the back in a 1-2-3-1"), one attempt, no
+        corrections. One drill is a small sample, so treat this as a starting
+        point.
+      </p>
+      <p class="muted">
+        A 22-player animation is several thousand words of output. If a reply
+        stops part-way, ask for a smaller drill (fewer players or frames) or ask
+        the assistant to send the whole document again.
+      </p>
+
+      <h2>Examples</h2>
+      <p>Open one to see what a finished drill looks like.</p>
+      <div id="examples"><p class="muted">Loading examples…</p></div>
+
+      <h2>Good to know</h2>
+      <ul>
+        <li>
+          The assistant is not a coach. Check that the drill suits your players,
+          and adjust it on the board.
+        </li>
+        <li>
+          Say what matters to you: the age group, the format (7v7, 9v9, 11v11),
+          full or half pitch, how many players, and the coaching point.
+        </li>
+        <li>
+          Ask for changes in plain words: "make it 5 frames", "add a second
+          defender", "show the switch to the other side".
+        </li>
+        <li>
+          Opening a drill replaces the current board. Undo brings it back.
+        </li>
+      </ul>
+      <p>
+        This is new, and we would like to hear how it works for you, including
+        which assistant you used:
+        <a href="mailto:info@tacticalboard.app">info@tacticalboard.app</a> or
+        <a href="https://github.com/tamsler/tactical-board/issues"
+          >open an issue</a
+        >.
+      </p>
+    </main>
+
+    <script>
+      // What we have actually run, so the guidance can be honest about its limits.
+      const MODELS = [
+        [
+          "Claude Opus 5.5",
+          "Opened first time with no warnings. The most detailed drill: seven frames, a pressing opposition and cone gates to play through.",
+        ],
+        [
+          "Claude Fable 5.1",
+          "Opened first time with no warnings. Both full teams, a short four-frame sequence.",
+        ],
+        [
+          "Claude Sonnet 5.5",
+          "Opened first time with no warnings. Six clear frames against four pressing opponents.",
+        ],
+        [
+          "Claude Haiku 4.5",
+          "Opened first time with no warnings, but the drill was simpler: the opposition stood off and never pressed. Fine for a first draft.",
+        ],
+        [
+          "ChatGPT, Gemini and others",
+          "Not tested by us yet. Pick the most capable model on offer.",
+        ],
+      ];
+
+      const status = document.getElementById("copy-status");
+      document
+        .getElementById("copy-prompt")
+        .addEventListener("click", async () => {
+          try {
+            const response = await fetch("/ai/prompt.md");
+            if (!response.ok) throw new Error(String(response.status));
+            await navigator.clipboard.writeText(await response.text());
+            status.textContent = "Copied. Paste it into a new chat.";
+          } catch {
+            status.textContent =
+              'Could not copy. Use "View it" and copy the text.';
+          }
+        });
+
+      const el = (tag, text) => {
+        const node = document.createElement(tag);
+        if (text !== undefined) node.textContent = text;
+        return node;
+      };
+
+      if (MODELS.length > 0) {
+        const table = el("table");
+        const head = table.createTHead().insertRow();
+        for (const label of ["Model", "What we saw"])
+          head.append(el("th", label));
+        const body = table.createTBody();
+        for (const [model, result] of MODELS) {
+          const row = body.insertRow();
+          row.append(el("td", model), el("td", result));
+        }
+        document.getElementById("models").append(table);
+      }
+
+      fetch("/ai/examples.json")
+        .then((response) => response.json())
+        .then((examples) => {
+          const list = document.getElementById("examples");
+          list.replaceChildren();
+          for (const example of examples) {
+            const panel = el("div");
+            panel.className = "panel";
+            const text = el("div");
+            const meta = el(
+              "p",
+              `${example.pitch} · ${example.players} players · ${example.frames} frames`,
+            );
+            meta.className = "muted";
+            text.append(el("h3", example.title), meta);
+            const link = el("a", "Open in the board");
+            link.className = "button";
+            link.href = example.link;
+            panel.append(text, link);
+            list.append(panel);
+          }
+        })
+        .catch(() => {
+          document
+            .getElementById("examples")
+            .replaceChildren(el("p", "The examples could not be loaded."));
+        });
+    </script>
+  </body>
+</html>

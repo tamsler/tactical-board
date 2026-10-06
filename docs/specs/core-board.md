@@ -1,6 +1,6 @@
 # Tactical Board: core board specification
 
-Behavioural specification of the static tactical board, as of v1.5.0. It
+Behavioural specification of the static tactical board, as of v1.6.0. It
 describes what the app does *without* animation frames, so changes can be
 checked against it. Animation, playback, sharing, file Save/Open and video
 export are specified in [animation.md](animation.md); where the two overlap
@@ -32,8 +32,8 @@ user-visible changes in [CHANGELOG.md](../../CHANGELOG.md).
 ## 1. Layout
 
 - **Header:** logo; editable board title; "Restored" badge; save
-  status. Undo, Redo, Clear Lines and Reset buttons. Load, the Save / Export
-  menu, Formations (small screens only) and Help.
+  status. Undo, Redo, Clear Lines and Reset buttons. Load, Paste from AI, the
+  Save / Export menu, Formations (small screens only) and Help.
 - **Left rail:** drawing tools, a colour palette and line-width options. The
   tool list scrolls while the pickers stay put.
 - **Centre:** the SVG pitch, with zoom controls floating at the bottom right on
@@ -49,7 +49,8 @@ user-visible changes in [CHANGELOG.md](../../CHANGELOG.md).
     or the close button closes it.
   - A handle on the edge collapses and expands it.
   - Selecting an item switches to the Properties tab.
-- **Small screens:** Load and Help move into the Save / Export menu.
+- **Small screens:** Load, Paste from AI and Help move into the Save / Export
+  menu.
 
 ## 2. Pitch
 
@@ -133,8 +134,9 @@ user-visible changes in [CHANGELOG.md](../../CHANGELOG.md).
 
 ## 6. Formations and layout
 
-- **Formation presets** (Team A positions; Team B is mirrored with
-  `x → 1050 − x`):
+- **Formation presets** (Team A positions; Team B is turned to face the other
+  way with `x → 1050 − x` and `y → 680 − y`, so each role stays on its own
+  team's side):
 
   | Format | Presets | Default A / B |
   |---|---|---|
@@ -146,8 +148,9 @@ user-visible changes in [CHANGELOG.md](../../CHANGELOG.md).
   half pitch it replaces both squads. It is undoable, and the selected preset
   is highlighted per format.
 - **Half pitch:** shows one team, chosen with "Half Pitch Team" (Red or Blue,
-  default Blue), attacking the top goal. Presets are rotated with
-  `toHalfPitchPosition`: depth becomes y and lateral position becomes x.
+  default Blue), defending the top goal and facing down the screen. Presets
+  are rotated with `toHalfPitchPosition`: depth becomes y and lateral position
+  becomes x, reversed so the team's right side is the left of the screen.
 - **Team visibility:** on the full pitch, the eye toggle next to each team
   hides it from view without deleting it, and deselects a hidden player.
 - **Default boards** (`createBaseState`):
@@ -249,6 +252,7 @@ Selected".
 | SVG | Vector clone of the board |
 | PDF | A4 landscape. Header with the title (fallback "Soccer Tactical Board Plan") and "Created: {date} \| Tactical Blueprint"; the pitch image on the left; "COACHING NOTES" on the right (fallback "No notes provided for this drill.") with Team Red / Team Blue player counts and ball/equipment counts; footer "Tactical Soccer Board Pro • Exported Tactical Sheet" |
 | Project | "Save (Ctrl/Cmd+S)" writes every frame as a `.tacticalboard` file (see [animation.md](animation.md)) |
+| Paste from AI | The "Paste from AI" header button beside Load (in the File menu on small screens) opens a dialog that accepts a document pasted as text (a whole chat reply is fine), shows whether it is valid with any advisory warnings from `src/animation/lint.ts`, offers "Copy feedback for the AI", and opens it as one undoable step. The format and the public guide at `/ai/` are described in [docs/agent/](../agent/document-format.md) |
 | JSON | "Current Frame (legacy JSON)" downloads the selected frame as `{title}-frame.json` (fallback `tactics-frame.json`) for older versions |
 
 - **Exports** leave out editor-only overlays (`data-editor-only`). File names

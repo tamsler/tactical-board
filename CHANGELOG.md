@@ -10,6 +10,28 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-05
+
+### Added
+
+- **Create drills with AI (experimental).** A new page at `/ai/` gives coaches
+  a prompt to paste into an AI assistant, which then writes a board or
+  animation from a one-line description. "Paste from AI" in the header, next
+  to Load, checks the assistant's answer, lists anything that looks wrong, and
+  opens it on the board. "Copy feedback for the AI" copies those messages so
+  the assistant can correct its drill.
+- `docs/agent/` documents the project file format for AI agents, and
+  `npm run check:board -- <file>` validates a file from the command line and
+  prints a share link.
+
+### Fixed
+
+- Team B and half-pitch formations no longer have left and right swapped. On
+  the full pitch Team B's right back used to stand on Team B's left; on the
+  half pitch the same happened to the single team shown. New boards and newly
+  applied formations place each role on its own side. Saved boards are not
+  changed.
+
 ## [1.5.0] - 2026-09-28
 
 ### Added
@@ -209,7 +231,8 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
 
 - Player numbers stay readable on light jerseys.
 
-[Unreleased]: https://github.com/tamsler/tactical-board/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/tamsler/tactical-board/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/tamsler/tactical-board/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/tamsler/tactical-board/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/tamsler/tactical-board/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/tamsler/tactical-board/compare/v1.2.3...v1.3.0

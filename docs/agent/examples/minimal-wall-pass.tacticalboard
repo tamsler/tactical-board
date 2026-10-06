@@ -1,0 +1,60 @@
+{
+  "kind": "tactical-board-document",
+  "schemaVersion": 3,
+  "title": "Wall pass",
+  "settings": { "pitchType": "blank", "matchFormat": "7v7", "halfPitchTeam": "B" },
+  "frames": [
+    {
+      "id": "frame-1",
+      "title": "Pass",
+      "players": [
+        { "id": "p1", "team": "A", "number": "7", "name": "Runner", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "x": 300, "y": 440 },
+        { "id": "p2", "team": "A", "number": "9", "name": "Wall", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "x": 500, "y": 280 }
+      ],
+      "balls": [{ "id": "ball-1", "x": 326, "y": 440, "size": 11 }],
+      "equipments": [{ "id": "cone-1", "type": "cone-orange", "x": 500, "y": 430 }],
+      "lines": [
+        { "id": "pass-1", "type": "pass", "points": [{ "x": 344, "y": 424 }, { "x": 482, "y": 296 }], "color": "#ffffff", "width": 3, "style": "dashed", "arrowEnd": "arrow" }
+      ],
+      "shapes": [],
+      "texts": [],
+      "notes": "Pass into the wall player.",
+      "holdMs": 800,
+      "durationMs": 1000
+    },
+    {
+      "id": "frame-2",
+      "title": "Run and return",
+      "players": [
+        { "id": "p1", "team": "A", "number": "7", "name": "Runner", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "x": 300, "y": 440 },
+        { "id": "p2", "team": "A", "number": "9", "name": "Wall", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "x": 500, "y": 280 }
+      ],
+      "balls": [{ "id": "ball-1", "x": 500, "y": 306, "size": 11 }],
+      "equipments": [{ "id": "cone-1", "type": "cone-orange", "x": 500, "y": 430 }],
+      "lines": [],
+      "shapes": [],
+      "texts": [],
+      "notes": "Runner curves around the cone (the defender); the wall player lays the ball into the run.",
+      "holdMs": 200,
+      "durationMs": 1500,
+      "paths": {
+        "p1": { "x": 500, "y": 560 }
+      }
+    },
+    {
+      "id": "frame-3",
+      "title": "Finish",
+      "players": [
+        { "id": "p1", "team": "A", "number": "7", "name": "Runner", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "x": 700, "y": 440 },
+        { "id": "p2", "team": "A", "number": "9", "name": "Wall", "color": "#ef4444", "textColor": "#ffffff", "radius": 17, "x": 500, "y": 280 }
+      ],
+      "balls": [{ "id": "ball-1", "x": 726, "y": 440, "size": 11 }],
+      "equipments": [{ "id": "cone-1", "type": "cone-orange", "x": 500, "y": 430 }],
+      "lines": [],
+      "shapes": [],
+      "texts": [],
+      "holdMs": 1500,
+      "durationMs": 1000
+    }
+  ]
+}

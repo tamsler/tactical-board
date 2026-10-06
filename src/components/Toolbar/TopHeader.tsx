@@ -13,6 +13,7 @@ import {
   Shield,
   Save,
   Link2,
+  Sparkles,
   Film,
 } from "lucide-react";
 import type { useTacticsState, BoardState } from "../../hooks/useTacticsState";
@@ -45,6 +46,7 @@ interface TopHeaderProps {
   /** Board shown on screen (the sampled pose while previewing), used for PDF notes and counts. */
   getExportBoard?: () => BoardState;
   onShare?: () => void;
+  onPasteImport?: () => void;
   onExportVideo?: (format: VideoFormat) => void;
 }
 
@@ -56,6 +58,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   onBeforeExport,
   getExportBoard,
   onShare,
+  onPasteImport,
   onExportVideo,
 }) => {
   const {
@@ -396,6 +399,20 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           <span className="hidden md:inline">Load</span>
         </button>
 
+        {onPasteImport && (
+          <button
+            onClick={onPasteImport}
+            disabled={tactics.isPreviewing}
+            aria-label="Paste from AI"
+            title="Open a drill written by an AI assistant"
+            className="hidden sm:flex items-center gap-1 px-2 py-1.5 sm:px-3 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition shrink-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden lg:inline">Paste from AI</span>
+            <span className="lg:hidden">AI</span>
+          </button>
+        )}
+
         {/* Export Dropdown */}
         <div className="relative" ref={exportDropdownRef}>
           <button
@@ -589,6 +606,25 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                     </div>
                   </div>
                 </button>
+
+                {onPasteImport && (
+                  <button
+                    disabled={tactics.isPreviewing}
+                    onClick={() => {
+                      setShowExportMenu(false);
+                      onPasteImport();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-700 transition text-left cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <Sparkles className="w-4 h-4 text-emerald-400" />
+                    <div>
+                      <div className="font-semibold">Paste from AI…</div>
+                      <div className="text-[10px] text-slate-400">
+                        Open a drill written by an assistant
+                      </div>
+                    </div>
+                  </button>
+                )}
 
                 {onOpenHelp && (
                   <button

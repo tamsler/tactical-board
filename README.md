@@ -19,6 +19,9 @@ coaching sheet. Boards are saved in your browser; nothing is uploaded.
   runs, and play them back. Export the animation as MP4 or MOV video.
 - Export to PNG, JPEG, SVG or a PDF sheet with your coaching notes.
 - Share a board as a link, with the whole board stored in the link itself.
+- Create drills with AI (experimental): copy a prompt from
+  [tacticalboard.app/ai](https://tacticalboard.app/ai/) into an AI assistant,
+  describe a drill, and paste the answer into the board.
 - Undo and redo, automatic saving, and saving or opening `.tacticalboard`
   project files.
 
@@ -56,6 +59,10 @@ and tests use Vitest with Testing Library.
   formations and exports, with acceptance criteria.
 - [docs/specs/animation.md](docs/specs/animation.md): animation, playback,
   sharing, files and video export.
+- [docs/agent/document-format.md](docs/agent/document-format.md): the
+  `.tacticalboard` file format, written for AI agents. `npm run check:board
+  -- <file>` validates a file; `npm run build:ai` regenerates the prompt and
+  examples served at `/ai/`.
 
 When you change behaviour, update the relevant spec and add a CHANGELOG entry
 under **Unreleased**.

@@ -1,15 +1,18 @@
 {
   "name": "tactical-board",
   "private": true,
-  "version": "1.5.0",
+  "version": "1.6.0",
   "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "build:ai": "node scripts/build-ai-prompt.mjs",
+    "prebuild": "npm run build:ai",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "check:board": "node scripts/check-board.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

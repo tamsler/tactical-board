@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+    <!-- "/ai" without its trailing slash falls back to the app on servers that do not redirect it. -->
+    <script>
+      if (location.pathname === "/ai") location.replace("/ai/");
+    </script>
+
     <!-- Google tag (gtag.js) -->
     <link rel="preconnect" href="https://www.googletagmanager.com" />
     <script

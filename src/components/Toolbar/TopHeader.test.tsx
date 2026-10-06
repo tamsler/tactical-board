@@ -12,6 +12,7 @@ function Harness() {
       tactics={tactics}
       boardRef={createRef<SVGSVGElement>()}
       onShare={() => {}}
+      onPasteImport={() => {}}
     />
   );
 }
@@ -43,6 +44,9 @@ describe("TopHeader file menu", () => {
     expect(screen.getByText("Save (Ctrl/Cmd+S)")).toBeTruthy();
     expect(screen.getByText(/all frames/i)).toBeTruthy();
     expect(screen.getByText(/share link/i)).toBeTruthy();
+    // Importing sits beside Load in the header, and beside it again in the phone menu.
+    expect(screen.getByRole("button", { name: "Paste from AI" })).toBeTruthy();
+    expect(screen.getByText("Paste from AI…")).toBeTruthy();
     expect(screen.getByText(/legacy json/i)).toBeTruthy();
     expect(screen.queryByText("Save Project File (JSON)")).toBeNull();
     expect(ctrlS()).toBe(true);
