@@ -44,6 +44,7 @@ import {
   setPathControl as setPathControlCommand,
 } from "../animation/commands";
 import { toDocument, type ImportedProject } from "../animation/migrate";
+import { nudgeBoard } from "../animation/nudge";
 import {
   buildStoredState,
   loadStoredState,
@@ -1156,6 +1157,29 @@ export function useTacticsState() {
     setSelectedType(null);
   }, [selectedId, pushState]);
 
+  // Move the selected item by keyboard. A press that moves nothing adds no
+  // undo step; continueStep folds a held key's repeats into the step its
+  // first press created.
+  const nudgeSelected = useCallback(
+    (dx: number, dy: number, continueStep = false) => {
+      if (!selectedId || !selectedType) return;
+      setHistory((curr) => {
+        if (curr.readOnly) return curr;
+        const board = boardFromSequence(
+          curr.present.sequence,
+          curr.present.selectedFrameId,
+        );
+        const next = nudgeBoard(board, selectedId, selectedType, dx, dy);
+        if (next === board) return curr;
+        const snapshot = editSnapshot(curr.present, next);
+        return continueStep
+          ? { ...curr, present: snapshot, draft: null }
+          : commit(curr, snapshot);
+      });
+    },
+    [selectedId, selectedType],
+  );
+
   // Clear all drawings (lines, shapes, texts)
   const clearDrawings = useCallback(() => {
     track("drawings_cleared");
@@ -1468,6 +1492,7 @@ export function useTacticsState() {
     updateShape,
     updateText,
     deleteSelected,
+    nudgeSelected,
     clearDrawings,
     resetBoard,
     loadFormation,

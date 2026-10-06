@@ -135,8 +135,9 @@ so numbering stays correct after reorder and delete.
   `contenteditable` or on a `BUTTON` (for Space/Enter).
 - Shortcuts when the board owns focus: **Space** play/pause; **,** / **.**
   (and **PageUp** / **PageDown**) previous/next frame; **Escape** cancels an
-  active drag, then deselects; existing undo/redo. Arrow keys are reserved for
-  v1.1 entity nudging.
+  active drag, then deselects; existing undo/redo. Arrow keys nudge the
+  selected item in the selected frame; see
+  [keyboard-positioning](../../openspec/specs/keyboard-positioning/spec.md).
 - Frame selection, slider time, control names and disabled states are exposed
   to assistive technology. Animation ticks are not announced. No autoplay;
   reduced-motion users get the same explicit Play and frame stepping.

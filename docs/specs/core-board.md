@@ -208,6 +208,7 @@ Selected".
   | V | Select tool |
   | Delete / Backspace | Delete the selected item |
   | Escape | Cancel the drag, deselect, and switch to Select |
+  | Arrow keys | Nudge the selected item 1 unit, or 10 with Shift; see [keyboard-positioning](../../openspec/specs/keyboard-positioning/spec.md) |
   | Ctrl/Cmd+Z | Undo |
   | Ctrl/Cmd+Shift+Z, Ctrl/Cmd+Y | Redo |
 
@@ -273,7 +274,8 @@ Selected".
 ## 12. Help and About
 
 - **Keyboard shortcuts:** Select Mode (V), Delete Selected, Undo, Redo,
-  Deselect / Cancel.
+  Deselect / Cancel, Nudge Selected and Nudge 10×
+  ([keyboard-positioning](../../openspec/specs/keyboard-positioning/spec.md)).
 - **Tool guide:** Move & Drag, Player Runs, Ball Passes, Dribbles, Curved
   Passes, Tactical Zones, Export.
 - **About:** Created by Thomas Amsler; version from `package.json`; contact

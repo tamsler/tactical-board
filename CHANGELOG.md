@@ -10,6 +10,15 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-10-06
+
+### Added
+
+- **Nudge with the arrow keys.** Select a player, ball, cone, line, zone or
+  text and press an arrow key to move it a small step, or hold Shift to move
+  it ten times as far. Holding a key keeps it moving, and one Undo takes it
+  back to where it started.
+
 ## [1.6.0] - 2026-10-05
 
 ### Added
@@ -231,7 +240,8 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
 
 - Player numbers stay readable on light jerseys.
 
-[Unreleased]: https://github.com/tamsler/tactical-board/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/tamsler/tactical-board/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/tamsler/tactical-board/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/tamsler/tactical-board/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/tamsler/tactical-board/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/tamsler/tactical-board/compare/v1.3.0...v1.4.0

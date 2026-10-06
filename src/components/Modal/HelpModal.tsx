@@ -95,6 +95,18 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                   Esc
                 </kbd>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Nudge Selected</span>
+                <kbd className="px-2 py-0.5 bg-slate-800 rounded font-mono text-slate-200">
+                  ← ↑ ↓ →
+                </kbd>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Nudge 10×</span>
+                <kbd className="px-2 py-0.5 bg-slate-800 rounded font-mono text-slate-200">
+                  Shift + Arrows
+                </kbd>
+              </div>
             </div>
           </div>
 

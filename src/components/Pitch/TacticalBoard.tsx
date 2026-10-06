@@ -34,6 +34,7 @@ import { SampledBoardLayer } from "../Animation/SampledBoardLayer";
 import type { AnimationPlayback } from "../../animation/useAnimationPlayback";
 import { segmentIndexAt } from "../../animation/timeline";
 import { pathControl } from "../../animation/model";
+import { nudgeBoard, nudgeDeltaForKey } from "../../animation/nudge";
 import {
   controlThroughMidpoint,
   curveMidpoint,
@@ -106,6 +107,10 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
     to: Point;
     control: Point | null;
   } | null>(null);
+
+  // Item and frame of the arrow-key press being held, so its auto-repeats
+  // join that press's undo step. Null when no such press is in progress.
+  const nudgeRunRef = useRef<string | null>(null);
 
   // Zoom & Pan state (enhanced for mobile pinch-to-zoom & detailed pitch viewing)
   const [zoom, setZoom] = useState(1.0);
@@ -1028,6 +1033,22 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
         return;
       }
 
+      const nudge = nudgeDeltaForKey(e);
+      if (!nudge) nudgeRunRef.current = null;
+      if (nudge && selectedId && selectedType && !isDragging && !pathDrag) {
+        e.preventDefault();
+        const run = `${tactics.selectedFrameId}:${selectedId}`;
+        const continueStep = e.repeat && nudgeRunRef.current === run;
+        if (!continueStep) {
+          const moves =
+            nudgeBoard(state, selectedId, selectedType, nudge.dx, nudge.dy) !==
+            state;
+          nudgeRunRef.current = moves ? run : null;
+        }
+        tactics.nudgeSelected(nudge.dx, nudge.dy, continueStep);
+        return;
+      }
+
       if (e.key === "Delete" || e.key === "Backspace") {
         tactics.deleteSelected();
       } else if (e.key === "Escape") {
@@ -1056,11 +1077,28 @@ export const TacticalBoard: React.FC<TacticalBoardProps> = ({
   }, [
     tactics,
     playback,
+    state,
+    selectedId,
+    selectedType,
     setSelectedId,
     setSelectedType,
     setActiveTool,
     isDragging,
+    pathDrag,
   ]);
+
+  // Releasing a key or leaving the window ends a held arrow-key press.
+  useEffect(() => {
+    const endNudgeRun = () => {
+      nudgeRunRef.current = null;
+    };
+    window.addEventListener("keyup", endNudgeRun);
+    window.addEventListener("blur", endNudgeRun);
+    return () => {
+      window.removeEventListener("keyup", endNudgeRun);
+      window.removeEventListener("blur", endNudgeRun);
+    };
+  }, []);
 
   // Render live preview while user is actively dragging/drawing
   const renderDrawingPreview = () => {

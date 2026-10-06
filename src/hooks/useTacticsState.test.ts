@@ -490,4 +490,103 @@ describe("useTacticsState", () => {
       expect(result.current.frames).toHaveLength(2);
     });
   });
+
+  describe("nudging the selected item", () => {
+    const setup = () => {
+      const hook = renderHook(() => useTacticsState());
+      const id = hook.result.current.state.players[0].id;
+      act(() => {
+        hook.result.current.setSelectedId(id);
+        hook.result.current.setSelectedType("player");
+      });
+      const pos = () => {
+        const p = hook.result.current.state.players.find((pl) => pl.id === id)!;
+        return { x: p.x, y: p.y };
+      };
+      return { ...hook, id, pos };
+    };
+
+    it("adds one undo step per press", () => {
+      const { result, pos } = setup();
+      const start = pos();
+      act(() => result.current.nudgeSelected(1, 0));
+      act(() => result.current.nudgeSelected(1, 0));
+      act(() => result.current.nudgeSelected(1, 0));
+      expect(pos()).toEqual({ x: start.x + 3, y: start.y });
+
+      act(() => result.current.undo());
+      expect(pos()).toEqual({ x: start.x + 2, y: start.y });
+    });
+
+    it("folds a held key into the step of its first press", () => {
+      const { result, pos } = setup();
+      const start = pos();
+      act(() => result.current.nudgeSelected(1, 0));
+      for (let i = 0; i < 39; i++) {
+        act(() => result.current.nudgeSelected(1, 0, true));
+      }
+      expect(pos()).toEqual({ x: start.x + 40, y: start.y });
+
+      act(() => result.current.undo());
+      expect(pos()).toEqual(start);
+      expect(result.current.canUndo).toBe(false);
+
+      act(() => result.current.redo());
+      expect(pos()).toEqual({ x: start.x + 40, y: start.y });
+    });
+
+    it("adds no undo step when the item cannot move", () => {
+      const { result, id, pos } = setup();
+      act(() => {
+        result.current.pushState((prev) => ({
+          ...prev,
+          players: prev.players.map((p) => (p.id === id ? { ...p, x: 0 } : p)),
+        }));
+      });
+      act(() => result.current.undo());
+      act(() => result.current.redo());
+      const before = pos();
+      act(() => result.current.nudgeSelected(-1, 0));
+      expect(pos()).toEqual(before);
+      // Only the setup edit is on the stack.
+      act(() => result.current.undo());
+      expect(result.current.canUndo).toBe(false);
+    });
+
+    it("does nothing without a selection", () => {
+      const { result } = renderHook(() => useTacticsState());
+      const before = result.current.state;
+      act(() => result.current.nudgeSelected(1, 0));
+      expect(result.current.state).toBe(before);
+      expect(result.current.canUndo).toBe(false);
+    });
+
+    it("changes the selected frame only", () => {
+      const { result, id } = setup();
+      act(() => result.current.addFrame());
+      act(() => result.current.addFrame());
+      act(() => result.current.selectFrame(result.current.frames[1].id));
+      // Changing frame clears the selection.
+      act(() => {
+        result.current.setSelectedId(id);
+        result.current.setSelectedType("player");
+      });
+      const ys = () =>
+        result.current.frames.map((f) => f.players.find((p) => p.id === id)!.y);
+      const [y1, y2, y3] = ys();
+
+      act(() => result.current.nudgeSelected(0, -1));
+      expect(ys()).toEqual([y1, y2 - 1, y3]);
+    });
+
+    it("does nothing while previewing", () => {
+      const { result, pos } = setup();
+      const start = pos();
+      act(() => result.current.setPreviewing(true));
+      act(() => result.current.nudgeSelected(1, 0));
+      act(() => result.current.setPreviewing(false));
+      expect(pos()).toEqual(start);
+      expect(result.current.canUndo).toBe(false);
+    });
+  });
 });
