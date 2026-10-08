@@ -47,7 +47,9 @@ user-visible changes in [CHANGELOG.md](../../CHANGELOG.md).
   - Open by default when the window is at least 768 px wide.
   - Below `md` it is a fixed drawer over a dark backdrop; tapping the backdrop
     or the close button closes it.
-  - A handle on the edge collapses and expands it.
+  - A handle on the edge collapses and expands it. It is vertically centred
+    from tablet width up; on a phone it sits at the top corner of the board,
+    clear of the timeline.
   - Selecting an item switches to the Properties tab.
 - **Small screens:** Load, Paste from AI and Help move into the Save / Export
   menu.
@@ -342,7 +344,9 @@ Automated coverage today:
   touch drag and a drag at 200% zoom land where the pointer went; reload
   restores the board (C11); PNG, JPEG, SVG and PDF export produce valid files
   and the SVG has no editor overlays (C12, in part); a share link opens after
-  confirmation; a held arrow key undoes in one step.
+  confirmation; a held arrow key undoes in one step; on a phone the timeline's
+  playback controls and frame strip stay inside the panel and the sidebar
+  handle stays above it.
 
 Not automated: what an exported image or PDF looks like; pinch-zoom and pan;
 video export; and dragging line and resize handles. The component tests run

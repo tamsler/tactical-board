@@ -10,6 +10,8 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-10-08
+
 ### Added
 
 - **Move pacing.** Each move in an animation can now be set to "Natural
@@ -290,7 +292,8 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
 
 - Player numbers stay readable on light jerseys.
 
-[Unreleased]: https://github.com/tamsler/tactical-board/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/tamsler/tactical-board/compare/v1.9.0...HEAD
+[1.9.0]: https://github.com/tamsler/tactical-board/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/tamsler/tactical-board/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/tamsler/tactical-board/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/tamsler/tactical-board/compare/v1.5.0...v1.6.0

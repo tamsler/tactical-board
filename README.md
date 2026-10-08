@@ -17,7 +17,8 @@ coaching sheet. Boards are saved in your browser; nothing is uploaded.
   shaded zones and text. Anything can be moved or edited afterwards, and
   nudged into place with the arrow keys.
 - Animated sequences: build frames, move players and the ball, bend their
-  runs, and play them back. Export the animation as MP4 or MOV video.
+  runs, choose steady or natural pacing for each move, and play them back.
+  Export the animation as MP4 or MOV video.
 - Export to PNG, JPEG, SVG or a PDF sheet with your coaching notes.
 - Share a board as a link, with the whole board stored in the link itself.
 - Create drills with AI (experimental): copy a prompt from
@@ -71,7 +72,8 @@ every push.
 - [docs/specs/animation.md](docs/specs/animation.md): animation, playback,
   sharing, files and video export.
 - [openspec/specs/](openspec/specs/): behaviour added or changed since v1.6.0,
-  one folder per capability (`keyboard-positioning`, `usage-analytics`).
+  one folder per capability (`keyboard-positioning`, `move-easing`,
+  `usage-analytics`).
 - [docs/roadmap.md](docs/roadmap.md): candidate features, not committed work.
 - [docs/agent/document-format.md](docs/agent/document-format.md): the
   `.tacticalboard` file format, written for AI agents. `npm run check:board
