@@ -309,11 +309,12 @@ export function App() {
           )}
         </aside>
 
-        {/* Sidebar Toggle Handle */}
+        {/* Sidebar Toggle Handle. On a phone it sits at the top corner of the
+            board, clear of the timeline and quick-add bar below it. */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-          className={`absolute top-1/2 -translate-y-1/2 z-30 bg-slate-800 hover:bg-slate-700 text-slate-300 p-1.5 rounded-l-md border-y border-l border-slate-700 shadow-md transition cursor-pointer ${
+          className={`absolute top-3 md:top-1/2 md:-translate-y-1/2 z-30 bg-slate-800 hover:bg-slate-700 text-slate-300 p-1.5 rounded-l-md border-y border-l border-slate-700 shadow-md transition cursor-pointer ${
             isSidebarOpen ? "hidden md:block md:right-80" : "block right-0"
           }`}
         >

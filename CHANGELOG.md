@@ -10,6 +10,18 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
 
 ## [Unreleased]
 
+### Fixed
+
+- On a phone, and on a tablet with the sidebar open, the playback speed
+  selector no longer runs off the edge of the timeline. When the playback
+  controls do not fit on one line, the seek slider moves to its own line
+  below them.
+- On a phone the frame strip in the timeline now uses the full width, with
+  the move, delete and Add frame buttons on a line below it, so more than
+  one frame is visible at a time.
+- On a phone the sidebar handle sits at the top corner of the board instead
+  of floating over the timeline controls.
+
 ## [1.8.0] - 2026-10-06
 
 ### Changed

@@ -178,101 +178,104 @@ export const FrameTimeline: React.FC<FrameTimelineProps> = ({
 
       {!collapsed && (
         <>
-          {/* Frame strip and actions */}
-          <div className="flex items-stretch gap-2">
-            <ol
-              ref={listRef}
-              className="flex-1 min-w-0 flex items-stretch gap-1.5 overflow-x-auto scrollbar-none touch-pan-x py-0.5"
-            >
-              {frames.map((f, i) => {
-                const selected = f.id === selectedFrameId && !isPreviewing;
-                const atPlayhead = isPreviewing && i === playheadIndex;
-                const last = i === frames.length - 1;
-                return (
-                  <li key={f.id} className="shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => editFrame(f.id)}
-                      aria-current={selected}
-                      data-playhead={atPlayhead}
-                      aria-label={`${frameLabel(f, i)}, hold ${toSeconds(f.holdMs)} seconds${
-                        last
-                          ? ""
-                          : `, then move for ${toSeconds(f.durationMs)} seconds`
-                      }`}
-                      className={`min-h-11 min-w-24 max-w-40 px-2.5 py-1 rounded-lg border text-left flex flex-col justify-center transition cursor-pointer ${
-                        selected
-                          ? "bg-emerald-600/20 border-emerald-500 ring-1 ring-emerald-500 text-white"
-                          : atPlayhead
-                            ? "bg-sky-600/20 border-sky-500 ring-1 ring-sky-500 text-white"
-                            : "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
-                      }`}
-                    >
-                      <span className="flex items-center gap-1.5 text-[11px] font-bold">
-                        <span
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
-                            selected
-                              ? "bg-emerald-500 text-white"
-                              : "bg-slate-700"
-                          }`}
-                        >
-                          {i + 1}
+          {/* Frame strip and actions. In a narrow panel the actions take
+              their own line, so the strip keeps the full width. */}
+          <div className="@container">
+            <div className="flex flex-wrap items-stretch gap-2">
+              <ol
+                ref={listRef}
+                className="basis-full @md:basis-0 flex-1 min-w-0 flex items-stretch gap-1.5 overflow-x-auto scrollbar-none touch-pan-x py-0.5"
+              >
+                {frames.map((f, i) => {
+                  const selected = f.id === selectedFrameId && !isPreviewing;
+                  const atPlayhead = isPreviewing && i === playheadIndex;
+                  const last = i === frames.length - 1;
+                  return (
+                    <li key={f.id} className="shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => editFrame(f.id)}
+                        aria-current={selected}
+                        data-playhead={atPlayhead}
+                        aria-label={`${frameLabel(f, i)}, hold ${toSeconds(f.holdMs)} seconds${
+                          last
+                            ? ""
+                            : `, then move for ${toSeconds(f.durationMs)} seconds`
+                        }`}
+                        className={`min-h-11 min-w-24 max-w-40 px-2.5 py-1 rounded-lg border text-left flex flex-col justify-center transition cursor-pointer ${
+                          selected
+                            ? "bg-emerald-600/20 border-emerald-500 ring-1 ring-emerald-500 text-white"
+                            : atPlayhead
+                              ? "bg-sky-600/20 border-sky-500 ring-1 ring-sky-500 text-white"
+                              : "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
+                        }`}
+                      >
+                        <span className="flex items-center gap-1.5 text-[11px] font-bold">
+                          <span
+                            className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
+                              selected
+                                ? "bg-emerald-500 text-white"
+                                : "bg-slate-700"
+                            }`}
+                          >
+                            {i + 1}
+                          </span>
+                          <span className="truncate">{frameLabel(f, i)}</span>
                         </span>
-                        <span className="truncate">{frameLabel(f, i)}</span>
-                      </span>
-                      <span className="text-[10px] text-slate-400 tabular-nums">
-                        {f.holdMs > 0 && `hold ${toSeconds(f.holdMs)} s`}
-                        {f.holdMs > 0 && !last && " · "}
-                        {!last && `→ ${toSeconds(f.durationMs)} s`}
-                        {last && f.holdMs === 0 && "end"}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
+                        <span className="text-[10px] text-slate-400 tabular-nums">
+                          {f.holdMs > 0 && `hold ${toSeconds(f.holdMs)} s`}
+                          {f.holdMs > 0 && !last && " · "}
+                          {!last && `→ ${toSeconds(f.durationMs)} s`}
+                          {last && f.holdMs === 0 && "end"}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
 
-            <div className="flex items-center gap-1 shrink-0">
-              <button
-                type="button"
-                onClick={() => handleMove(-1)}
-                disabled={isPreviewing || index === 0}
-                title="Move frame earlier"
-                className={iconButton}
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span className="sr-only">Move frame earlier</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleMove(1)}
-                disabled={isPreviewing || isLast}
-                title="Move frame later"
-                className={iconButton}
-              >
-                <ChevronRight className="w-4 h-4" />
-                <span className="sr-only">Move frame later</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={isPreviewing || frames.length === 1}
-                title="Delete frame"
-                className={`${iconButton} text-rose-400`}
-              >
-                <Trash2 className="w-4 h-4" />
-                <span className="sr-only">Delete frame</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleAdd}
-                disabled={isPreviewing || frames.length >= LIMITS.maxFrames}
-                title="Add a copy of this frame after it"
-                className="h-10 px-3 shrink-0 flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold disabled:opacity-40 transition cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add frame</span>
-              </button>
+              <div className="flex items-center gap-1 shrink-0 w-full @md:w-auto">
+                <button
+                  type="button"
+                  onClick={() => handleMove(-1)}
+                  disabled={isPreviewing || index === 0}
+                  title="Move frame earlier"
+                  className={iconButton}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="sr-only">Move frame earlier</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleMove(1)}
+                  disabled={isPreviewing || isLast}
+                  title="Move frame later"
+                  className={iconButton}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                  <span className="sr-only">Move frame later</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isPreviewing || frames.length === 1}
+                  title="Delete frame"
+                  className={`${iconButton} text-rose-400`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="sr-only">Delete frame</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAdd}
+                  disabled={isPreviewing || frames.length >= LIMITS.maxFrames}
+                  title="Add a copy of this frame after it"
+                  className="h-10 px-3 ml-auto @md:ml-0 shrink-0 flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold disabled:opacity-40 transition cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add frame</span>
+                </button>
+              </div>
             </div>
           </div>
 

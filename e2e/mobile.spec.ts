@@ -57,3 +57,33 @@ test("a drag at 200% zoom covers half the pitch distance", async ({ page }) => {
   await expectSaved(page, ball, { x: BALL.x + 60, y: BALL.y });
   await expect(boardSvg(page)).toBeVisible();
 });
+
+test("the timeline controls fit inside the panel on a phone", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Animate" }).click();
+  await page.getByRole("button", { name: /add frame/i }).click();
+
+  const panel = (await page
+    .getByRole("region", { name: "Animation frames" })
+    .boundingBox())!;
+  for (const control of [
+    page.getByLabel("Playback speed"),
+    page.getByRole("button", { name: "Loop playback" }),
+    page.getByLabel("Playback position"),
+  ]) {
+    const box = (await control.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(panel.x);
+    expect(box.x + box.width).toBeLessThanOrEqual(panel.x + panel.width);
+  }
+
+  // The sidebar handle floats over the board, not over the timeline.
+  const handle = (await page
+    .getByRole("button", { name: "Expand sidebar" })
+    .boundingBox())!;
+  expect(handle.y + handle.height).toBeLessThanOrEqual(panel.y);
+
+  // The frame chips get the panel's width, not what the action buttons leave.
+  const strip = (await page.getByRole("list").boundingBox())!;
+  expect(strip.width).toBeGreaterThan(panel.width * 0.8);
+});
