@@ -14,11 +14,10 @@ revisit the order once they have collected a few weeks of data.
 
 | # | Candidate | Size | Why | Source |
 |---|---|---|---|---|
-| 1 | Easing (`easeInOut`) per frame | Medium | Every move is linear, which makes playback look mechanical. The formula is already specified. Adds an optional field to the document format. | [animation.md](specs/animation.md) §11 |
-| 2 | Ball possession (the ball follows a player) | Large | A dribble currently needs the ball and the player moved separately in every frame. Needs design work: possession must be explicit, never inferred from proximity. | [animation.md](specs/animation.md) §11 |
-| 3 | Board library | Large | The app holds one board at a time; a second drill means saving a file and loading another. The spec defers an IndexedDB library. | [animation.md](specs/animation.md) §13 |
-| 4 | Cross-tab conflict detection | Medium | Two tabs on the app overwrite each other's autosave without warning. How often this happens in practice is unknown. | [animation.md](specs/animation.md) §8 |
-| 5 | Open a share link pasted into an open tab | Small | A share link is read on page load only. Pasting one into the address bar of a tab that already has the app open changes the URL but not the board, until the coach reloads. The spec does not say when a link is read, only the code comment does ("once, on page load"), so decide first whether this is a bug or a behaviour change. | `src/hooks/useShareLinkImport.ts`, [animation.md](specs/animation.md) §13 |
+| 1 | Ball possession (the ball follows a player) | Large | A dribble currently needs the ball and the player moved separately in every frame. Needs design work: possession must be explicit, never inferred from proximity. | [animation.md](specs/animation.md) §11 |
+| 2 | Board library | Large | The app holds one board at a time; a second drill means saving a file and loading another. The spec defers an IndexedDB library. | [animation.md](specs/animation.md) §13 |
+| 3 | Cross-tab conflict detection | Medium | Two tabs on the app overwrite each other's autosave without warning. How often this happens in practice is unknown. | [animation.md](specs/animation.md) §8 |
+| 4 | Open a share link pasted into an open tab | Small | A share link is read on page load only. Pasting one into the address bar of a tab that already has the app open changes the URL but not the board, until the coach reloads. The spec does not say when a link is read, only the code comment does ("once, on page load"), so decide first whether this is a bug or a behaviour change. | `src/hooks/useShareLinkImport.ts`, [animation.md](specs/animation.md) §13 |
 
 ## Smaller deferred items
 
@@ -59,6 +58,9 @@ tests on every push. See the coverage list in
 1. Arrow-key nudging was the first OpenSpec change (`add-arrow-key-nudge`)
    and is specified in `openspec/specs/keyboard-positioning/`.
 2. Usage analytics was the second (`add-feature-usage-analytics`).
-3. Undecided. Easing and possession improve how animations look; the board
-   library helps coaches who manage several drills. Choose once there is
-   signal from coaches or from the usage events.
+3. Easing per frame was the third (`add-frame-easing`) and is specified in
+   `openspec/specs/move-easing/`.
+4. Undecided. Possession improves how animations look; the board library
+   helps coaches who manage several drills. Choose once there is signal from
+   coaches or from the usage events, which now include how often move pacing
+   is changed.

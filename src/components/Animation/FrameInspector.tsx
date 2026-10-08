@@ -1,6 +1,11 @@
 import React, { useId, useState } from "react";
-import type { AnimationFrame } from "../../animation/model";
-import { LIMITS, frameLabel, toSeconds } from "../../animation/model";
+import type { AnimationFrame, Easing } from "../../animation/model";
+import { EASINGS, LIMITS, frameLabel, toSeconds } from "../../animation/model";
+
+const EASING_LABELS: Record<Easing, string> = {
+  linear: "Steady speed",
+  easeInOut: "Natural (speeds up, then slows)",
+};
 
 interface FrameInspectorProps {
   frame: AnimationFrame;
@@ -12,6 +17,7 @@ interface FrameInspectorProps {
     holdMs?: number;
     durationMs?: number;
   }) => string | null;
+  onSetEasing: (easing: Easing) => void;
 }
 
 /** Remount with a key built from the frame's stored values to reset local drafts. */
@@ -21,6 +27,7 @@ export const FrameInspector: React.FC<FrameInspectorProps> = ({
   isLast,
   onRename,
   onSetTiming,
+  onSetEasing,
 }) => {
   const id = useId();
   const [title, setTitle] = useState(frame.title);
@@ -108,31 +115,53 @@ export const FrameInspector: React.FC<FrameInspectorProps> = ({
           Last frame — no move after it.
         </p>
       ) : (
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor={`${id}-duration`}
-            className="font-semibold text-slate-400"
-          >
-            Move to next frame (s)
-          </label>
-          <input
-            id={`${id}-duration`}
-            type="number"
-            inputMode="decimal"
-            min={LIMITS.minDurationMs / 1000}
-            max={LIMITS.maxDurationMs / 1000}
-            step={0.1}
-            value={duration}
-            aria-invalid={error?.field === "durationMs"}
-            aria-describedby={error ? `${id}-error` : undefined}
-            onChange={(e) => setDuration(e.target.value)}
-            onBlur={(e) => commitTiming("durationMs", e.target.value)}
-            onKeyDown={onKeyDown(() =>
-              setDuration(toSeconds(frame.durationMs)),
-            )}
-            className={`${inputClass} w-20`}
-          />
-        </div>
+        <>
+          <div className="flex flex-col gap-1">
+            <label
+              htmlFor={`${id}-duration`}
+              className="font-semibold text-slate-400"
+            >
+              Move to next frame (s)
+            </label>
+            <input
+              id={`${id}-duration`}
+              type="number"
+              inputMode="decimal"
+              min={LIMITS.minDurationMs / 1000}
+              max={LIMITS.maxDurationMs / 1000}
+              step={0.1}
+              value={duration}
+              aria-invalid={error?.field === "durationMs"}
+              aria-describedby={error ? `${id}-error` : undefined}
+              onChange={(e) => setDuration(e.target.value)}
+              onBlur={(e) => commitTiming("durationMs", e.target.value)}
+              onKeyDown={onKeyDown(() =>
+                setDuration(toSeconds(frame.durationMs)),
+              )}
+              className={`${inputClass} w-20`}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label
+              htmlFor={`${id}-easing`}
+              className="font-semibold text-slate-400"
+            >
+              Move pacing
+            </label>
+            <select
+              id={`${id}-easing`}
+              value={frame.easing ?? "linear"}
+              onChange={(e) => onSetEasing(e.target.value as Easing)}
+              className={`${inputClass} cursor-pointer`}
+            >
+              {EASINGS.map((easing) => (
+                <option key={easing} value={easing}>
+                  {EASING_LABELS[easing]}
+                </option>
+              ))}
+            </select>
+          </div>
+        </>
       )}
 
       <p

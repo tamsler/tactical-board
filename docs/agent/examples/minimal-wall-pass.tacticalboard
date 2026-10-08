@@ -1,6 +1,6 @@
 {
   "kind": "tactical-board-document",
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "title": "Wall pass",
   "settings": { "pitchType": "blank", "matchFormat": "7v7", "halfPitchTeam": "B" },
   "frames": [

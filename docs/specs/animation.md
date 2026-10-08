@@ -42,7 +42,7 @@ pose, not one rendered video frame.
 | Release | Included |
 |---|---|
 | v1: sequence editor | Create animation from the current board; add (duplicate), rename, delete and reorder frames with buttons; drag players and ball within a frame; hold and duration controls; linear interpolation; play, pause, restart, seek, loop, speed; numbered frame chips; previous-frame ghosts; undo/redo; save/load and migration |
-| v1.1: motion controls | Per-transition easing (`easeInOut`), per-object delayed starts and early arrivals, ball possession/follow, insert frame at playhead, drag-to-reorder, rendered thumbnails, arrow-key nudging of selected entities (curved paths shipped early, §14) |
+| v1.1: motion controls | Per-object delayed starts and early arrivals, ball possession/follow, insert frame at playhead, drag-to-reorder, rendered thumbnails, arrow-key nudging of selected entities (curved paths shipped early, §14; per-move easing shipped as [move-easing](../../openspec/specs/move-easing/spec.md)) |
 | Later | GIF export, stand-alone HTML player, cloud storage (§13), animated annotations, multiple clips per board, collaboration, cross-tab conflict detection, narration, templates, substitutions and object lifecycles |
 
 Out of scope for v1: physics, collision avoidance, automatic tactical
@@ -99,12 +99,12 @@ animated.
 
 | Surface | Required controls and behavior |
 |---|---|
-| Frame strip | Numbered chip per frame (label if set), hold and outgoing duration; selected frame and playhead visually distinct |
+| Frame strip | Numbered chip per frame (label if set), hold and outgoing duration, and a marker for natural pacing ([move-easing](../../openspec/specs/move-easing/spec.md)); selected frame and playhead visually distinct |
 | Frame actions | Add, delete, move earlier, move later |
 | Playback bar | Play/pause, restart, previous/next frame, seek slider, elapsed/total time, loop, speed |
 | Speed | 0.25×, 0.5×, 1×, 1.5×, 2×; default 1×; changes preview rate, not saved durations |
 | Pitch overlays | **Show moves** toggle (on by default): previous-frame positions and movement guides with bend handles (§14); faded, non-interactive apart from the handles. Hint "Moves appear from Frame 2" on Frame 1. The UI never says "ghosts", which coaches don't recognise |
-| Frame inspector | Frame label, hold, outgoing duration (notes via the Coaching Notes field); outgoing settings shown only when a next frame exists |
+| Frame inspector | Frame label, hold, outgoing duration and move pacing ([move-easing](../../openspec/specs/move-easing/spec.md)) (notes via the Coaching Notes field); outgoing settings shown only when a next frame exists |
 | Status | Saving / saved / error, and a distinct preview versus frame-edit state |
 
 Frame titles are optional. An empty title displays as "Frame N" by position,
@@ -208,8 +208,10 @@ total        = start[last] + hold[last]
 - `time >= total` returns the final pose; negative or non-finite time clamps
   to 0. A one-frame, zero-hold sequence returns its pose without division.
 
-For `u = clamp((time - moveStart) / duration, 0, 1)` and v1 linear easing
-`p = u`:
+For `u = clamp((time - moveStart) / duration, 0, 1)`, each entity is at
+progress `p` along its path. How `p` follows from `u` is set by the frame's
+easing and is specified in
+[move-easing](../../openspec/specs/move-easing/spec.md); the default is `p = u`.
 
 ```
 x = from.x + (to.x - from.x) * p
@@ -233,6 +235,7 @@ interface AnimationFrame extends TacticFrame {
   holdMs: number;
   durationMs: number; // outgoing transition; unused on the last frame
   paths?: Record<string, Point>; // curve control points for outgoing moves (§14)
+  easing?: "linear" | "easeInOut"; // pacing of the outgoing move; absent means linear
 }
 
 interface SequenceState {
@@ -249,7 +252,7 @@ interface DocumentSettings {
 
 interface TacticsDocument {
   kind: "tactical-board-document";
-  schemaVersion: 3; // v2 is read as a document without curves
+  schemaVersion: 4; // v3 is read as a document without easing, v2 also without curves
   title: string;
   settings: DocumentSettings;
   frames: AnimationFrame[];
@@ -459,7 +462,8 @@ are available to everyone, and the original single-board "Save Project File
 old links that still carry it open normally.
 
 Add to the `AnalyticsEvent` union: `animation_created`,
-`animation_frame_added`, `animation_played`, `animation_save_failed`. Events
+`animation_frame_added`, `animation_played`, `animation_save_failed`,
+`frame_pacing_changed`. Events
 carry counts only (frames, duration buckets); the full rule for what no event
 may carry is in
 [usage-analytics](../../openspec/specs/usage-analytics/spec.md).
@@ -472,8 +476,8 @@ with several frames opens on its selected frame and is never stripped.
 Extensions keep the `sample(time)` contract and add optional fields with
 defaults, or bump `schemaVersion` with a migration when semantics change.
 
-- **Easing**: optional `easing: "linear" | "easeInOut"` per frame, with
-  `p = 3u² − 2u³`.
+- **Easing**: implemented; see
+  [move-easing](../../openspec/specs/move-easing/spec.md).
 - **Motion windows**: per-entity start/end fractions `0 ≤ start < end ≤ 1`.
 - **Curved paths**: implemented (§14).
 - **Possession**: explicit follow-player versus free-flight intervals; never
@@ -634,10 +638,12 @@ runs, overlaps and curled passes.
 
 ### Compatibility
 
-The document schema is now version 3. Version 2 documents, v2 storage and
-share links load unchanged (no curves). Builds that only understand version 2
-reject v3 files as "created by a newer version" instead of silently dropping
-the curves and saving straight moves back.
+Curved paths raised the document schema to version 3. Version 2 documents,
+v2 storage and share links load unchanged (no curves). Builds that only
+understand version 2 reject v3 files as "created by a newer version" instead
+of silently dropping the curves and saving straight moves back. The current
+schema version, and which versions the app opens, are specified in
+[move-easing](../../openspec/specs/move-easing/spec.md).
 
 ### Deferred
 

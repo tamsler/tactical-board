@@ -18,6 +18,7 @@ export type AnalyticsEvent =
   | "animation_frame_added"
   | "animation_played"
   | "animation_save_failed"
+  | "frame_pacing_changed"
   | "share_link_copied"
   | "ai_paste_opened"
   | "ai_paste_feedback_copied"

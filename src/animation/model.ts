@@ -5,6 +5,9 @@ import type {
   TacticFrame,
 } from "../types/tactics";
 
+export const EASINGS = ["linear", "easeInOut"] as const;
+export type Easing = (typeof EASINGS)[number];
+
 export interface AnimationFrame extends TacticFrame {
   holdMs: number;
   /** Outgoing transition to the next frame; unused on the last frame. */
@@ -14,6 +17,8 @@ export interface AnimationFrame extends TacticFrame {
    * moves, keyed by player or ball ID. Missing entries move in a straight line.
    */
   paths?: Record<string, Point>;
+  /** Pacing of the outgoing move. Stored only as "easeInOut"; absent means linear. */
+  easing?: Easing;
 }
 
 export interface SequenceState {
@@ -40,9 +45,12 @@ export interface DocumentSettings {
 }
 
 export const DOCUMENT_KIND = "tactical-board-document";
-/** v3 added curved paths; v2 documents are read as having none. */
-export const DOCUMENT_SCHEMA_VERSION = 3;
-export const SUPPORTED_SCHEMA_VERSIONS: readonly number[] = [2, 3];
+/**
+ * v3 added curved paths and v4 added easing. Older documents are read as
+ * having neither.
+ */
+export const DOCUMENT_SCHEMA_VERSION = 4;
+export const SUPPORTED_SCHEMA_VERSIONS: readonly number[] = [2, 3, 4];
 
 export interface TacticsDocument {
   kind: typeof DOCUMENT_KIND;

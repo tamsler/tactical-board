@@ -13,12 +13,18 @@ import {
   Film,
   Plus,
   Route,
+  Spline,
   Trash2,
   Undo2,
   X,
 } from "lucide-react";
 import type { useTacticsState } from "../../hooks/useTacticsState";
-import { LIMITS, frameLabel, toSeconds } from "../../animation/model";
+import {
+  LIMITS,
+  frameLabel,
+  toSeconds,
+  type Easing,
+} from "../../animation/model";
 import { segmentIndexAt } from "../../animation/timeline";
 import type { AnimationPlayback } from "../../animation/useAnimationPlayback";
 import { track } from "../../utils/analytics";
@@ -52,6 +58,7 @@ export const FrameTimeline: React.FC<FrameTimelineProps> = ({
     moveFrame,
     renameFrame,
     setFrameTiming,
+    setFrameEasing,
     undo,
     showPreviousFrame,
     setShowPreviousFrame,
@@ -94,6 +101,12 @@ export const FrameTimeline: React.FC<FrameTimelineProps> = ({
     addFrame();
     track("animation_frame_added", { frames: frames.length + 1 });
     setNotice(null);
+  };
+
+  const handleEasing = (easing: Easing) => {
+    if ((frame.easing ?? "linear") === easing) return;
+    setFrameEasing(frame.id, easing);
+    track("frame_pacing_changed", { easing, frames: frames.length });
   };
 
   const handleDelete = () => {
@@ -190,6 +203,7 @@ export const FrameTimeline: React.FC<FrameTimelineProps> = ({
                   const selected = f.id === selectedFrameId && !isPreviewing;
                   const atPlayhead = isPreviewing && i === playheadIndex;
                   const last = i === frames.length - 1;
+                  const natural = !last && f.easing === "easeInOut";
                   return (
                     <li key={f.id} className="shrink-0">
                       <button
@@ -201,7 +215,7 @@ export const FrameTimeline: React.FC<FrameTimelineProps> = ({
                           last
                             ? ""
                             : `, then move for ${toSeconds(f.durationMs)} seconds`
-                        }`}
+                        }${natural ? ", natural pacing" : ""}`}
                         className={`min-h-11 min-w-24 max-w-40 px-2.5 py-1 rounded-lg border text-left flex flex-col justify-center transition cursor-pointer ${
                           selected
                             ? "bg-emerald-600/20 border-emerald-500 ring-1 ring-emerald-500 text-white"
@@ -226,6 +240,13 @@ export const FrameTimeline: React.FC<FrameTimelineProps> = ({
                           {f.holdMs > 0 && `hold ${toSeconds(f.holdMs)} s`}
                           {f.holdMs > 0 && !last && " · "}
                           {!last && `→ ${toSeconds(f.durationMs)} s`}
+                          {natural && (
+                            <Spline
+                              aria-hidden="true"
+                              data-pacing-marker
+                              className="inline-block w-3 h-3 ml-1 align-[-2px]"
+                            />
+                          )}
                           {last && f.holdMs === 0 && "end"}
                         </span>
                       </button>
@@ -302,12 +323,13 @@ export const FrameTimeline: React.FC<FrameTimelineProps> = ({
             </p>
           ) : (
             <FrameInspector
-              key={`${frame.id}:${frame.title}:${frame.holdMs}:${frame.durationMs}:${isLast}`}
+              key={`${frame.id}:${frame.title}:${frame.holdMs}:${frame.durationMs}:${frame.easing}:${isLast}`}
               frame={frame}
               index={index}
               isLast={isLast}
               onRename={(title) => renameFrame(frame.id, title)}
               onSetTiming={(timing) => setFrameTiming(frame.id, timing)}
+              onSetEasing={handleEasing}
             />
           )}
         </>

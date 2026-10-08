@@ -1,4 +1,5 @@
 import type { Ball, Player, TacticFrame } from "../types/tactics";
+import { ease } from "./easing";
 import { pathControl, type AnimationFrame, type SampledFrame } from "./model";
 import { pointAtLength } from "./path";
 import { segmentIndexAt, type Timeline } from "./timeline";
@@ -75,12 +76,13 @@ export function sampleAt(
 
   const target = frames[i + 1];
   const u = Math.min(1, Math.max(0, (t - moveStart) / timeline.durations[i]));
+  const p = ease(u, source.easing);
   const frame = toTacticFrame(source);
   return {
     frame: {
       ...frame,
-      players: interpolate(source, source.players, target.players, u),
-      balls: interpolate(source, source.balls, target.balls, u),
+      players: interpolate(source, source.players, target.players, p),
+      balls: interpolate(source, source.balls, target.balls, p),
     },
     sourceFrameId: source.id,
     targetFrameId: target.id,

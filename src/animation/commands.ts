@@ -8,6 +8,7 @@ import {
   LIMITS,
   PLAYER_POSE_KEYS,
   type AnimationFrame,
+  type Easing,
   type SequenceState,
 } from "./model";
 import { totalDurationMs } from "./timeline";
@@ -308,6 +309,24 @@ export function setFrameTiming(
     };
   }
   return { ok: true, value: { ...seq, frames } };
+}
+
+/** Returns the same sequence when the frame already has that easing. */
+export function setFrameEasing(
+  seq: SequenceState,
+  frameId: string,
+  easing: Easing,
+): SequenceState {
+  const index = frameIndex(seq, frameId);
+  const frame = seq.frames[index];
+  if (!frame || (frame.easing ?? "linear") === easing) return seq;
+  const next: AnimationFrame = { ...frame };
+  // Linear is the default and is never stored.
+  if (easing === "linear") delete next.easing;
+  else next.easing = easing;
+  const frames = [...seq.frames];
+  frames[index] = next;
+  return { ...seq, frames };
 }
 
 function sameEquipment(a: Equipment, b: Equipment): boolean {

@@ -77,6 +77,7 @@ describe("useProjectFile", () => {
     });
     expect(message).toBeNull();
     expect(result.current.tactics.state.title).toBe("Old corner");
+    expect(result.current.tactics.projectDocument.frames).toHaveLength(1);
 
     const project = JSON.stringify(result.current.tactics.projectDocument);
     await act(async () => {

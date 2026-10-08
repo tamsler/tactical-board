@@ -10,6 +10,28 @@ and versions follow [Semantic Versioning](https://semver.org/). Features marked
 
 ## [Unreleased]
 
+### Added
+
+- **Move pacing.** Each move in an animation can now be set to "Natural
+  (speeds up, then slows)" instead of "Steady speed", so players ease out of
+  one frame and into the next. Choose it per frame in the timeline, next to
+  the move duration. It applies to every player and ball in that move,
+  including curved runs, and shows in playback and video export. Frames with
+  natural pacing carry a small marker in the timeline. Existing boards and
+  new frames stay on steady speed.
+- AI assistants can set the pacing with the new optional `easing` frame field
+  (`"linear"` or `"easeInOut"`); the "Create drills with AI" prompt explains
+  when to use it.
+
+### Changed
+
+- Boards are now saved as document version 4. Boards, files and share links
+  from earlier versions open exactly as before. A file or share link saved by
+  this version needs this version or later to open; an older copy of the app
+  left open in a tab says it was "created by a newer version" until reloaded.
+- The app counts one more anonymous usage event: a change of a move's pacing,
+  with the chosen value and the number of frames only.
+
 ### Fixed
 
 - On a phone, and on a tablet with the sidebar open, the playback speed

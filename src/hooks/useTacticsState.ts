@@ -26,6 +26,7 @@ import { track } from "../utils/analytics";
 import { createId, randomToken } from "../utils/id";
 import {
   type DocumentSettings,
+  type Easing,
   type SelectedFormations,
   type SequenceState,
 } from "../animation/model";
@@ -40,6 +41,7 @@ import {
   removeEquipmentFromAllFrames as removeEquipmentFromAllFramesCommand,
   renameFrame as renameFrameCommand,
   sequenceFromBoard,
+  setFrameEasing as setFrameEasingCommand,
   setFrameTiming as setFrameTimingCommand,
   setPathControl as setPathControlCommand,
 } from "../animation/commands";
@@ -1072,6 +1074,19 @@ export function useTacticsState() {
     [present.sequence],
   );
 
+  const setFrameEasing = useCallback((frameId: string, easing: Easing) => {
+    setHistory((curr) => {
+      const sequence = setFrameEasingCommand(
+        curr.present.sequence,
+        frameId,
+        easing,
+      );
+      return sequence === curr.present.sequence
+        ? curr
+        : commit(curr, { ...curr.present, sequence });
+    });
+  }, []);
+
   // Modify individual items
   const updatePlayer = useCallback(
     (id: string, updates: Partial<Player>) => {
@@ -1506,6 +1521,7 @@ export function useTacticsState() {
     moveFrame,
     renameFrame,
     setFrameTiming,
+    setFrameEasing,
     setPathControl,
     copyEquipmentToAllFrames,
     removeEquipmentFromAllFrames,

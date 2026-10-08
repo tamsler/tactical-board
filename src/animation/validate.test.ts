@@ -5,6 +5,7 @@ import { duplicateFrame, sequenceFromBoard } from "./commands";
 import { DEFAULT_SELECTED_FORMATIONS, type DocumentSettings } from "./model";
 import type { Player } from "../types/tactics";
 import type { BoardState } from "../hooks/useTacticsState";
+import { V2_DOCUMENT, V3_DOCUMENT } from "./testing";
 
 const player: Player = {
   id: "p1",
@@ -86,7 +87,7 @@ describe("parseDocument", () => {
   });
 
   it("rejects newer schema versions", () => {
-    const r = parseDocument({ ...doc, schemaVersion: 4 });
+    const r = parseDocument({ ...doc, schemaVersion: 5 });
     expect(!r.ok && r.error).toMatch(/newer version/);
   });
 
@@ -104,9 +105,44 @@ describe("parseDocument", () => {
   });
 
   it("reads v2 documents, which have no curved paths", () => {
-    const r = parseDocument({ ...doc, schemaVersion: 2 });
-    expect(r.ok && r.value.schemaVersion).toBe(3);
+    const r = parseDocument(V2_DOCUMENT);
+    if (!r.ok) throw new Error(r.error);
+    expect(r.value.schemaVersion).toBe(4);
+    expect(r.value.frames).toEqual(V2_DOCUMENT.frames);
   });
+
+  it("reads v3 documents with their curves and timing, as linear moves", () => {
+    const r = parseDocument(V3_DOCUMENT);
+    if (!r.ok) throw new Error(r.error);
+    expect(r.value.schemaVersion).toBe(4);
+    expect(r.value.frames).toEqual(V3_DOCUMENT.frames);
+    expect(r.value.frames.some((f) => "easing" in f)).toBe(false);
+  });
+
+  it("keeps easeInOut and never stores linear", () => {
+    const eased = [{ ...doc.frames[0], easing: "easeInOut" }, doc.frames[1]];
+    const r = parseDocument({ ...doc, frames: eased });
+    expect(r.ok && r.value.frames).toEqual(eased);
+
+    const linear = [{ ...doc.frames[0], easing: "linear" }, doc.frames[1]];
+    const l = parseDocument({ ...doc, frames: linear });
+    expect(l.ok && l.value).toEqual(doc);
+  });
+
+  it("accepts easing on the last frame", () => {
+    const frames = [doc.frames[0], { ...doc.frames[1], easing: "easeInOut" }];
+    const r = parseDocument({ ...doc, frames });
+    expect(r.ok && r.value.frames[1].easing).toBe("easeInOut");
+  });
+
+  it.each([["easeOut"], [true], [null], [1]])(
+    "rejects the easing %j with the path of the field",
+    (easing) => {
+      const frames = [doc.frames[0], { ...doc.frames[1], easing }];
+      const r = parseDocument({ ...doc, frames });
+      expect(!r.ok && r.error).toMatch(/^document\.frames\[1\]\.easing: /);
+    },
+  );
 
   it("accepts curve control points only for players and balls", () => {
     const curved = [
@@ -172,5 +208,22 @@ describe("migration", () => {
     const v2 = parseProjectJSON(JSON.stringify(doc));
     expect(v2.ok && v2.value.settings).toEqual(settings);
     expect(parseProjectJSON("{").ok).toBe(false);
+  });
+
+  it("imports a legacy board as one linear frame", () => {
+    const legacy = parseProjectJSON(
+      JSON.stringify({ players: [player], balls: [], title: "Old corner" }),
+    );
+    if (!legacy.ok) throw new Error(legacy.error);
+    expect(legacy.value.sequence.frames).toHaveLength(1);
+    expect(legacy.value.sequence.frames[0].easing).toBeUndefined();
+  });
+
+  it("imports project files written by earlier versions", () => {
+    for (const old of [V2_DOCUMENT, V3_DOCUMENT]) {
+      const r = parseProjectJSON(JSON.stringify(old));
+      if (!r.ok) throw new Error(r.error);
+      expect(r.value.sequence.frames).toEqual(old.frames);
+    }
   });
 });

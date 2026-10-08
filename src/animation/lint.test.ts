@@ -158,6 +158,17 @@ describe("lintDocument", () => {
   });
 });
 
+describe("lintDocument and easing", () => {
+  it("does not warn about easing, on a middle frame or on the last", () => {
+    const frames = [
+      frame("f1", [player("p1", 100, 100)]),
+      frame("f2", [player("p1", 200, 150)], { easing: "easeInOut" }),
+      frame("f3", [player("p1", 300, 100)], { easing: "easeInOut" }),
+    ];
+    expect(lintDocument(doc(frames))).toEqual([]);
+  });
+});
+
 // The examples are quoted in docs/agent/document-format.md and handed to agents as references.
 describe("agent example documents", () => {
   const examples = import.meta.glob<string>(

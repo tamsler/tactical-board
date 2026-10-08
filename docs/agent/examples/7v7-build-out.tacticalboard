@@ -1,6 +1,6 @@
 {
   "kind": "tactical-board-document",
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "title": "U10 7v7 - Building out of the back (1-2-3-1)",
   "settings": {
     "pitchType": "full",
@@ -44,7 +44,8 @@
       ],
       "notes": "Goal kick. Blue must wait behind the build-out line until the ball is played. Red starts in the 2-3-1.",
       "holdMs": 1500,
-      "durationMs": 1500
+      "durationMs": 1500,
+      "easing": "easeInOut"
     },
     {
       "id": "frame-2",

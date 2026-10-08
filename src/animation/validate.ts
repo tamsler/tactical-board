@@ -18,10 +18,12 @@ import {
   DEFAULT_SELECTED_FORMATIONS,
   DOCUMENT_KIND,
   DOCUMENT_SCHEMA_VERSION,
+  EASINGS,
   LIMITS,
   SUPPORTED_SCHEMA_VERSIONS,
   type AnimationFrame,
   type DocumentSettings,
+  type Easing,
   type SelectedFormations,
   type TacticsDocument,
 } from "./model";
@@ -353,6 +355,11 @@ function paths(v: unknown, path: string): Record<string, Point> {
   );
 }
 
+// Linear is the default and is never stored, so documents without easing round-trip unchanged.
+function easing(v: unknown, path: string): Easing | undefined {
+  return oneOf(v, path, EASINGS) === "easeInOut" ? "easeInOut" : undefined;
+}
+
 function frame(v: unknown, path: string): AnimationFrame {
   const o = obj(v, path);
   return compact({
@@ -368,6 +375,7 @@ function frame(v: unknown, path: string): AnimationFrame {
       LIMITS.maxDurationMs,
     ),
     paths: opt(o, "paths", path, paths),
+    easing: opt(o, "easing", path, easing),
   });
 }
 

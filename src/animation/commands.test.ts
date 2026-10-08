@@ -11,6 +11,7 @@ import {
   moveFrame,
   removeEquipmentFromAllFrames,
   sequenceFromBoard,
+  setFrameEasing,
   setFrameTiming,
   setPathControl,
 } from "./commands";
@@ -193,6 +194,64 @@ describe("frame commands", () => {
     expect(setFrameTiming(seq, id, { holdMs: 0, durationMs: 100 }).ok).toBe(
       true,
     );
+  });
+});
+
+describe("easing", () => {
+  it("sets easeInOut on one frame and stores nothing for linear", () => {
+    const { seq, ids } = threeFrames();
+    const eased = setFrameEasing(seq, ids[1], "easeInOut");
+    expect(eased.frames.map((f) => f.easing)).toEqual([
+      undefined,
+      "easeInOut",
+      undefined,
+    ]);
+    const back = setFrameEasing(eased, ids[1], "linear");
+    expect("easing" in back.frames[1]).toBe(false);
+    expect(back).toEqual(seq);
+  });
+
+  it("returns the same sequence when nothing changes", () => {
+    const { seq, ids } = threeFrames();
+    expect(setFrameEasing(seq, ids[0], "linear")).toBe(seq);
+    const eased = setFrameEasing(seq, ids[0], "easeInOut");
+    expect(setFrameEasing(eased, ids[0], "easeInOut")).toBe(eased);
+  });
+
+  it("copies the easing to a duplicate and leaves the source's in place", () => {
+    const { seq, ids } = threeFrames();
+    const eased = setFrameEasing(seq, ids[0], "easeInOut");
+    const { seq: next, frameId } = duplicateFrame(eased, ids[0])!;
+    expect(next.frames.map((f) => [f.id, f.easing])).toEqual([
+      [ids[0], "easeInOut"],
+      [frameId, "easeInOut"],
+      [ids[1], undefined],
+      [ids[2], undefined],
+    ]);
+  });
+
+  it("stays with its frame through reorder, delete and timing changes", () => {
+    const { seq, ids } = threeFrames();
+    const eased = setFrameEasing(seq, ids[0], "easeInOut");
+
+    const moved = moveFrame(eased, ids[0], 1);
+    expect(moved.frames.map((f) => [f.id, f.easing])).toEqual([
+      [ids[1], undefined],
+      [ids[0], "easeInOut"],
+      [ids[2], undefined],
+    ]);
+
+    const deleted = deleteFrame(eased, ids[1])!;
+    expect(deleted.seq.frames.map((f) => f.easing)).toEqual([
+      "easeInOut",
+      undefined,
+    ]);
+
+    const timed = setFrameTiming(eased, ids[0], { durationMs: 2000 });
+    expect(timed.ok && timed.value.frames[0]).toMatchObject({
+      durationMs: 2000,
+      easing: "easeInOut",
+    });
   });
 });
 

@@ -11,6 +11,7 @@ import {
   parsePreferences,
   saveStoredState,
 } from "./storage";
+import { V3_DOCUMENT } from "./testing";
 
 const board: BoardState = {
   players: [],
@@ -44,6 +45,61 @@ describe("storage", () => {
     expect(loaded.selectedFrameId).toBe(seq.frames[1].id);
     expect(loaded.settings).toEqual(settings);
     expect(loaded.preferences).toEqual(prefs);
+  });
+
+  it("keeps a frame's easing through a save and load", () => {
+    const seq = duplicateFrame(sequenceFromBoard(board), "")!.seq;
+    const eased = {
+      ...seq,
+      frames: [
+        { ...seq.frames[0], easing: "easeInOut" as const },
+        seq.frames[1],
+      ],
+    };
+    saveStoredState(
+      buildStoredState(
+        eased,
+        eased.frames[0].id,
+        DEFAULT_SETTINGS,
+        DEFAULT_PREFERENCES,
+      ),
+    );
+    expect(loadStoredState().sequence).toEqual(eased);
+  });
+
+  it("restores a board autosaved by version 1.8.0 (schema version 3)", () => {
+    const raw = JSON.stringify({
+      storageVersion: 2,
+      document: V3_DOCUMENT,
+      selectedFrameId: "f2",
+      preferences: DEFAULT_PREFERENCES,
+    });
+    localStorage.setItem(STORAGE_KEY_V2, raw);
+    const loaded = loadStoredState();
+    expect(loaded.problem).toBeUndefined();
+    expect(loaded.source).toBe("v2");
+    expect(loaded.sequence).toEqual({
+      title: V3_DOCUMENT.title,
+      frames: V3_DOCUMENT.frames,
+    });
+    expect(loaded.selectedFrameId).toBe("f2");
+    // Reading never rewrites what an older build saved.
+    expect(localStorage.getItem(STORAGE_KEY_V2)).toBe(raw);
+  });
+
+  it("refuses a stored document from a newer schema without overwriting it", () => {
+    const raw = JSON.stringify({
+      storageVersion: 2,
+      document: { ...V3_DOCUMENT, schemaVersion: 5 },
+      selectedFrameId: "f1",
+      preferences: DEFAULT_PREFERENCES,
+    });
+    localStorage.setItem(STORAGE_KEY_V2, raw);
+    const loaded = loadStoredState();
+    expect(loaded.problem?.reason).toMatch(/newer version/);
+    expect(loaded.problem?.raw).toBe(raw);
+    expect(loaded.sequence).toBeNull();
+    expect(localStorage.getItem(STORAGE_KEY_V2)).toBe(raw);
   });
 
   it("migrates v1 settings and preferences without touching the v1 key", () => {

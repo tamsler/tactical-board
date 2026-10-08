@@ -463,6 +463,40 @@ describe("useTacticsState", () => {
       expect(result.current.canUndo).toBe(false);
     });
 
+    it("changes a frame's easing as one undoable step", () => {
+      const { result } = renderHook(() => useTacticsState());
+      const firstFrameId = result.current.selectedFrameId;
+      act(() => result.current.addFrame());
+      act(() => result.current.undo());
+      act(() => result.current.redo());
+      const easing = () => result.current.frames.map((f) => f.easing);
+
+      act(() => result.current.setFrameEasing(firstFrameId, "easeInOut"));
+      expect(easing()).toEqual(["easeInOut", undefined]);
+      act(() => result.current.undo());
+      expect(easing()).toEqual([undefined, undefined]);
+      expect(result.current.frames).toHaveLength(2);
+      act(() => result.current.redo());
+      expect(easing()).toEqual(["easeInOut", undefined]);
+    });
+
+    it("adds no undo step when the easing is already set", () => {
+      const { result } = renderHook(() => useTacticsState());
+      const id = result.current.selectedFrameId;
+      act(() => result.current.setFrameEasing(id, "linear"));
+      expect(result.current.canUndo).toBe(false);
+    });
+
+    it("does not change the easing while previewing", () => {
+      const { result } = renderHook(() => useTacticsState());
+      const id = result.current.selectedFrameId;
+      act(() => result.current.setPreviewing(true));
+      act(() => result.current.setFrameEasing(id, "easeInOut"));
+      act(() => result.current.setPreviewing(false));
+      expect(result.current.frames[0].easing).toBeUndefined();
+      expect(result.current.canUndo).toBe(false);
+    });
+
     it("bends a move as one undoable step", () => {
       const { result } = renderHook(() => useTacticsState());
       const firstFrameId = result.current.selectedFrameId;

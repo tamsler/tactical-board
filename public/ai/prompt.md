@@ -62,7 +62,7 @@ and send the complete corrected document again, not only the changed part.
 
 ---
 
-# Tactical Board document format (schema version 3)
+# Tactical Board document format (schema version 4)
 
 This is the reference for writing a Tactical Board document by hand or with an
 AI agent. A document is one JSON file with the extension `.tacticalboard`. One
@@ -77,7 +77,7 @@ how to check and open a document.
 ```json
 {
   "kind": "tactical-board-document",
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "title": "Wall pass",
   "settings": { "pitchType": "blank", "matchFormat": "7v7", "halfPitchTeam": "B" },
   "frames": [ ... ]
@@ -87,7 +87,7 @@ how to check and open a document.
 | Field | Type | Rules |
 |---|---|---|
 | `kind` | string | Exactly `"tactical-board-document"` |
-| `schemaVersion` | number | `3` |
+| `schemaVersion` | number | `4` |
 | `title` | string | Up to 200 characters; shown in the header and used as the file name |
 | `settings.pitchType` | string | `"full"`, `"half"` or `"blank"` (see §2) |
 | `settings.matchFormat` | string | `"11v11"`, `"9v9"` or `"7v7"`. It does not change the pitch size. It turns on the 7v7 build-out lines, picks the sidebar's preset list, and sets the team size the checker warns about. Usual age groups: 7v7 for U9–U10, 9v9 for U11–U12, 11v11 from U13 |
@@ -198,7 +198,8 @@ players of a rondo as Team A and the defenders as Team B.
   "notes": "Pass into the wall player.",
   "holdMs": 800,
   "durationMs": 1000,
-  "paths": { "p1": { "x": 500, "y": 560 } }
+  "paths": { "p1": { "x": 500, "y": 560 } },
+  "easing": "easeInOut"
 }
 ```
 
@@ -212,6 +213,7 @@ players of a rondo as Team A and the defenders as Team B.
 | `holdMs` | integer | 0 to 30 000. How long this frame stands still before moving on |
 | `durationMs` | integer | 100 to 30 000. How long the move to the **next** frame takes. Required on every frame; ignored on the last |
 | `paths` | object | Optional curved moves, see §5 |
+| `easing` | string | Optional. `"linear"` (the default) or `"easeInOut"`. How the move to the **next** frame is paced, see §5 rule 11; ignored on the last |
 
 Every `id` inside a frame must be unique across all six collections. Use short
 readable IDs such as `a-gk`, `b-st`, `ball-1`, `cone-3`, `pass-2`. Annotation
@@ -401,9 +403,10 @@ copy them from the example for a readable dark caption box.
    `rotation`. Everything else (team, number, name, colours, radius, size) must
    be copied unchanged.
 4. **Movement is the difference between two frames.** Players and balls travel
-   in a straight line at constant speed from their position in frame *i* to
-   their position in frame *i + 1*, taking frame *i*'s `durationMs`. An entity
-   with the same position in both frames stands still.
+   in a straight line from their position in frame *i* to their position in
+   frame *i + 1*, taking frame *i*'s `durationMs`. The speed is constant
+   unless frame *i* sets `easing` (rule 11). An entity with the same position
+   in both frames stands still.
 5. **One clock per transition.** Everything that moves between two frames
    starts and arrives together. To have a pass arrive before a run starts, use
    two transitions. When a whole team reacts to one pass (a press, a shift),
@@ -429,9 +432,23 @@ copy them from the example for a readable dark caption box.
 10. **Curved moves.** `paths` on frame *i* maps a player or ball ID to a
     control point. That entity then travels to frame *i + 1* along the
     quadratic Bézier curve from its position, bent toward the control point,
-    still at constant speed. To make the curve pass through a point M halfway,
+    paced along the curve's length as rule 4 describes. To make the curve pass
+    through a point M halfway,
     use `control = 2·M − (start + end) / 2`. `paths` on the last frame does
     nothing.
+11. **Easing.** `"easing": "easeInOut"` on frame *i* makes everything in the
+    move to frame *i + 1* start slowly, speed up and slow into its end
+    position: after a fraction *u* of `durationMs`, each entity has covered
+    `6u⁵ − 15u⁴ + 10u³` of its path (about 10% after a quarter of the time,
+    half at the midpoint). The move still takes `durationMs` and everything
+    still starts and arrives together. Leave `easing` out, or use `"linear"`,
+    for constant speed. It applies to every player and ball in the move,
+    including the ball, so it cannot be set for one entity.
+
+Use `easeInOut` for a move that is runs, a press or a team shifting across.
+Leave a move that is mainly a pass or a shot linear: a struck ball leaves at
+full speed, and an eased one looks rolled. If a transition has both a pass and
+important runs, keep it linear.
 
 Pacing that reads well: 1 000 to 1 500 ms per move, 300 to 800 ms holds
 between moves, 1 500 ms or more on the first and last frames. A shot or a
@@ -440,7 +457,9 @@ of N actions needs N + 1 frames).
 
 Keep speeds believable. On the full pitch a sprinting player covers about 70
 units per second and a pass 150 to 250; on the half pitch, which is drawn
-larger, about 105 and 225 to 375. If a run needs more than that, lengthen
+larger, about 105 and 225 to 375. These are averages over the move
+(distance ÷ `durationMs`): an `easeInOut` move peaks at almost twice its
+average (1.875 times), so give a long eased sprint more time. If a run needs more than that, lengthen
 `durationMs` (going past 1 500 ms is fine) or shorten the run. An intercepted
 pass may be slower. A blank pitch has no scale: keep moves between 1 000 and
 2 000 ms and similar distances at similar speeds.
@@ -512,7 +531,7 @@ one pass arrow and one curved run.
 ```json
 {
   "kind": "tactical-board-document",
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "title": "Wall pass",
   "settings": { "pitchType": "blank", "matchFormat": "7v7", "halfPitchTeam": "B" },
   "frames": [

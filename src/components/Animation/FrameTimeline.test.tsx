@@ -1,9 +1,11 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { useEffect } from "react";
 import { render, screen, fireEvent, within, act } from "@testing-library/react";
 import { useTacticsState } from "../../hooks/useTacticsState";
 import { useAnimationPlayback } from "../../animation/useAnimationPlayback";
-import { createFakeClock } from "../../animation/testing";
+import { createFakeClock, V3_DOCUMENT } from "../../animation/testing";
+import { parseProjectJSON } from "../../animation/migrate";
+import { recordEvents, stopRecording } from "../../utils/analyticsRecorder";
 import { FrameTimeline } from "./FrameTimeline";
 
 type Tactics = ReturnType<typeof useTacticsState>;
@@ -153,5 +155,169 @@ describe("FrameTimeline", () => {
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(true);
+  });
+
+  describe("move pacing", () => {
+    const NATURAL = "Natural (speeds up, then slows)";
+    const pacing = () =>
+      screen.getByLabelText("Move pacing") as HTMLSelectElement;
+    const addFrames = (n: number) => {
+      for (let i = 0; i < n; i++) {
+        fireEvent.click(screen.getByRole("button", { name: /add frame/i }));
+      }
+    };
+    const choose = (easing: "linear" | "easeInOut") =>
+      fireEvent.change(pacing(), { target: { value: easing } });
+    const marker = (i: number) =>
+      chips()[i].querySelector("[data-pacing-marker]");
+
+    it("offers steady and natural pacing, except on the last frame", () => {
+      render(<Harness />);
+      expect(screen.queryByLabelText("Move pacing")).toBeNull();
+      addFrames(1);
+      expect(screen.queryByLabelText("Move pacing")).toBeNull();
+
+      fireEvent.click(chips()[0]);
+      expect(pacing().value).toBe("linear");
+      expect(
+        within(pacing())
+          .getAllByRole("option")
+          .map((o) => o.textContent),
+      ).toEqual(["Steady speed", NATURAL]);
+    });
+
+    it("changes only the selected frame and shows the stored choice again", () => {
+      render(<Harness />);
+      addFrames(3);
+      fireEvent.click(chips()[1]);
+      choose("easeInOut");
+      expect(latest.frames.map((f) => f.easing)).toEqual([
+        undefined,
+        "easeInOut",
+        undefined,
+        undefined,
+      ]);
+
+      fireEvent.click(chips()[2]);
+      expect(pacing().value).toBe("linear");
+      fireEvent.click(chips()[1]);
+      expect(pacing().value).toBe("easeInOut");
+    });
+
+    it("is one undo step back to steady speed", () => {
+      render(<Harness />);
+      addFrames(1);
+      fireEvent.click(chips()[0]);
+      choose("easeInOut");
+      act(() => latest.undo());
+      expect(latest.frames).toHaveLength(2);
+      expect(pacing().value).toBe("linear");
+    });
+
+    it("marks a frame with natural pacing on its chip", () => {
+      render(<Harness />);
+      addFrames(2);
+      fireEvent.click(chips()[1]);
+      const steadyLabel = chips()[1].getAttribute("aria-label");
+      expect(steadyLabel).toBe(
+        "Frame 2, hold 0.00 seconds, then move for 1.00 seconds",
+      );
+      expect(marker(1)).toBeNull();
+
+      choose("easeInOut");
+      expect(marker(1)).not.toBeNull();
+      expect(marker(1)!.getAttribute("aria-hidden")).toBe("true");
+      expect(chips()[1].getAttribute("aria-label")).toBe(
+        `${steadyLabel}, natural pacing`,
+      );
+      expect(marker(0)).toBeNull();
+      expect(chips()[0].getAttribute("aria-label")).not.toMatch(/pacing/);
+
+      act(() => latest.undo());
+      expect(marker(1)).toBeNull();
+      expect(chips()[1].getAttribute("aria-label")).toBe(steadyLabel);
+    });
+
+    it("shows no marker once the frame is the last one", () => {
+      render(<Harness />);
+      addFrames(1);
+      fireEvent.click(chips()[0]);
+      choose("easeInOut");
+      expect(marker(0)).not.toBeNull();
+
+      fireEvent.click(screen.getByRole("button", { name: /move .*later/i }));
+      expect(latest.frames[1].easing).toBe("easeInOut");
+      expect(marker(1)).toBeNull();
+      expect(chips()[1].getAttribute("aria-label")).not.toMatch(/pacing/);
+    });
+
+    describe("usage event", () => {
+      let events: ReturnType<typeof recordEvents>;
+      const sent = () =>
+        events.filter((e) => e.name === "frame_pacing_changed");
+      beforeEach(() => {
+        events = recordEvents();
+      });
+      afterEach(() => stopRecording());
+
+      it("reports the new value and the frame count, never the label", () => {
+        render(<Harness />);
+        addFrames(3);
+        fireEvent.click(chips()[1]);
+        act(() =>
+          latest.renameFrame(latest.selectedFrameId, "Press their number 6"),
+        );
+
+        choose("easeInOut");
+        expect(sent()).toEqual([
+          {
+            name: "frame_pacing_changed",
+            params: { easing: "easeInOut", frames: 4 },
+          },
+        ]);
+        choose("linear");
+        expect(sent()[1].params).toEqual({ easing: "linear", frames: 4 });
+        expect(JSON.stringify(sent())).not.toMatch(/Press|number 6/);
+      });
+
+      it("reports nothing when the value is already set", () => {
+        render(<Harness />);
+        addFrames(1);
+        fireEvent.click(chips()[0]);
+        choose("linear");
+        expect(sent()).toEqual([]);
+        expect(latest.canUndo).toBe(true); // only the added frame
+        act(() => latest.undo());
+        expect(latest.canUndo).toBe(false);
+      });
+
+      it("reports nothing for undo and redo", () => {
+        render(<Harness />);
+        addFrames(1);
+        fireEvent.click(chips()[0]);
+        choose("easeInOut");
+        act(() => latest.undo());
+        act(() => latest.redo());
+        expect(latest.frames[0].easing).toBe("easeInOut");
+        expect(sent()).toHaveLength(1);
+      });
+
+      it("reports nothing when a board with eased frames is opened", () => {
+        render(<Harness />);
+        const eased = {
+          ...V3_DOCUMENT,
+          schemaVersion: 4,
+          frames: V3_DOCUMENT.frames.map((f) => ({
+            ...f,
+            easing: "easeInOut",
+          })),
+        };
+        const project = parseProjectJSON(JSON.stringify(eased));
+        if (!project.ok) throw new Error(project.error);
+        act(() => latest.importProject(project.value));
+        expect(latest.frames[0].easing).toBe("easeInOut");
+        expect(sent()).toEqual([]);
+      });
+    });
   });
 });
